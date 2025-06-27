@@ -78,18 +78,62 @@ export default function Reports() {
     }
   };
 
-  const generateReport = () => {
-    toast({
-      title: "Report Generated",
-      description: `Generated report for ${selectedRange} range`,
-    });
+  const generateReport = async () => {
+    try {
+      const response = await fetch(`/api/reports/generate?range=${selectedRange}&subject=${selectedSubject}&section=${selectedSection}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        toast({
+          title: "Report Generated",
+          description: `Generated report for ${selectedRange} range with ${data.records} records`,
+        });
+      } else {
+        throw new Error('Failed to generate report');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Generation Failed",
+        description: error.message || "Failed to generate report",
+        variant: "destructive"
+      });
+    }
   };
 
-  const exportReport = (format: 'excel' | 'pdf') => {
-    toast({
-      title: "Export Started",
-      description: `Exporting report as ${format.toUpperCase()}`,
-    });
+  const exportReport = async (format: 'excel' | 'pdf') => {
+    try {
+      const response = await fetch(`/api/reports/export?range=${selectedRange}&subject=${selectedSubject}&section=${selectedSection}&format=${format}`, {
+        method: 'GET',
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `attendance-report-${selectedRange}-${new Date().toISOString().split('T')[0]}.${format === 'excel' ? 'xlsx' : 'pdf'}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        toast({
+          title: "Export Successful",
+          description: `Report exported as ${format.toUpperCase()}`,
+        });
+      } else {
+        throw new Error('Failed to export report');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Export Failed",
+        description: error.message || "Failed to export report",
+        variant: "destructive"
+      });
+    }
   };
 
   return (

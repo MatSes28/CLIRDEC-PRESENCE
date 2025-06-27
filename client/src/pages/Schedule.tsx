@@ -15,10 +15,13 @@ import {
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import AddScheduleModal from "@/components/AddScheduleModal";
+import FileUpload from "@/components/FileUpload";
 
 export default function Schedule() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const { data: schedules, isLoading } = useQuery({
     queryKey: ['/api/schedules'],
@@ -119,7 +122,7 @@ export default function Schedule() {
           <h1 className="text-2xl font-semibold">Class Schedule Management</h1>
           <p className="text-muted-foreground">Manage your class schedules and automated session triggers</p>
         </div>
-        <Button>
+        <Button onClick={() => setShowAddModal(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Add New Schedule
         </Button>
@@ -132,15 +135,15 @@ export default function Schedule() {
           <p className="text-muted-foreground">Upload your class schedule file (CSV/Excel format)</p>
         </CardHeader>
         <CardContent>
-          <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:border-muted-foreground/50 transition-colors">
-            <CloudUpload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-lg font-medium mb-2">Drop your schedule file here</p>
-            <p className="text-muted-foreground mb-4">or click to browse</p>
-            <Button variant="outline">
-              <Upload className="mr-2 h-4 w-4" />
-              Choose File
-            </Button>
-          </div>
+          <FileUpload 
+            onFileUpload={(file) => {
+              toast({
+                title: "File Upload Started",
+                description: `Processing ${file.name}...`
+              });
+              queryClient.invalidateQueries({ queryKey: ['/api/schedules'] });
+            }}
+          />
         </CardContent>
       </Card>
 
@@ -247,6 +250,12 @@ export default function Schedule() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Add Schedule Modal */}
+      <AddScheduleModal 
+        open={showAddModal} 
+        onClose={() => setShowAddModal(false)} 
+      />
     </div>
   );
 }

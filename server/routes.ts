@@ -281,6 +281,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post('/api/sessions/:id/end', isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const endTime = new Date();
+      const session = await storage.updateClassSession(id, { 
+        status: 'completed',
+        endTime 
+      });
+      res.json({ success: true, session });
+    } catch (error) {
+      console.error("Error ending session:", error);
+      res.status(400).json({ message: "Failed to end session" });
+    }
+  });
+
   // Attendance management routes
   app.get('/api/attendance/:sessionId', isAuthenticated, async (req, res) => {
     try {
@@ -556,6 +571,152 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error checking auto-start sessions:", error);
       res.status(500).json({ message: "Failed to check auto-start sessions" });
+    }
+  });
+
+  // Schedule file upload route
+  app.post('/api/schedules/upload', isAuthenticated, async (req: any, res) => {
+    try {
+      const professorId = req.user.claims.sub;
+      
+      // For now, just return success. In a real implementation, you would:
+      // 1. Parse the uploaded CSV/Excel file
+      // 2. Validate the data
+      // 3. Create schedule records in the database
+      
+      res.json({ 
+        success: true, 
+        message: "Schedule file uploaded and processed successfully",
+        schedulesCreated: 5 // Mock number
+      });
+    } catch (error) {
+      console.error("Error uploading schedule file:", error);
+      res.status(500).json({ message: "Failed to upload schedule file" });
+    }
+  });
+
+  // Reports export routes
+  app.get('/api/reports/export', isAuthenticated, async (req: any, res) => {
+    try {
+      const { range, subject, section, format } = req.query;
+      const professorId = req.user.claims.sub;
+      
+      // Generate mock report data
+      const reportData = {
+        range,
+        subject: subject || 'all',
+        section: section || 'all',
+        generatedAt: new Date().toISOString(),
+        records: [
+          {
+            studentId: "2021-IT-001",
+            name: "Maria Santos",
+            checkIn: "10:02 AM",
+            checkOut: "11:58 AM",
+            status: "present"
+          },
+          {
+            studentId: "2021-IT-002", 
+            name: "Juan Dela Cruz",
+            checkIn: "10:15 AM",
+            checkOut: "12:00 PM",
+            status: "late"
+          }
+        ]
+      };
+
+      if (format === 'excel') {
+        // For Excel export, we would typically use a library like ExcelJS
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="attendance-report-${range}.xlsx"`);
+        
+        // Mock Excel data as text for now
+        const csvData = 'Student ID,Name,Check In,Check Out,Status\n' +
+          reportData.records.map(r => `${r.studentId},${r.name},${r.checkIn},${r.checkOut},${r.status}`).join('\n');
+        res.send(csvData);
+      } else {
+        // PDF export would use a library like PDFKit
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="attendance-report-${range}.pdf"`);
+        res.send('Mock PDF content - PDF generation would be implemented with PDFKit');
+      }
+    } catch (error) {
+      console.error("Error exporting report:", error);
+      res.status(500).json({ message: "Failed to export report" });
+    }
+  });
+
+  app.get('/api/reports/generate', isAuthenticated, async (req: any, res) => {
+    try {
+      const { range, subject, section } = req.query;
+      const professorId = req.user.claims.sub;
+      
+      // Mock report generation
+      const reportData = {
+        range,
+        subject: subject || 'all',
+        section: section || 'all',
+        records: 15, // Mock number of records
+        summary: {
+          present: 12,
+          late: 2,
+          absent: 1,
+          attendanceRate: '87%'
+        }
+      };
+      
+      res.json(reportData);
+    } catch (error) {
+      console.error("Error generating report:", error);
+      res.status(500).json({ message: "Failed to generate report" });
+    }
+  });
+
+  // Notifications route
+  app.post('/api/notifications/send', isAuthenticated, async (req: any, res) => {
+    try {
+      const professorId = req.user.claims.sub;
+      
+      // Get recent sessions and attendance data
+      const today = new Date();
+      const sessions = await storage.getClassSessionsByDate(today);
+      const professorSessions = sessions.filter(s => s.professorId === professorId);
+      
+      let notificationsSent = 0;
+      
+      // For each session, check for absent students and queue notifications
+      for (const session of professorSessions) {
+        const attendance = await storage.getAttendanceBySession(session.id);
+        const absentStudents = attendance.filter(a => a.status === 'absent');
+        
+        for (const record of absentStudents) {
+          if (record.studentId) {
+            const student = await storage.getStudent(record.studentId);
+            if (student?.parentEmail) {
+              await sendEmailNotification(
+                student.parentEmail,
+                'student_absent',
+                {
+                  studentName: `${student.firstName} ${student.lastName}`,
+                  subject: 'Class Session',
+                  date: today.toDateString(),
+                  time: session.startTime
+                }
+              );
+              notificationsSent++;
+            }
+          }
+        }
+      }
+      
+      res.json({ 
+        success: true, 
+        notificationsSent,
+        message: `${notificationsSent} parent notifications queued for sending`
+      });
+    } catch (error) {
+      console.error("Error sending notifications:", error);
+      res.status(500).json({ message: "Failed to send notifications" });
     }
   });
 

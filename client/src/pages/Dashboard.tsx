@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,11 +19,102 @@ import {
   LogOut,
   Clock
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import StartSessionModal from "@/components/StartSessionModal";
 
 export default function Dashboard() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [showStartSessionModal, setShowStartSessionModal] = useState(false);
+  
   const { data: stats, isLoading } = useQuery({
     queryKey: ['/api/dashboard/stats'],
   });
+
+  const endSessionMutation = useMutation({
+    mutationFn: async (sessionId: number) => {
+      const response = await fetch(`/api/sessions/${sessionId}/end`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (!response.ok) throw new Error('Failed to end session');
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Session Ended",
+        description: "Class session has been ended successfully."
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/sessions'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to end session",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const exportReports = async () => {
+    try {
+      const response = await fetch('/api/reports/export?range=today', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        // Create a blob from the response and download it
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `attendance-report-${new Date().toISOString().split('T')[0]}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        toast({
+          title: "Report Downloaded",
+          description: "Today's attendance report has been downloaded."
+        });
+      } else {
+        throw new Error('Failed to export report');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Export Failed",
+        description: error.message || "Failed to export reports",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const sendNotifications = async () => {
+    try {
+      const response = await fetch('/api/notifications/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        toast({
+          title: "Notifications Sent",
+          description: "Parent notifications have been queued for sending."
+        });
+      } else {
+        throw new Error('Failed to send notifications');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Send Failed",
+        description: error.message || "Failed to send notifications",
+        variant: "destructive"
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -154,9 +246,14 @@ export default function Dashboard() {
                     </div>
                   </div>
                   
-                  <Button variant="destructive" className="w-full">
+                  <Button 
+                    variant="destructive" 
+                    className="w-full"
+                    onClick={() => endSessionMutation.mutate(stats?.activeSession?.id)}
+                    disabled={endSessionMutation.isPending}
+                  >
                     <Play className="mr-2 h-4 w-4" />
-                    End Class Session
+                    {endSessionMutation.isPending ? "Ending..." : "End Class Session"}
                   </Button>
                 </div>
               </div>
@@ -165,7 +262,7 @@ export default function Dashboard() {
                 <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No Active Session</h3>
                 <p className="text-muted-foreground mb-4">Start a new class session when ready</p>
-                <Button className="w-full">
+                <Button className="w-full" onClick={() => setShowStartSessionModal(true)}>
                   <Plus className="mr-2 h-4 w-4" />
                   Start New Class Session
                 </Button>
@@ -180,19 +277,35 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <Button variant="outline" className="w-full justify-start">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => setShowStartSessionModal(true)}
+              >
                 <Plus className="mr-2 h-4 w-4" />
                 Start New Class Session
               </Button>
-              <Button variant="outline" className="w-full justify-start">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={exportReports}
+              >
                 <Download className="mr-2 h-4 w-4" />
                 Export Today's Reports
               </Button>
-              <Button variant="outline" className="w-full justify-start">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => toast({ title: "Hardware Settings", description: "Hardware configuration panel will be implemented." })}
+              >
                 <Settings className="mr-2 h-4 w-4" />
                 Hardware Settings
               </Button>
-              <Button variant="outline" className="w-full justify-start">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={sendNotifications}
+              >
                 <Mail className="mr-2 h-4 w-4" />
                 Send Parent Notifications
               </Button>
@@ -234,6 +347,12 @@ export default function Dashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Start Session Modal */}
+      <StartSessionModal 
+        open={showStartSessionModal} 
+        onClose={() => setShowStartSessionModal(false)} 
+      />
     </div>
   );
 }
