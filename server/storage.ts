@@ -55,12 +55,15 @@ export interface IStorage {
   getSubjects(): Promise<Subject[]>;
   getSubjectsByProfessor(professorId: string): Promise<Subject[]>;
   createSubject(subject: InsertSubject): Promise<Subject>;
+  updateSubject(id: number, subject: Partial<InsertSubject>): Promise<Subject>;
+  deleteSubject(id: number): Promise<void>;
 
   // Schedule operations
   getSchedules(): Promise<Schedule[]>;
   getSchedulesByProfessor(professorId: string): Promise<Schedule[]>;
   createSchedule(schedule: InsertSchedule): Promise<Schedule>;
   updateSchedule(id: number, schedule: Partial<InsertSchedule>): Promise<Schedule>;
+  deleteSchedule(id: number): Promise<void>;
 
   // Class session operations
   getActiveSession(professorId: string): Promise<ClassSession | undefined>;
@@ -79,6 +82,7 @@ export interface IStorage {
   getComputersByClassroom(classroomId: number): Promise<Computer[]>;
   createComputer(computer: InsertComputer): Promise<Computer>;
   updateComputer(id: number, computer: Partial<InsertComputer>): Promise<Computer>;
+  deleteComputer(id: number): Promise<void>;
   assignComputerToStudent(computerId: number, studentId: number): Promise<Computer>;
   releaseComputer(computerId: number): Promise<Computer>;
 
@@ -185,6 +189,19 @@ export class DatabaseStorage implements IStorage {
     return newSubject;
   }
 
+  async updateSubject(id: number, subject: Partial<InsertSubject>): Promise<Subject> {
+    const [updatedSubject] = await db
+      .update(subjects)
+      .set(subject)
+      .where(eq(subjects.id, id))
+      .returning();
+    return updatedSubject;
+  }
+
+  async deleteSubject(id: number): Promise<void> {
+    await db.delete(subjects).where(eq(subjects.id, id));
+  }
+
   // Schedule operations
   async getSchedules(): Promise<Schedule[]> {
     return await db.select().from(schedules).where(eq(schedules.isActive, true)).orderBy(asc(schedules.dayOfWeek), asc(schedules.startTime));
@@ -210,6 +227,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(schedules.id, id))
       .returning();
     return updatedSchedule;
+  }
+
+  async deleteSchedule(id: number): Promise<void> {
+    await db.delete(schedules).where(eq(schedules.id, id));
   }
 
   // Class session operations
@@ -301,6 +322,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(computers.id, id))
       .returning();
     return updatedComputer;
+  }
+
+  async deleteComputer(id: number): Promise<void> {
+    await db.delete(computers).where(eq(computers.id, id));
   }
 
   async assignComputerToStudent(computerId: number, studentId: number): Promise<Computer> {

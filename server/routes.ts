@@ -104,6 +104,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete('/api/students/:id', isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteStudent(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting student:", error);
+      res.status(400).json({ message: "Failed to delete student" });
+    }
+  });
+
   // Classroom management routes
   app.get('/api/classrooms', isAuthenticated, async (req, res) => {
     try {
@@ -123,6 +134,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating classroom:", error);
       res.status(400).json({ message: "Failed to create classroom" });
+    }
+  });
+
+  app.put('/api/classrooms/:id', isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const classroomData = insertClassroomSchema.partial().parse(req.body);
+      const classroom = await storage.updateClassroom(id, classroomData);
+      res.json(classroom);
+    } catch (error) {
+      console.error("Error updating classroom:", error);
+      res.status(400).json({ message: "Failed to update classroom" });
     }
   });
 
@@ -150,6 +173,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put('/api/subjects/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const professorId = req.user.claims.sub;
+      const subjectData = insertSubjectSchema.partial().parse({ ...req.body, professorId });
+      const subject = await storage.updateSubject(id, subjectData);
+      res.json(subject);
+    } catch (error) {
+      console.error("Error updating subject:", error);
+      res.status(400).json({ message: "Failed to update subject" });
+    }
+  });
+
+  app.delete('/api/subjects/:id', isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteSubject(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting subject:", error);
+      res.status(400).json({ message: "Failed to delete subject" });
+    }
+  });
+
   // Schedule management routes
   app.get('/api/schedules', isAuthenticated, async (req: any, res) => {
     try {
@@ -171,6 +218,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating schedule:", error);
       res.status(400).json({ message: "Failed to create schedule" });
+    }
+  });
+
+  app.put('/api/schedules/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const professorId = req.user.claims.sub;
+      const scheduleData = insertScheduleSchema.partial().parse({ ...req.body, professorId });
+      const schedule = await storage.updateSchedule(id, scheduleData);
+      res.json(schedule);
+    } catch (error) {
+      console.error("Error updating schedule:", error);
+      res.status(400).json({ message: "Failed to update schedule" });
+    }
+  });
+
+  app.delete('/api/schedules/:id', isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteSchedule(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting schedule:", error);
+      res.status(400).json({ message: "Failed to delete schedule" });
     }
   });
 
@@ -270,6 +341,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put('/api/computers/:id', isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const computerData = insertComputerSchema.partial().parse(req.body);
+      const computer = await storage.updateComputer(id, computerData);
+      res.json(computer);
+    } catch (error) {
+      console.error("Error updating computer:", error);
+      res.status(400).json({ message: "Failed to update computer" });
+    }
+  });
+
+  app.delete('/api/computers/:id', isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteComputer(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting computer:", error);
+      res.status(400).json({ message: "Failed to delete computer" });
+    }
+  });
+
   app.put('/api/computers/:id/assign', isAuthenticated, async (req, res) => {
     try {
       const computerId = parseInt(req.params.id);
@@ -325,7 +419,132 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(setting);
     } catch (error) {
       console.error("Error updating setting:", error);
-      res.status(400).json({ message: "Failed to update setting" });
+      res.status(500).json({ message: "Failed to update setting" });
+    }
+  });
+
+  // Reports routes
+  app.get('/api/reports/attendance/:sessionId', isAuthenticated, async (req, res) => {
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      const attendanceRecords = await storage.getAttendanceBySession(sessionId);
+      res.json(attendanceRecords);
+    } catch (error) {
+      console.error("Error fetching attendance report:", error);
+      res.status(500).json({ message: "Failed to fetch attendance report" });
+    }
+  });
+
+  app.get('/api/reports/daily/:date', isAuthenticated, async (req: any, res) => {
+    try {
+      const date = new Date(req.params.date);
+      const professorId = req.user.claims.sub;
+      
+      // Get sessions for the day
+      const sessions = await storage.getClassSessionsByDate(date);
+      const professorSessions = sessions.filter(s => s.professorId === professorId);
+      
+      const report = {
+        date: date.toISOString().split('T')[0],
+        totalSessions: professorSessions.length,
+        attendanceData: [] as any[]
+      };
+      
+      for (const session of professorSessions) {
+        const attendance = await storage.getAttendanceBySession(session.id);
+        const present = attendance.filter(a => a.status === 'present' || a.status === 'late').length;
+        const absent = attendance.filter(a => a.status === 'absent').length;
+        
+        report.attendanceData.push({
+          sessionId: session.id,
+          subject: session.scheduleId,
+          totalStudents: attendance.length,
+          present,
+          absent,
+          attendanceRate: attendance.length > 0 ? Math.round((present / attendance.length) * 100) : 0
+        });
+      }
+      
+      res.json(report);
+    } catch (error) {
+      console.error("Error generating daily report:", error);
+      res.status(500).json({ message: "Failed to generate daily report" });
+    }
+  });
+
+  app.get('/api/reports/student/:studentId', isAuthenticated, async (req, res) => {
+    try {
+      const studentId = parseInt(req.params.studentId);
+      const { startDate, endDate } = req.query;
+      
+      // Get student details
+      const student = await storage.getStudent(studentId);
+      if (!student) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+      
+      // Get attendance records for date range
+      const attendanceQuery = `
+        SELECT a.*, s.date, sub.name as subject_name, sub.code as subject_code
+        FROM attendance a
+        JOIN class_sessions s ON a.session_id = s.id
+        JOIN schedules sch ON s.schedule_id = sch.id
+        JOIN subjects sub ON sch.subject_id = sub.id
+        WHERE a.student_id = $1
+        ${startDate ? 'AND s.date >= $2' : ''}
+        ${endDate ? 'AND s.date <= $3' : ''}
+        ORDER BY s.date DESC
+      `;
+      
+      // For now, return basic student info and a placeholder for attendance
+      const report = {
+        student,
+        attendanceRecords: [],
+        summary: {
+          totalClasses: 0,
+          presentCount: 0,
+          lateCount: 0,
+          absentCount: 0,
+          attendanceRate: 0
+        }
+      };
+      
+      res.json(report);
+    } catch (error) {
+      console.error("Error generating student report:", error);
+      res.status(500).json({ message: "Failed to generate student report" });
+    }
+  });
+
+  // Export routes for downloading reports
+  app.get('/api/reports/export/csv/:type', isAuthenticated, async (req: any, res) => {
+    try {
+      const { type } = req.params;
+      const { sessionId, date, studentId } = req.query;
+      
+      let csvData = '';
+      let filename = '';
+      
+      if (type === 'attendance' && sessionId) {
+        const attendance = await storage.getAttendanceBySession(parseInt(sessionId));
+        csvData = 'Student ID,Name,Status,Check In,Check Out\n';
+        
+        for (const record of attendance) {
+          if (record.studentId) {
+            const student = await storage.getStudent(record.studentId);
+            csvData += `${student?.studentId || 'N/A'},${student?.firstName} ${student?.lastName},${record.status},${record.checkInTime || 'N/A'},${record.checkOutTime || 'N/A'}\n`;
+          }
+        }
+        
+        filename = `attendance_session_${sessionId}.csv`;
+      }
+      
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(csvData);
+    } catch (error) {
+      console.error("Error exporting report:", error);
+      res.status(500).json({ message: "Failed to export report" });
     }
   });
 
