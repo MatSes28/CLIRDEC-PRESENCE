@@ -720,6 +720,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update student information
+  app.put('/api/students/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const studentId = parseInt(req.params.id);
+      const { firstName, lastName, studentId: studentIdCode, email, parentEmail, parentName, year, section, rfidCardId } = req.body;
+      
+      if (!firstName || !lastName || !studentIdCode || !email) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      const updatedStudent = await storage.updateStudent(studentId, {
+        firstName,
+        lastName,
+        studentId: studentIdCode,
+        email,
+        parentEmail,
+        parentName,
+        year,
+        section,
+        rfidCardId: rfidCardId || undefined
+      });
+
+      res.json(updatedStudent);
+    } catch (error) {
+      console.error("Error updating student:", error);
+      res.status(500).json({ message: "Failed to update student" });
+    }
+  });
+
+  // Send email to student/parent
+  app.post('/api/notifications/send-email', isAuthenticated, async (req: any, res) => {
+    try {
+      const { studentId, recipientType, subject, message, priority, type } = req.body;
+      const professorId = req.user.claims.sub;
+      
+      // Get student information
+      const student = await storage.getStudent(studentId);
+      if (!student) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+
+      // Determine recipient email(s)
+      let recipients = [];
+      if (recipientType === 'parent' || recipientType === 'both') {
+        recipients.push({
+          email: student.parentEmail,
+          name: student.parentName || 'Parent/Guardian',
+          type: 'parent'
+        });
+      }
+      if (recipientType === 'student' || recipientType === 'both') {
+        recipients.push({
+          email: student.email,
+          name: `${student.firstName} ${student.lastName}`,
+          type: 'student'
+        });
+      }
+
+      // Filter out recipients without email addresses
+      recipients = recipients.filter(r => r.email);
+
+      if (recipients.length === 0) {
+        return res.status(400).json({ 
+          message: "No valid email addresses found for selected recipients" 
+        });
+      }
+
+      // Create email notifications for each recipient
+      let notificationsCreated = 0;
+      for (const recipient of recipients) {
+        try {
+          await storage.createEmailNotification({
+            studentId,
+            recipientEmail: recipient.email!,
+            recipientName: recipient.name,
+            subject,
+            message,
+            priority: priority || 'normal',
+            type: type || 'general_communication',
+            status: 'pending',
+            sentBy: professorId
+          });
+          notificationsCreated++;
+        } catch (error) {
+          console.error(`Failed to create notification for ${recipient.email}:`, error);
+        }
+      }
+
+      if (notificationsCreated > 0) {
+        res.json({ 
+          success: true, 
+          notificationsCreated,
+          recipients: recipients.length,
+          message: `Email notification queued for ${recipients.length} recipient(s)`
+        });
+
+        // Process email queue in background
+        setImmediate(async () => {
+          try {
+            const { processEmailQueue } = await import('./services/emailService');
+            await processEmailQueue();
+          } catch (error) {
+            console.error("Error processing email queue:", error);
+          }
+        });
+      } else {
+        res.status(500).json({ 
+          message: "Failed to create email notifications" 
+        });
+      }
+    } catch (error) {
+      console.error("Error sending email:", error);
+      res.status(500).json({ message: "Failed to send email" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

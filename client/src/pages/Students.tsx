@@ -16,11 +16,19 @@ import {
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import EditStudentModal from "@/components/EditStudentModal";
+import ViewStudentModal from "@/components/ViewStudentModal";
+import ContactStudentModal from "@/components/ContactStudentModal";
 
 export default function Students() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedYear, setSelectedYear] = useState("all");
   const [selectedSection, setSelectedSection] = useState("all");
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [contactModalOpen, setContactModalOpen] = useState(false);
+  const [contactType, setContactType] = useState<'contact' | 'alert'>('contact');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -112,6 +120,30 @@ export default function Students() {
       });
     },
   });
+
+  // Modal handlers
+  const handleEditStudent = (student: any) => {
+    setSelectedStudent(student);
+    setEditModalOpen(true);
+  };
+
+  const handleViewStudent = (student: any) => {
+    setSelectedStudent(student);
+    setViewModalOpen(true);
+  };
+
+  const handleContactStudent = (student: any) => {
+    setSelectedStudent(student);
+    setContactType(student.attendanceRate < 60 ? 'alert' : 'contact');
+    setContactModalOpen(true);
+  };
+
+  const closeModals = () => {
+    setEditModalOpen(false);
+    setViewModalOpen(false);
+    setContactModalOpen(false);
+    setSelectedStudent(null);
+  };
 
   if (isLoading) {
     return (
@@ -240,15 +272,18 @@ export default function Students() {
                     </div>
                     
                     <div className="flex space-x-2">
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleEditStudent(student)}
+                      >
                         <Edit className="mr-1 h-3 w-3" />
                         Edit
                       </Button>
                       <Button 
                         size="sm" 
                         variant="outline"
-                        onClick={() => sendEmailNotification.mutate(student.id)}
-                        disabled={sendEmailNotification.isPending}
+                        onClick={() => handleContactStudent(student)}
                       >
                         {student.attendanceRate < 60 ? (
                           <AlertTriangle className="mr-1 h-3 w-3" />
@@ -257,7 +292,11 @@ export default function Students() {
                         )}
                         {student.attendanceRate < 60 ? 'Alert' : 'Contact'}
                       </Button>
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleViewStudent(student)}
+                      >
                         <Eye className="mr-1 h-3 w-3" />
                         View
                       </Button>
@@ -320,6 +359,26 @@ export default function Students() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modals */}
+      <EditStudentModal
+        open={editModalOpen}
+        onClose={closeModals}
+        student={selectedStudent}
+      />
+      
+      <ViewStudentModal
+        open={viewModalOpen}
+        onClose={closeModals}
+        student={selectedStudent}
+      />
+      
+      <ContactStudentModal
+        open={contactModalOpen}
+        onClose={closeModals}
+        student={selectedStudent}
+        type={contactType}
+      />
     </div>
   );
 }
