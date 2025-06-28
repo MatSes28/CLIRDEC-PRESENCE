@@ -836,6 +836,138 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get attendance behavior analysis for all students
+  app.get('/api/attendance/behavior-analysis', isAuthenticated, async (req: any, res) => {
+    try {
+      const { analyzeStudentAttendanceBehavior } = await import('./services/attendanceMonitor');
+      const students = await storage.getStudents();
+      
+      const behaviorAnalysis = [];
+      for (const student of students) {
+        const behavior = await analyzeStudentAttendanceBehavior(student.id);
+        behaviorAnalysis.push({
+          ...behavior,
+          student: {
+            id: student.id,
+            name: `${student.firstName} ${student.lastName}`,
+            studentId: student.studentId,
+            parentEmail: student.parentEmail,
+            email: student.email
+          }
+        });
+      }
+      
+      // Sort by behavior priority (critical first)
+      behaviorAnalysis.sort((a, b) => {
+        const priorities = { critical: 0, concerning: 1, average: 2, good: 3, excellent: 4 };
+        return priorities[a.behaviorLevel] - priorities[b.behaviorLevel];
+      });
+      
+      res.json(behaviorAnalysis);
+    } catch (error) {
+      console.error("Error analyzing attendance behavior:", error);
+      res.status(500).json({ message: "Failed to analyze attendance behavior" });
+    }
+  });
+
+  // Manually trigger attendance monitoring for all students
+  app.post('/api/attendance/trigger-monitoring', isAuthenticated, async (req: any, res) => {
+    try {
+      const { checkAllStudentsAttendanceBehavior } = await import('./services/attendanceMonitor');
+      await checkAllStudentsAttendanceBehavior();
+      
+      res.json({ 
+        success: true, 
+        message: "Attendance monitoring completed successfully" 
+      });
+    } catch (error) {
+      console.error("Error triggering attendance monitoring:", error);
+      res.status(500).json({ message: "Failed to trigger attendance monitoring" });
+    }
+  });
+
+  // Get attendance alerts history
+  app.get('/api/attendance/alerts', isAuthenticated, async (req: any, res) => {
+    try {
+      const alerts = await storage.getUnsentNotifications();
+      const sentAlerts = []; // Would get from database
+      
+      res.json({
+        pending: alerts,
+        sent: sentAlerts,
+        total: alerts.length
+      });
+    } catch (error) {
+      console.error("Error fetching attendance alerts:", error);
+      res.status(500).json({ message: "Failed to fetch attendance alerts" });
+    }
+  });
+
+  // Get automated monitoring settings
+  app.get('/api/settings/attendance-monitoring', isAuthenticated, async (req: any, res) => {
+    try {
+      const settings = {
+        enabled: await storage.getSystemSetting('attendance_monitoring_enabled') || { value: 'true' },
+        thresholds: {
+          critical: await storage.getSystemSetting('attendance_threshold_critical') || { value: '50' },
+          concerning: await storage.getSystemSetting('attendance_threshold_concerning') || { value: '60' },
+          consecutiveAbsences: await storage.getSystemSetting('consecutive_absences_threshold') || { value: '3' },
+          lateArrivalsWeekly: await storage.getSystemSetting('late_arrivals_weekly_threshold') || { value: '3' }
+        },
+        notifications: {
+          cooldownDays: await storage.getSystemSetting('alert_cooldown_days') || { value: '7' },
+          checkInterval: await storage.getSystemSetting('monitoring_check_interval') || { value: '6' }
+        }
+      };
+      
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching monitoring settings:", error);
+      res.status(500).json({ message: "Failed to fetch monitoring settings" });
+    }
+  });
+
+  // Update automated monitoring settings
+  app.put('/api/settings/attendance-monitoring', isAuthenticated, async (req: any, res) => {
+    try {
+      const { enabled, thresholds, notifications } = req.body;
+      
+      // Update settings
+      if (enabled !== undefined) {
+        await storage.setSystemSetting('attendance_monitoring_enabled', enabled.toString(), 'Enable/disable automated attendance monitoring');
+      }
+      
+      if (thresholds) {
+        if (thresholds.critical) {
+          await storage.setSystemSetting('attendance_threshold_critical', thresholds.critical.toString(), 'Attendance rate threshold for critical alerts');
+        }
+        if (thresholds.concerning) {
+          await storage.setSystemSetting('attendance_threshold_concerning', thresholds.concerning.toString(), 'Attendance rate threshold for concerning alerts');
+        }
+        if (thresholds.consecutiveAbsences) {
+          await storage.setSystemSetting('consecutive_absences_threshold', thresholds.consecutiveAbsences.toString(), 'Number of consecutive absences that trigger alerts');
+        }
+        if (thresholds.lateArrivalsWeekly) {
+          await storage.setSystemSetting('late_arrivals_weekly_threshold', thresholds.lateArrivalsWeekly.toString(), 'Number of late arrivals per week that trigger alerts');
+        }
+      }
+      
+      if (notifications) {
+        if (notifications.cooldownDays) {
+          await storage.setSystemSetting('alert_cooldown_days', notifications.cooldownDays.toString(), 'Days to wait before sending follow-up alerts');
+        }
+        if (notifications.checkInterval) {
+          await storage.setSystemSetting('monitoring_check_interval', notifications.checkInterval.toString(), 'Hours between automated monitoring checks');
+        }
+      }
+      
+      res.json({ success: true, message: "Monitoring settings updated successfully" });
+    } catch (error) {
+      console.error("Error updating monitoring settings:", error);
+      res.status(500).json({ message: "Failed to update monitoring settings" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

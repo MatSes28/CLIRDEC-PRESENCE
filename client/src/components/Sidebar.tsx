@@ -11,7 +11,8 @@ import {
   BarChart3,
   Settings,
   LogOut,
-  University
+  University,
+  Shield
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -24,6 +25,7 @@ export default function Sidebar() {
     { path: "/schedule", icon: Calendar, label: "Schedule" },
     { path: "/students", icon: GraduationCap, label: "Students" },
     { path: "/computers", icon: Monitor, label: "Lab Computers" },
+    { path: "/monitoring", icon: Shield, label: "Attendance Monitor" },
     { path: "/reports", icon: BarChart3, label: "Reports" },
     { path: "/settings", icon: Settings, label: "Settings" },
   ];

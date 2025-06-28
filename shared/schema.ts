@@ -49,8 +49,8 @@ export const students = pgTable("students", {
   year: integer("year").notNull(),
   section: varchar("section").notNull(),
   rfidCardId: varchar("rfid_card_id").unique(),
-  parentEmail: varchar("parent_email"),
-  parentName: varchar("parent_name"),
+  parentEmail: varchar("parent_email").notNull(),
+  parentName: varchar("parent_name").notNull(),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -134,10 +134,14 @@ export const emailNotifications = pgTable("email_notifications", {
   id: serial("id").primaryKey(),
   studentId: integer("student_id").references(() => students.id),
   recipientEmail: varchar("recipient_email").notNull(),
+  recipientName: varchar("recipient_name"),
   subject: varchar("subject").notNull(),
-  content: text("content").notNull(),
-  type: varchar("type").notNull(), // absence_alert, late_arrival, daily_summary
+  message: text("message").notNull(),
+  content: text("content"), // for backward compatibility
+  type: varchar("type").notNull(), // absence_alert, late_arrival, daily_summary, attendance_alert
+  priority: varchar("priority").default("normal"), // low, normal, high, urgent
   status: varchar("status").default("pending"), // pending, sent, failed
+  sentBy: varchar("sent_by"), // professor ID or 'system' for automated alerts
   sentAt: timestamp("sent_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });

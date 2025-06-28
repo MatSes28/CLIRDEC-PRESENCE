@@ -12,6 +12,7 @@ import Students from "@/pages/Students";
 import Computers from "@/pages/Computers";
 import Reports from "@/pages/Reports";
 import Settings from "@/pages/Settings";
+import AttendanceMonitoring from "@/pages/AttendanceMonitoring";
 import NotFound from "@/pages/not-found";
 import Sidebar from "@/components/Sidebar";
 import TopBar from "@/components/TopBar";
@@ -45,6 +46,7 @@ function Router() {
                   <Route path="/students" component={Students} />
                   <Route path="/computers" component={Computers} />
                   <Route path="/reports" component={Reports} />
+                  <Route path="/monitoring" component={AttendanceMonitoring} />
                   <Route path="/settings" component={Settings} />
                   <Route component={NotFound} />
                 </Switch>

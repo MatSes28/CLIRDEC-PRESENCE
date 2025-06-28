@@ -74,5 +74,15 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    
+    // Start automated attendance monitoring
+    setImmediate(async () => {
+      try {
+        const { startAttendanceMonitoring } = await import('./services/attendanceMonitor');
+        await startAttendanceMonitoring();
+      } catch (error) {
+        console.error('Failed to start attendance monitoring:', error);
+      }
+    });
   });
 })();
