@@ -96,6 +96,344 @@ export interface IStorage {
   setSystemSetting(key: string, value: string, description?: string): Promise<SystemSetting>;
 }
 
+// In-memory storage implementation for when database is unavailable
+export class MemStorage implements IStorage {
+  private users: Map<string, User> = new Map();
+  private students: Map<number, Student> = new Map();
+  private classrooms: Map<number, Classroom> = new Map();
+  private subjects: Map<number, Subject> = new Map();
+  private schedules: Map<number, Schedule> = new Map();
+  private classSessions: Map<number, ClassSession> = new Map();
+  private attendance: Map<number, Attendance> = new Map();
+  private computers: Map<number, Computer> = new Map();
+  private emailNotifications: Map<number, EmailNotification> = new Map();
+  private systemSettings: Map<string, SystemSetting> = new Map();
+  private nextId = 1;
+
+  constructor() {
+    // Initialize with some sample data
+    this.initializeSampleData();
+  }
+
+  private initializeSampleData() {
+    // Add sample classrooms
+    this.createClassroom({ name: "Lab 204", location: "CLIRDEC Building", capacity: 30, computers: 25 });
+    this.createClassroom({ name: "Room 301", location: "Main Building", capacity: 40, computers: 0 });
+    
+    // Add sample students with parent emails
+    this.createStudent({
+      studentId: "2021-IT-001",
+      firstName: "Juan",
+      lastName: "Cruz",
+      email: "juan.cruz@student.clsu.edu.ph",
+      rfidCardId: "A1B2C3D4",
+      program: "BSIT",
+      year: 3,
+      section: "A",
+      parentEmail: "parent.cruz@email.com",
+      parentName: "Maria Cruz",
+      emergencyContact: "09171234567",
+      isActive: true
+    });
+    
+    this.createStudent({
+      studentId: "2021-IT-002",
+      firstName: "Maria",
+      lastName: "Santos",
+      email: "maria.santos@student.clsu.edu.ph",
+      rfidCardId: "E5F6G7H8",
+      program: "BSIT",
+      year: 3,
+      section: "A",
+      parentEmail: "parent.santos@email.com",
+      parentName: "Jose Santos",
+      emergencyContact: "09181234567",
+      isActive: true
+    });
+
+    this.createStudent({
+      studentId: "2021-IT-003",
+      firstName: "Carlos",
+      lastName: "Reyes",
+      email: "carlos.reyes@student.clsu.edu.ph",
+      rfidCardId: "I9J0K1L2",
+      program: "BSIT",
+      year: 3,
+      section: "B",
+      parentEmail: "parent.reyes@email.com",
+      parentName: "Ana Reyes",
+      emergencyContact: "09191234567",
+      isActive: true
+    });
+
+    // Add sample computers
+    for (let i = 1; i <= 25; i++) {
+      this.createComputer({
+        computerName: `PC-${i.toString().padStart(2, '0')}`,
+        classroomId: 1, // Lab 204
+        status: "available",
+        assignedStudentId: null
+      });
+    }
+  }
+
+  // User operations - required for Replit Auth
+  async getUser(id: string): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const user: User = {
+      ...userData,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.users.set(userData.id, user);
+    return user;
+  }
+
+  // Student operations
+  async getStudents(): Promise<Student[]> {
+    return Array.from(this.students.values()).filter(s => s.isActive);
+  }
+
+  async getStudent(id: number): Promise<Student | undefined> {
+    return this.students.get(id);
+  }
+
+  async getStudentByRFID(rfidCardId: string): Promise<Student | undefined> {
+    return Array.from(this.students.values()).find(s => s.rfidCardId === rfidCardId);
+  }
+
+  async createStudent(student: InsertStudent): Promise<Student> {
+    const newStudent: Student = { ...student, id: this.nextId++, createdAt: new Date(), updatedAt: new Date() };
+    this.students.set(newStudent.id, newStudent);
+    return newStudent;
+  }
+
+  async updateStudent(id: number, student: Partial<InsertStudent>): Promise<Student> {
+    const existing = this.students.get(id);
+    if (!existing) throw new Error("Student not found");
+    const updated = { ...existing, ...student, updatedAt: new Date() };
+    this.students.set(id, updated);
+    return updated;
+  }
+
+  async deleteStudent(id: number): Promise<void> {
+    this.students.delete(id);
+  }
+
+  // Classroom operations
+  async getClassrooms(): Promise<Classroom[]> {
+    return Array.from(this.classrooms.values());
+  }
+
+  async getClassroom(id: number): Promise<Classroom | undefined> {
+    return this.classrooms.get(id);
+  }
+
+  async createClassroom(classroom: InsertClassroom): Promise<Classroom> {
+    const newClassroom: Classroom = { ...classroom, id: this.nextId++ };
+    this.classrooms.set(newClassroom.id, newClassroom);
+    return newClassroom;
+  }
+
+  async updateClassroom(id: number, classroom: Partial<InsertClassroom>): Promise<Classroom> {
+    const existing = this.classrooms.get(id);
+    if (!existing) throw new Error("Classroom not found");
+    const updated = { ...existing, ...classroom };
+    this.classrooms.set(id, updated);
+    return updated;
+  }
+
+  // Subject operations
+  async getSubjects(): Promise<Subject[]> {
+    return Array.from(this.subjects.values());
+  }
+
+  async getSubjectsByProfessor(professorId: string): Promise<Subject[]> {
+    return Array.from(this.subjects.values()).filter(s => s.professorId === professorId);
+  }
+
+  async createSubject(subject: InsertSubject): Promise<Subject> {
+    const newSubject: Subject = { ...subject, id: this.nextId++ };
+    this.subjects.set(newSubject.id, newSubject);
+    return newSubject;
+  }
+
+  async updateSubject(id: number, subject: Partial<InsertSubject>): Promise<Subject> {
+    const existing = this.subjects.get(id);
+    if (!existing) throw new Error("Subject not found");
+    const updated = { ...existing, ...subject };
+    this.subjects.set(id, updated);
+    return updated;
+  }
+
+  async deleteSubject(id: number): Promise<void> {
+    this.subjects.delete(id);
+  }
+
+  // Schedule operations
+  async getSchedules(): Promise<Schedule[]> {
+    return Array.from(this.schedules.values());
+  }
+
+  async getSchedulesByProfessor(professorId: string): Promise<Schedule[]> {
+    return Array.from(this.schedules.values()).filter(s => s.professorId === professorId);
+  }
+
+  async createSchedule(schedule: InsertSchedule): Promise<Schedule> {
+    const newSchedule: Schedule = { ...schedule, id: this.nextId++ };
+    this.schedules.set(newSchedule.id, newSchedule);
+    return newSchedule;
+  }
+
+  async updateSchedule(id: number, schedule: Partial<InsertSchedule>): Promise<Schedule> {
+    const existing = this.schedules.get(id);
+    if (!existing) throw new Error("Schedule not found");
+    const updated = { ...existing, ...schedule };
+    this.schedules.set(id, updated);
+    return updated;
+  }
+
+  async deleteSchedule(id: number): Promise<void> {
+    this.schedules.delete(id);
+  }
+
+  // Class session operations
+  async getActiveSession(professorId: string): Promise<ClassSession | undefined> {
+    return Array.from(this.classSessions.values()).find(s => s.professorId === professorId && s.isActive);
+  }
+
+  async createClassSession(session: InsertClassSession): Promise<ClassSession> {
+    const newSession: ClassSession = { ...session, id: this.nextId++, createdAt: new Date(), updatedAt: new Date() };
+    this.classSessions.set(newSession.id, newSession);
+    return newSession;
+  }
+
+  async updateClassSession(id: number, session: Partial<InsertClassSession>): Promise<ClassSession> {
+    const existing = this.classSessions.get(id);
+    if (!existing) throw new Error("Class session not found");
+    const updated = { ...existing, ...session, updatedAt: new Date() };
+    this.classSessions.set(id, updated);
+    return updated;
+  }
+
+  async getClassSessionsByDate(date: Date): Promise<ClassSession[]> {
+    const dateStr = date.toISOString().split('T')[0];
+    return Array.from(this.classSessions.values()).filter(s => 
+      s.date && s.date.toISOString().split('T')[0] === dateStr
+    );
+  }
+
+  // Attendance operations
+  async getAttendanceBySession(sessionId: number): Promise<Attendance[]> {
+    return Array.from(this.attendance.values()).filter(a => a.sessionId === sessionId);
+  }
+
+  async createAttendance(attendance: InsertAttendance): Promise<Attendance> {
+    const newAttendance: Attendance = { ...attendance, id: this.nextId++, createdAt: new Date(), updatedAt: new Date() };
+    this.attendance.set(newAttendance.id, newAttendance);
+    return newAttendance;
+  }
+
+  async updateAttendance(id: number, attendance: Partial<InsertAttendance>): Promise<Attendance> {
+    const existing = this.attendance.get(id);
+    if (!existing) throw new Error("Attendance not found");
+    const updated = { ...existing, ...attendance, updatedAt: new Date() };
+    this.attendance.set(id, updated);
+    return updated;
+  }
+
+  async checkStudentAttendance(studentId: number, sessionId: number): Promise<Attendance | undefined> {
+    return Array.from(this.attendance.values()).find(a => a.studentId === studentId && a.sessionId === sessionId);
+  }
+
+  // Computer operations
+  async getComputers(): Promise<Computer[]> {
+    return Array.from(this.computers.values());
+  }
+
+  async getComputersByClassroom(classroomId: number): Promise<Computer[]> {
+    return Array.from(this.computers.values()).filter(c => c.classroomId === classroomId);
+  }
+
+  async createComputer(computer: InsertComputer): Promise<Computer> {
+    const newComputer: Computer = { ...computer, id: this.nextId++ };
+    this.computers.set(newComputer.id, newComputer);
+    return newComputer;
+  }
+
+  async updateComputer(id: number, computer: Partial<InsertComputer>): Promise<Computer> {
+    const existing = this.computers.get(id);
+    if (!existing) throw new Error("Computer not found");
+    const updated = { ...existing, ...computer };
+    this.computers.set(id, updated);
+    return updated;
+  }
+
+  async deleteComputer(id: number): Promise<void> {
+    this.computers.delete(id);
+  }
+
+  async assignComputerToStudent(computerId: number, studentId: number): Promise<Computer> {
+    const computer = this.computers.get(computerId);
+    if (!computer) throw new Error("Computer not found");
+    const updated = { ...computer, assignedStudentId: studentId, status: "occupied" as const };
+    this.computers.set(computerId, updated);
+    return updated;
+  }
+
+  async releaseComputer(computerId: number): Promise<Computer> {
+    const computer = this.computers.get(computerId);
+    if (!computer) throw new Error("Computer not found");
+    const updated = { ...computer, assignedStudentId: null, status: "available" as const };
+    this.computers.set(computerId, updated);
+    return updated;
+  }
+
+  // Email notification operations
+  async createEmailNotification(notification: InsertEmailNotification): Promise<EmailNotification> {
+    const newNotification: EmailNotification = { 
+      ...notification, 
+      id: this.nextId++, 
+      createdAt: new Date(), 
+      updatedAt: new Date() 
+    };
+    this.emailNotifications.set(newNotification.id, newNotification);
+    return newNotification;
+  }
+
+  async getUnsentNotifications(): Promise<EmailNotification[]> {
+    return Array.from(this.emailNotifications.values()).filter(n => !n.sentAt);
+  }
+
+  async markNotificationAsSent(id: number): Promise<void> {
+    const notification = this.emailNotifications.get(id);
+    if (notification) {
+      notification.sentAt = new Date();
+      this.emailNotifications.set(id, notification);
+    }
+  }
+
+  // System settings operations
+  async getSystemSetting(key: string): Promise<SystemSetting | undefined> {
+    return this.systemSettings.get(key);
+  }
+
+  async setSystemSetting(key: string, value: string, description?: string): Promise<SystemSetting> {
+    const setting: SystemSetting = {
+      key,
+      value,
+      description: description || null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.systemSettings.set(key, setting);
+    return setting;
+  }
+}
+
 export class DatabaseStorage implements IStorage {
   // User operations - required for Replit Auth
   async getUser(id: string): Promise<User | undefined> {
@@ -382,4 +720,5 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+// Temporarily using in-memory storage due to database connection issues
+export const storage = new MemStorage();
