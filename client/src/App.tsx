@@ -37,11 +37,11 @@ function Router() {
         </>
       ) : (
         <>
-          <div className="flex min-h-screen">
+          <div className="flex min-h-screen bg-gray-50">
             <Sidebar />
-            <div className="flex-1 ml-64">
+            <div className="flex-1 ml-64 flex flex-col">
               <TopBar />
-              <main className="flex-1">
+              <main className="flex-1 overflow-auto">
                 <Switch>
                   <Route path="/" component={Dashboard} />
                   <Route path="/attendance" component={LiveAttendance} />

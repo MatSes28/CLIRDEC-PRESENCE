@@ -17,7 +17,7 @@ import {
 
 export default function Sidebar() {
   const [location] = useLocation();
-  const { user } = useAuth();
+  const { user, logout, isLoggingOut } = useAuth();
 
   const navigationItems = [
     { path: "/", icon: LayoutDashboard, label: "Dashboard" },
@@ -37,28 +37,24 @@ export default function Sidebar() {
     return location.startsWith(path);
   };
 
-  const handleLogout = () => {
-    window.location.href = "/api/logout";
-  };
-
   return (
-    <div className="fixed left-0 top-0 h-full w-64 bg-sidebar border-r border-sidebar-border shadow-lg z-40">
+    <div className="fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 shadow-xl z-40">
       {/* Header */}
-      <div className="p-6 border-b border-sidebar-border">
+      <div className="p-6 border-b border-gray-200" style={{ backgroundColor: '#2596be' }}>
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-            <University className="h-6 w-6 text-white" />
+          <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
+            <University className="h-7 w-7" style={{ color: '#2596be' }} />
           </div>
           <div>
-            <h2 className="font-semibold text-sidebar-foreground">PRESENCE</h2>
-            <p className="text-sm text-sidebar-foreground/70">CLIRDEC System</p>
+            <h2 className="font-bold text-white text-lg">PRESENCE</h2>
+            <p className="text-sm text-white/90">Attendance System</p>
           </div>
         </div>
       </div>
       
       {/* Navigation */}
-      <nav className="mt-6 px-3">
-        <div className="space-y-1">
+      <nav className="mt-8 px-4">
+        <div className="space-y-2">
           {navigationItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
@@ -67,13 +63,14 @@ export default function Sidebar() {
               <Link 
                 key={item.path} 
                 href={item.path}
-                className={`flex items-center px-3 py-3 rounded-lg transition-colors duration-200 ${
+                className={`flex items-center px-4 py-3 rounded-xl transition-all duration-200 group ${
                   active 
-                    ? 'text-primary bg-primary/10 border-r-2 border-primary font-medium' 
-                    : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                    ? 'text-white font-semibold shadow-lg transform scale-105' 
+                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                 }`}
+                style={active ? { backgroundColor: '#2596be' } : {}}
               >
-                <Icon className="mr-3 h-5 w-5" />
+                <Icon className="mr-3 h-5 w-5 transition-transform group-hover:scale-110" />
                 {item.label}
               </Link>
             );
@@ -82,29 +79,28 @@ export default function Sidebar() {
       </nav>
       
       {/* User Profile & Logout */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-sidebar-border bg-sidebar">
-        <div className="flex items-center space-x-3 mb-4">
-          <img 
-            src={user?.profileImageUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"} 
-            alt="Professor profile" 
-            className="w-10 h-10 rounded-full object-cover"
-          />
+      <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-gray-200 bg-white">
+        <div className="flex items-center space-x-3 mb-4 p-3 bg-gray-50 rounded-xl">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-white text-lg" style={{ backgroundColor: '#2596be' }}>
+            {user?.firstName ? user.firstName.charAt(0) : 'U'}
+          </div>
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-sidebar-foreground truncate">
+            <p className="font-semibold text-gray-800 truncate text-sm">
               {user?.firstName && user?.lastName 
                 ? `${user.firstName} ${user.lastName}` 
-                : user?.email || 'Professor'}
+                : user?.email || 'User'}
             </p>
-            <p className="text-sm text-sidebar-foreground/70">IT Department</p>
+            <p className="text-xs text-gray-500 capitalize">{user?.role || 'Faculty'} • IT Department</p>
           </div>
         </div>
         <Button 
           variant="ghost" 
-          onClick={handleLogout}
-          className="w-full justify-start text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent"
+          onClick={logout}
+          disabled={isLoggingOut}
+          className="w-full justify-start text-gray-700 hover:text-red-600 hover:bg-red-50 transition-colors duration-200"
         >
           <LogOut className="mr-2 h-4 w-4" />
-          Sign Out
+          {isLoggingOut ? "Signing Out..." : "Sign Out"}
         </Button>
       </div>
     </div>

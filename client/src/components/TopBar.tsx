@@ -73,32 +73,26 @@ export default function TopBar() {
   });
 
   return (
-    <header className="bg-background border-b border-border px-6 py-4 shadow-sm">
-      <div className="flex items-center justify-between">
+    <header className="bg-white border-b border-gray-200 px-8 py-6 shadow-sm" style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)' }}>
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">{pageInfo.title}</h1>
-          <p className="text-muted-foreground">{pageInfo.subtitle}</p>
+          <h1 className="text-2xl font-bold text-gray-800 mb-1">{pageInfo.title}</h1>
+          <p className="text-sm text-gray-600">{pageInfo.subtitle}</p>
         </div>
         
-        <div className="flex items-center space-x-4">
-          {/* System Status Indicator */}
-          <div className="flex items-center space-x-2 bg-secondary/10 px-3 py-2 rounded-lg">
-            <div className="w-2 h-2 bg-secondary rounded-full animate-pulse"></div>
-            <span className="text-sm font-medium text-secondary">System Online</span>
-          </div>
-          
-          {/* Current Time */}
-          <div className="text-sm text-muted-foreground font-mono">
+        <div className="flex items-center space-x-6">
+          <div className="text-sm text-gray-600 bg-white px-4 py-2 rounded-lg shadow-sm border">
             {timeString}
           </div>
           
-          {/* Notifications */}
-          <div className="relative">
-            <Button variant="ghost" size="sm" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center">
-                3
-              </span>
+          <div className="flex items-center space-x-3">
+            <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 border-green-200">
+              <Wifi className="h-3 w-3 mr-1" />
+              Online
+            </Badge>
+            
+            <Button variant="ghost" size="sm" className="p-2 hover:bg-white/50 rounded-xl">
+              <Bell className="h-5 w-5 text-gray-600" />
             </Button>
           </div>
         </div>

@@ -160,18 +160,18 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="p-8 space-y-8 bg-gray-50 min-h-screen">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
+        <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Today's Classes</p>
-                <p className="text-3xl font-bold">{stats?.todayClasses || 0}</p>
+                <p className="text-sm font-semibold text-gray-700">Today's Classes</p>
+                <p className="text-3xl font-bold text-gray-800 mt-1">{stats?.todayClasses || 0}</p>
               </div>
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <Users className="h-6 w-6 text-primary" />
+              <div className="p-3 rounded-xl" style={{ backgroundColor: '#2596be20' }}>
+                <Users className="h-6 w-6" style={{ color: '#2596be' }} />
               </div>
             </div>
           </CardContent>
