@@ -89,7 +89,7 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen w-full flex">
+    <div className="h-screen w-full flex overflow-hidden">
       {/* Left side - Modern Branding & Features */}
       <div className="flex-1 relative overflow-hidden gradient-primary">
         <div className="absolute inset-0 opacity-10">
@@ -159,7 +159,7 @@ export default function AuthPage() {
       </div>
 
       {/* Right side - Modern Login Form */}
-      <div className="flex-1 flex items-center justify-center p-16 bg-background">
+      <div className="flex-1 flex items-center justify-center p-16 bg-background overflow-y-auto">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gradient mb-2">Welcome Back</h2>
@@ -229,6 +229,12 @@ export default function AuthPage() {
                 )}
               </Button>
             </form>
+
+            <div className="mt-6 text-center">
+              <Button variant="ghost" className="text-sm text-muted-foreground hover:text-foreground">
+                Forgot your password?
+              </Button>
+            </div>
 
             <div className="mt-8 pt-6 border-t border-border/50">
               <div className="text-center text-sm text-muted-foreground">
