@@ -86,7 +86,7 @@ export default function AuthPage() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="BSIT"
+                    placeholder="email"
                     value={loginForm.email}
                     onChange={(e) => setLoginForm({...loginForm, email: e.target.value})}
                     required
@@ -99,7 +99,7 @@ export default function AuthPage() {
                   <Input
                     id="password"
                     type="password"
-                    placeholder="••••••••••"
+                    placeholder="password"
                     value={loginForm.password}
                     onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
                     required
