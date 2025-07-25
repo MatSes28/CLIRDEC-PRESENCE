@@ -61,28 +61,28 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-white">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen w-full flex items-center justify-center bg-white px-4">
+      <div className="w-full max-w-sm">
         <Card className="shadow-lg border-0">
-          <CardHeader className="text-center pb-6">
-            <h1 className="text-3xl font-bold text-blue-800 mb-2">CLIRDEC PRESENCE</h1>
-            <p className="text-blue-600">Attendance Monitoring System</p>
+          <CardHeader className="text-center px-8 pt-8 pb-4">
+            <h1 className="text-2xl font-bold text-blue-800 mb-1">CLIRDEC PRESENCE</h1>
+            <p className="text-blue-600 text-sm">Attendance Monitoring System</p>
           </CardHeader>
           
-          <CardContent>
+          <CardContent className="px-8 pb-8">
             {error && (
-              <Alert variant="destructive" className="mb-4">
+              <Alert variant="destructive" className="mb-6">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
 
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-blue-800">Login</h2>
+              <h2 className="text-lg font-semibold text-blue-800 text-center">Login</h2>
               
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     id="email"
                     type="email"
@@ -90,12 +90,12 @@ export default function AuthPage() {
                     value={loginForm.email}
                     onChange={(e) => setLoginForm({...loginForm, email: e.target.value})}
                     required
-                    className="pl-10 bg-gray-200 border-0 rounded-full h-12 placeholder:text-gray-500"
+                    className="pl-12 pr-4 bg-gray-200 border-0 rounded-full h-12 placeholder:text-gray-500 text-sm"
                   />
                 </div>
                 
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     id="password"
                     type="password"
@@ -103,34 +103,38 @@ export default function AuthPage() {
                     value={loginForm.password}
                     onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
                     required
-                    className="pl-10 bg-gray-200 border-0 rounded-full h-12 placeholder:text-gray-500"
+                    className="pl-12 pr-4 bg-gray-200 border-0 rounded-full h-12 placeholder:text-gray-500 text-sm"
                   />
                 </div>
                 
-                <Button 
-                  type="submit" 
-                  className="w-full bg-green-500 hover:bg-green-600 text-white rounded-full h-12 text-lg font-semibold mt-6"
-                  disabled={loginMutation.isPending}
-                >
-                  {loginMutation.isPending ? "LOGGING IN..." : "LOGIN"}
-                </Button>
+                <div className="pt-2">
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-green-500 hover:bg-green-600 text-white rounded-full h-12 text-base font-semibold"
+                    disabled={loginMutation.isPending}
+                  >
+                    {loginMutation.isPending ? "LOGGING IN..." : "LOGIN"}
+                  </Button>
+                </div>
               </form>
               
-              <div className="text-center text-sm space-y-2">
-                <a href="#" className="text-blue-600 hover:underline">Forgot password?</a>
-                <div className="flex justify-between text-blue-600">
-                  <a href="#" className="hover:underline">Log in using Applicant ID</a>
+              <div className="text-center space-y-3 pt-2">
+                <div>
+                  <a href="#" className="text-blue-600 hover:underline text-sm">Forgot password?</a>
+                </div>
+                <div>
+                  <a href="#" className="text-blue-600 hover:underline text-sm">Log in using Applicant ID</a>
                 </div>
               </div>
               
-              <div className="text-center text-sm text-gray-600">
-                <p>Not registered yet? <a href="#" className="text-blue-600 hover:underline">Create an account</a></p>
+              <div className="text-center pt-1">
+                <p className="text-sm text-gray-600">Not registered yet? <a href="#" className="text-blue-600 hover:underline">Create an account</a></p>
               </div>
               
-              <div className="mt-4 p-3 bg-gray-100 rounded text-xs text-gray-600">
-                <p className="font-semibold mb-1">Demo Accounts:</p>
-                <p>Admin: admin@clsu.edu.ph / admin123</p>
-                <p>Faculty: faculty@clsu.edu.ph / faculty123</p>
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
+                <p className="font-semibold mb-2 text-xs text-gray-700">Demo Accounts:</p>
+                <p className="text-xs text-gray-600">Admin: admin@clsu.edu.ph / admin123</p>
+                <p className="text-xs text-gray-600">Faculty: faculty@clsu.edu.ph / faculty123</p>
               </div>
             </div>
           </CardContent>
