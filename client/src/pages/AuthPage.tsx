@@ -187,7 +187,7 @@ export default function AuthPage() {
                     value={loginForm.email}
                     onChange={(e) => setLoginForm({...loginForm, email: e.target.value})}
                     required
-                    placeholder="admin@clsu.edu.ph"
+                    placeholder="Enter your email"
                     className="pl-10 h-12 rounded-xl border-border/50 focus:border-primary transition-all duration-200"
                   />
                 </div>
