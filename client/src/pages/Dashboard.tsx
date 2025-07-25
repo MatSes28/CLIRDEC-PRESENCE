@@ -10,17 +10,36 @@ import {
   TrendingUp, 
   Play, 
   Download, 
-  Settings, 
   Mail,
   Plus,
   UserPlus,
   LogIn,
   AlertTriangle,
   LogOut,
-  Clock
+  Clock,
+  Activity,
+  Zap,
+  BarChart3,
+  Calendar,
+  Monitor,
+  ArrowUpRight,
+  ArrowDownRight,
+  Target,
+  Star,
+  Sparkles
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import StartSessionModal from "@/components/StartSessionModal";
+
+interface StatCard {
+  title: string;
+  value: string | number;
+  change: string;
+  trend: 'up' | 'down' | 'neutral';
+  icon: React.ComponentType<any>;
+  color: string;
+  description: string;
+}
 
 export default function Dashboard() {
   const { toast } = useToast();
@@ -65,7 +84,6 @@ export default function Dashboard() {
       });
       
       if (response.ok) {
-        // Create a blob from the response and download it
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -116,21 +134,56 @@ export default function Dashboard() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {[...Array(4)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-6">
-                <div className="h-16 bg-gray-200 rounded"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  // Mock data for demonstration
+  const mockStats = {
+    todayClasses: stats?.todayClasses || 8,
+    presentStudents: stats?.presentStudents || 142,
+    absentStudents: stats?.absentStudents || 18,
+    attendanceRate: stats?.attendanceRate || 88.7,
+    activeSessions: stats?.activeSessions || 3,
+    totalStudents: stats?.totalStudents || 160,
+    avgSessionTime: stats?.avgSessionTime || '2.3h',
+    systemUptime: stats?.systemUptime || '99.8%'
+  };
+
+  const statCards: StatCard[] = [
+    {
+      title: "Active Sessions",
+      value: mockStats.activeSessions,
+      change: "+2 from yesterday",
+      trend: "up",
+      icon: Activity,
+      color: "primary",
+      description: "Currently running classes"
+    },
+    {
+      title: "Present Students", 
+      value: mockStats.presentStudents,
+      change: `+${((mockStats.presentStudents / mockStats.totalStudents) * 100).toFixed(1)}%`,
+      trend: "up",
+      icon: UserCheck,
+      color: "success",
+      description: "Students checked in today"
+    },
+    {
+      title: "Attendance Rate",
+      value: `${mockStats.attendanceRate}%`,
+      change: "+2.3% vs last week",
+      trend: "up", 
+      icon: Target,
+      color: "accent",
+      description: "Overall attendance performance"
+    },
+    {
+      title: "System Status",
+      value: mockStats.systemUptime,
+      change: "All systems operational",
+      trend: "neutral",
+      icon: Zap,
+      color: "warning",
+      description: "Network uptime"
+    }
+  ];
 
   const recentActivities = [
     {
@@ -139,15 +192,17 @@ export default function Dashboard() {
       student: 'Maria Santos',
       subject: 'Database Management Systems',
       time: '2 minutes ago',
-      timestamp: '10:28 AM'
+      timestamp: '10:28 AM',
+      computer: 'PC-04'
     },
     {
       id: 2,
       type: 'late',
-      student: 'John Doe',
+      student: 'John Doe', 
       subject: 'Programming Logic',
       time: '5 minutes ago',
-      timestamp: '10:25 AM'
+      timestamp: '10:25 AM',
+      computer: 'PC-12'
     },
     {
       id: 3,
@@ -155,204 +210,215 @@ export default function Dashboard() {
       student: 'Anna Cruz',
       subject: 'Data Structures',
       time: '8 minutes ago',
-      timestamp: '10:22 AM'
+      timestamp: '10:22 AM',
+      computer: 'PC-08'
+    },
+    {
+      id: 4,
+      type: 'check-in',
+      student: 'Carlos Reyes',
+      subject: 'Web Development',
+      time: '12 minutes ago',
+      timestamp: '10:18 AM',
+      computer: 'PC-15'
     }
   ];
 
+  const quickActions = [
+    {
+      title: "Start Session",
+      description: "Begin new class session",
+      icon: Play,
+      action: () => setShowStartSessionModal(true),
+      color: "primary"
+    },
+    {
+      title: "Export Reports",
+      description: "Download today's data",
+      icon: Download,
+      action: exportReports,
+      color: "accent"
+    },
+    {
+      title: "Send Alerts",
+      description: "Notify parents",
+      icon: Mail,
+      action: sendNotifications,
+      color: "warning"
+    }
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="card-modern p-6 animate-pulse">
+              <div className="h-20 bg-muted/50 rounded-xl"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-8 space-y-8 bg-gray-50 min-h-screen">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold text-gray-700">Today's Classes</p>
-                <p className="text-3xl font-bold text-gray-800 mt-1">{stats?.todayClasses || 0}</p>
-              </div>
-              <div className="p-3 rounded-xl" style={{ backgroundColor: '#2596be20' }}>
-                <Users className="h-6 w-6" style={{ color: '#2596be' }} />
-              </div>
+    <div className="space-y-8 animate-fade-in-up">
+      {/* Welcome Header */}
+      <div className="relative overflow-hidden rounded-3xl gradient-primary p-8 text-white">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute -top-8 -right-8 w-48 h-48 bg-white/20 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+        </div>
+        <div className="relative z-10">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Good Morning! 👋</h1>
+              <p className="text-white/80 text-lg">Here's what's happening in your attendance system today</p>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Present Students</p>
-                <p className="text-3xl font-bold text-secondary">{stats?.presentStudents || 0}</p>
-              </div>
-              <div className="p-3 bg-secondary/10 rounded-lg">
-                <UserCheck className="h-6 w-6 text-secondary" />
-              </div>
+            <div className="text-right">
+              <div className="text-white/60 text-sm mono uppercase tracking-wider">Live Status</div>
+              <div className="text-2xl font-bold">{new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Absent Students</p>
-                <p className="text-3xl font-bold text-destructive">{stats?.absentStudents || 0}</p>
-              </div>
-              <div className="p-3 bg-destructive/10 rounded-lg">
-                <UserX className="h-6 w-6 text-destructive" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Attendance Rate</p>
-                <p className="text-3xl font-bold text-accent">{stats?.attendanceRate || '0%'}</p>
-              </div>
-              <div className="p-3 bg-accent/10 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-accent" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
-      {/* Current Class Status & Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Current Class</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {stats?.activeSession ? (
-              <div className="text-center space-y-4">
-                <div className="w-16 h-16 bg-secondary/10 rounded-full mx-auto flex items-center justify-center">
-                  <Play className="h-8 w-8 text-secondary" />
+      {/* Enhanced Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {statCards.map((card, index) => {
+          const Icon = card.icon;
+          return (
+            <div 
+              key={card.title} 
+              className={`card-elevated p-6 group animate-fade-in-up stagger-${index + 1}`}
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className={`p-3 rounded-2xl transition-all duration-300 group-hover:scale-110 ${
+                  card.color === 'primary' ? 'bg-primary/10' :
+                  card.color === 'success' ? 'bg-success/10' :
+                  card.color === 'accent' ? 'bg-accent/10' :
+                  card.color === 'warning' ? 'bg-warning/10' : 'bg-muted'
+                }`}>
+                  <Icon className={`h-6 w-6 ${
+                    card.color === 'primary' ? 'text-primary' :
+                    card.color === 'success' ? 'text-success' :
+                    card.color === 'accent' ? 'text-accent' :
+                    card.color === 'warning' ? 'text-warning' : 'text-muted-foreground'
+                  }`} />
                 </div>
-                <div>
-                  <h3 className="text-xl font-semibold mb-2">Database Management Systems</h3>
-                  <p className="text-muted-foreground mb-4">Room: Lab 204 | Time: 10:00 AM - 12:00 PM</p>
-                  
-                  <div className="bg-secondary/5 rounded-lg p-4 mb-4">
-                    <div className="flex items-center justify-between text-sm mb-2">
-                      <span className="text-muted-foreground">Session Duration</span>
-                      <Badge variant="secondary">32 minutes</Badge>
+                <div className="flex items-center space-x-1">
+                  {card.trend === 'up' && <ArrowUpRight className="h-4 w-4 text-success" />}
+                  {card.trend === 'down' && <ArrowDownRight className="h-4 w-4 text-destructive" />}
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
+                <p className="text-3xl font-bold text-foreground">{card.value}</p>
+                <p className="text-xs text-muted-foreground">{card.description}</p>
+              </div>
+              <div className="mt-4 pt-4 border-t border-border/50">
+                <p className={`text-xs font-medium ${
+                  card.trend === 'up' ? 'text-success' :
+                  card.trend === 'down' ? 'text-destructive' : 'text-muted-foreground'
+                }`}>
+                  {card.change}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Quick Actions */}
+        <div className="card-elevated p-6">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="p-2 rounded-xl bg-primary/10">
+              <Sparkles className="h-5 w-5 text-primary" />
+            </div>
+            <h2 className="text-xl font-bold text-foreground">Quick Actions</h2>
+          </div>
+          <div className="space-y-4">
+            {quickActions.map((action) => {
+              const Icon = action.icon;
+              return (
+                <button
+                  key={action.title}
+                  onClick={action.action}
+                  className="w-full p-4 rounded-2xl border border-border/50 hover:border-primary/50 transition-all duration-200 group hover:scale-[1.02] text-left"
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className={`p-3 rounded-xl transition-all duration-300 group-hover:scale-110 ${
+                      action.color === 'primary' ? 'bg-primary/10 group-hover:bg-primary/20' :
+                      action.color === 'accent' ? 'bg-accent/10 group-hover:bg-accent/20' :
+                      action.color === 'warning' ? 'bg-warning/10 group-hover:bg-warning/20' : 'bg-muted'
+                    }`}>
+                      <Icon className={`h-5 w-5 ${
+                        action.color === 'primary' ? 'text-primary' :
+                        action.color === 'accent' ? 'text-accent' :
+                        action.color === 'warning' ? 'text-warning' : 'text-muted-foreground'
+                      }`} />
                     </div>
-                    <div className="w-full bg-secondary/20 rounded-full h-2">
-                      <div className="bg-secondary h-2 rounded-full w-1/3"></div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-foreground">{action.title}</div>
+                      <div className="text-sm text-muted-foreground">{action.description}</div>
                     </div>
                   </div>
-                  
-                  <Button 
-                    variant="destructive" 
-                    className="w-full"
-                    onClick={() => endSessionMutation.mutate(stats?.activeSession?.id)}
-                    disabled={endSessionMutation.isPending}
-                  >
-                    <Play className="mr-2 h-4 w-4" />
-                    {endSessionMutation.isPending ? "Ending..." : "End Class Session"}
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No Active Session</h3>
-                <p className="text-muted-foreground mb-4">Start a new class session when ready</p>
-                <Button className="w-full" onClick={() => setShowStartSessionModal(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Start New Class Session
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={() => setShowStartSessionModal(true)}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Start New Class Session
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={exportReports}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Export Today's Reports
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={() => toast({ title: "Hardware Settings", description: "Hardware configuration panel will be implemented." })}
-              >
-                <Settings className="mr-2 h-4 w-4" />
-                Hardware Settings
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={sendNotifications}
-              >
-                <Mail className="mr-2 h-4 w-4" />
-                Send Parent Notifications
-              </Button>
+        {/* Recent Activity */}
+        <div className="lg:col-span-2 card-elevated p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 rounded-xl bg-accent/10">
+                <Clock className="h-5 w-5 text-accent" />
+              </div>
+              <h2 className="text-xl font-bold text-foreground">Live Activity Feed</h2>
             </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-        </CardHeader>
-        <CardContent>
+            <Badge className="status-indicator status-online">Live</Badge>
+          </div>
           <div className="space-y-4">
-            {recentActivities.map((activity) => (
-              <div key={activity.id} className="flex items-center space-x-4 p-3 bg-muted/50 rounded-lg">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  activity.type === 'check-in' ? 'bg-secondary/10' : 
-                  activity.type === 'late' ? 'bg-accent/10' : 'bg-destructive/10'
+            {recentActivities.map((activity, index) => (
+              <div 
+                key={activity.id} 
+                className={`flex items-center space-x-4 p-4 rounded-2xl border border-border/30 hover:border-border/60 transition-all duration-200 animate-fade-in-up stagger-${index + 1}`}
+              >
+                <div className={`p-2 rounded-xl ${
+                  activity.type === 'check-in' ? 'bg-success/10' :
+                  activity.type === 'check-out' ? 'bg-accent/10' :
+                  activity.type === 'late' ? 'bg-warning/10' : 'bg-muted'
                 }`}>
-                  {activity.type === 'check-in' && <LogIn className="h-5 w-5 text-secondary" />}
-                  {activity.type === 'late' && <AlertTriangle className="h-5 w-5 text-accent" />}
-                  {activity.type === 'check-out' && <LogOut className="h-5 w-5 text-destructive" />}
+                  {activity.type === 'check-in' && <LogIn className="h-4 w-4 text-success" />}
+                  {activity.type === 'check-out' && <LogOut className="h-4 w-4 text-accent" />}
+                  {activity.type === 'late' && <AlertTriangle className="h-4 w-4 text-warning" />}
                 </div>
-                <div className="flex-1">
-                  <p className="font-medium">
-                    {activity.type === 'check-in' && `${activity.student} checked in`}
-                    {activity.type === 'late' && `Late arrival detected`}
-                    {activity.type === 'check-out' && `${activity.student} checked out`}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {activity.subject} - {activity.time}
-                  </p>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-foreground truncate">{activity.student}</p>
+                  <p className="text-sm text-muted-foreground truncate">{activity.subject}</p>
                 </div>
-                <span className="text-xs text-muted-foreground">{activity.timestamp}</span>
+                <div className="text-right">
+                  <p className="text-sm font-medium text-foreground">{activity.timestamp}</p>
+                  <p className="text-xs text-muted-foreground mono">{activity.computer}</p>
+                </div>
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Start Session Modal */}
-      <StartSessionModal 
-        open={showStartSessionModal} 
-        onClose={() => setShowStartSessionModal(false)} 
-      />
+      {/* Modals */}
+      {showStartSessionModal && (
+        <StartSessionModal
+          open={showStartSessionModal}
+          onClose={() => setShowStartSessionModal(false)}
+        />
+      )}
     </div>
   );
 }

@@ -73,30 +73,31 @@ export default function TopBar() {
   });
 
   return (
-    <header className="bg-white border-b border-gray-200 px-8 py-6 shadow-sm" style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)' }}>
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-1">{pageInfo.title}</h1>
-          <p className="text-sm text-gray-600">{pageInfo.subtitle}</p>
-        </div>
-        
-        <div className="flex items-center space-x-6">
-          <div className="text-sm text-gray-600 bg-white px-4 py-2 rounded-lg shadow-sm border">
-            {timeString}
+    <div className="h-20 glass border-b border-border/20 px-8 flex items-center justify-between backdrop-blur-sm">
+      <div className="flex-1">
+        <h1 className="text-2xl font-bold text-gradient">{pageInfo.title}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{pageInfo.subtitle}</p>
+      </div>
+      
+      <div className="flex items-center space-x-6">
+        <div className="flex items-center space-x-3">
+          <div className="status-indicator status-online">
+            System Online
           </div>
           
-          <div className="flex items-center space-x-3">
-            <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 border-green-200">
-              <Wifi className="h-3 w-3 mr-1" />
-              Online
-            </Badge>
-            
-            <Button variant="ghost" size="sm" className="p-2 hover:bg-white/50 rounded-xl">
-              <Bell className="h-5 w-5 text-gray-600" />
-            </Button>
+          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+            <Wifi className="h-4 w-4" />
+            <span className="mono font-medium">{timeString}</span>
           </div>
         </div>
+        
+        <Button variant="ghost" size="sm" className="relative hover:bg-muted/50 rounded-xl">
+          <Bell className="h-5 w-5" />
+          <div className="absolute -top-1 -right-1 h-5 w-5 bg-destructive rounded-full flex items-center justify-center">
+            <span className="text-xs text-destructive-foreground font-bold">3</span>
+          </div>
+        </Button>
       </div>
-    </header>
+    </div>
   );
 }

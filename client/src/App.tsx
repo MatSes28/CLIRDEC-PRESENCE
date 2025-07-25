@@ -22,8 +22,13 @@ function Router() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex items-center justify-center gradient-primary">
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center animate-pulse">
+            <div className="w-6 h-6 bg-white/80 rounded-full"></div>
+          </div>
+          <div className="text-white/80 font-medium">Loading CLIRDEC Presence...</div>
+        </div>
       </div>
     );
   }
@@ -37,11 +42,11 @@ function Router() {
         </>
       ) : (
         <>
-          <div className="flex min-h-screen bg-gray-50">
+          <div className="flex min-h-screen">
             <Sidebar />
-            <div className="flex-1 ml-64 flex flex-col">
+            <div className="flex-1 ml-80 flex flex-col min-h-screen">
               <TopBar />
-              <main className="flex-1 overflow-auto">
+              <main className="flex-1 overflow-auto p-6 space-y-6">
                 <Switch>
                   <Route path="/" component={Dashboard} />
                   <Route path="/attendance" component={LiveAttendance} />

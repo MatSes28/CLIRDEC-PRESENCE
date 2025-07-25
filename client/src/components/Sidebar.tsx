@@ -1,5 +1,4 @@
 import { Link, useLocation } from "wouter";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
   AlertDialog,
@@ -22,8 +21,10 @@ import {
   BarChart3,
   Settings,
   LogOut,
-  University,
-  Shield
+  Zap,
+  Shield,
+  Activity,
+  ArrowRight
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -31,14 +32,54 @@ export default function Sidebar() {
   const { user, logout, isLoggingOut } = useAuth();
 
   const navigationItems = [
-    { path: "/", icon: LayoutDashboard, label: "Dashboard" },
-    { path: "/attendance", icon: Users, label: "Live Attendance" },
-    { path: "/schedule", icon: Calendar, label: "Schedule" },
-    { path: "/students", icon: GraduationCap, label: "Students" },
-    { path: "/computers", icon: Monitor, label: "Lab Computers" },
-    { path: "/monitoring", icon: Shield, label: "Attendance Monitor" },
-    { path: "/reports", icon: BarChart3, label: "Reports" },
-    { path: "/settings", icon: Settings, label: "Settings" },
+    { 
+      path: "/", 
+      icon: LayoutDashboard, 
+      label: "Dashboard",
+      description: "Overview & Analytics"
+    },
+    { 
+      path: "/attendance", 
+      icon: Activity, 
+      label: "Live Attendance",
+      description: "Real-time tracking"
+    },
+    { 
+      path: "/schedule", 
+      icon: Calendar, 
+      label: "Schedule",
+      description: "Class timetables"
+    },
+    { 
+      path: "/students", 
+      icon: GraduationCap, 
+      label: "Students",
+      description: "Student management"
+    },
+    { 
+      path: "/computers", 
+      icon: Monitor, 
+      label: "Lab Computers",
+      description: "Computer allocation"
+    },
+    { 
+      path: "/monitoring", 
+      icon: Shield, 
+      label: "Monitor",
+      description: "System oversight"
+    },
+    { 
+      path: "/reports", 
+      icon: BarChart3, 
+      label: "Reports",
+      description: "Data insights"
+    },
+    { 
+      path: "/settings", 
+      icon: Settings, 
+      label: "Settings",
+      description: "System configuration"
+    },
   ];
 
   const isActive = (path: string) => {
@@ -49,84 +90,130 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 shadow-xl z-40">
-      {/* Header */}
-      <div className="p-6 border-b border-gray-200" style={{ backgroundColor: '#2596be' }}>
-        <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
-            <University className="h-7 w-7" style={{ color: '#2596be' }} />
+    <div className="fixed left-0 top-0 h-full w-80 glass border-r border-border/20 z-40 animate-slide-in-right">
+      {/* Modern Header with Gradient */}
+      <div className="relative p-8 gradient-primary overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute -top-4 -right-4 w-32 h-32 bg-white/20 rounded-full blur-xl"></div>
+          <div className="absolute -bottom-4 -left-4 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
+        </div>
+        <div className="relative z-10">
+          <div className="flex items-center space-x-4 mb-6">
+            <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg border border-white/30">
+              <Zap className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <h1 className="font-bold text-white text-xl tracking-tight">CLIRDEC</h1>
+              <p className="text-white/80 text-sm font-medium">Presence System</p>
+            </div>
           </div>
-          <div>
-            <h2 className="font-bold text-white text-lg">PRESENCE</h2>
-            <p className="text-sm text-white/90">Attendance System</p>
+          <div className="text-white/60 text-xs font-mono uppercase tracking-wider">
+            Advanced Attendance Management
           </div>
         </div>
       </div>
       
-      {/* Navigation */}
-      <nav className="mt-8 px-4">
-        <div className="space-y-2">
-          {navigationItems.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.path);
-            
-            return (
-              <Link 
-                key={item.path} 
-                href={item.path}
-                className={`flex items-center px-4 py-3 rounded-xl transition-all duration-200 group ${
+      {/* Modern Navigation */}
+      <nav className="px-6 py-6 space-y-3">
+        {navigationItems.map((item, index) => {
+          const Icon = item.icon;
+          const active = isActive(item.path);
+          
+          return (
+            <Link 
+              key={item.path} 
+              href={item.path}
+              className={`group relative flex items-center p-4 rounded-2xl transition-all duration-300 ease-out animate-fade-in-up stagger-${index + 1} ${
+                active 
+                  ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25 scale-[1.02]' 
+                  : 'hover:bg-muted/50 hover:scale-[1.01] text-foreground/80 hover:text-foreground'
+              }`}
+            >
+              <div className={`p-2 rounded-xl mr-4 transition-all duration-300 ${
+                active 
+                  ? 'bg-white/20' 
+                  : 'bg-muted/50 group-hover:bg-muted'
+              }`}>
+                <Icon className="h-5 w-5" />
+              </div>
+              <div className="flex-1">
+                <div className="font-semibold text-sm">{item.label}</div>
+                <div className={`text-xs transition-colors duration-300 ${
                   active 
-                    ? 'text-white font-semibold shadow-lg transform scale-105' 
-                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                }`}
-                style={active ? { backgroundColor: '#2596be' } : {}}
-              >
-                <Icon className="mr-3 h-5 w-5 transition-transform group-hover:scale-110" />
-                {item.label}
-              </Link>
-            );
-          })}
-        </div>
+                    ? 'text-primary-foreground/70' 
+                    : 'text-muted-foreground group-hover:text-foreground/70'
+                }`}>
+                  {item.description}
+                </div>
+              </div>
+              {active && (
+                <ArrowRight className="h-4 w-4 text-primary-foreground/70" />
+              )}
+              {active && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white/30 rounded-r-full"></div>
+              )}
+            </Link>
+          );
+        })}
       </nav>
       
-      {/* User Profile & Logout */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-gray-200 bg-white">
-        <div className="flex items-center space-x-3 mb-4 p-3 bg-gray-50 rounded-xl">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-white text-lg" style={{ backgroundColor: '#2596be' }}>
-            {user?.firstName ? user.firstName.charAt(0) : 'U'}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-gray-800 truncate text-sm">
-              {user?.firstName && user?.lastName 
-                ? `${user.firstName} ${user.lastName}` 
-                : user?.email || 'User'}
-            </p>
-            <p className="text-xs text-gray-500 capitalize">{user?.role || 'Faculty'} • IT Department</p>
+      {/* Modern User Profile Section */}
+      <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-border/20 glass">
+        <div className="card-modern p-4 mb-4">
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <div className="w-12 h-12 gradient-accent rounded-2xl flex items-center justify-center font-bold text-white text-lg shadow-lg">
+                {user?.firstName ? user.firstName.charAt(0) : 'U'}
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-success rounded-full border-2 border-card"></div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-foreground truncate text-sm leading-tight">
+                {user?.firstName && user?.lastName 
+                  ? `${user.firstName} ${user.lastName}` 
+                  : user?.email || 'User'}
+              </p>
+              <div className="flex items-center space-x-2 mt-1">
+                <span className="status-indicator status-online">
+                  {user?.role || 'Faculty'}
+                </span>
+                <span className="text-xs text-muted-foreground mono">
+                  IT Dept
+                </span>
+              </div>
+            </div>
           </div>
         </div>
+        
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button 
               variant="ghost" 
               disabled={isLoggingOut}
-              className="w-full justify-start text-gray-700 hover:text-red-600 hover:bg-red-50 transition-colors duration-200"
+              className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all duration-200 rounded-xl p-3 group"
             >
-              <LogOut className="mr-2 h-4 w-4" />
-              {isLoggingOut ? "Signing Out..." : "Sign Out"}
+              <LogOut className="mr-3 h-4 w-4 transition-transform group-hover:scale-110" />
+              <span className="font-medium">
+                {isLoggingOut ? "Signing Out..." : "Sign Out"}
+              </span>
             </Button>
           </AlertDialogTrigger>
-          <AlertDialogContent>
+          <AlertDialogContent className="card-elevated border-0">
             <AlertDialogHeader>
-              <AlertDialogTitle>Sign Out Confirmation</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to sign out? You will need to log in again to access the system.
+              <AlertDialogTitle className="text-gradient text-xl font-bold">
+                Confirm Sign Out
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-muted-foreground leading-relaxed">
+                Are you sure you want to sign out of CLIRDEC Presence? You'll need to authenticate again to access the attendance management system.
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Go Back</AlertDialogCancel>
+            <AlertDialogFooter className="gap-3">
+              <AlertDialogCancel className="btn-modern bg-muted hover:bg-muted/80">
+                Stay Logged In
+              </AlertDialogCancel>
               <AlertDialogAction 
                 onClick={logout}
-                className="bg-red-600 hover:bg-red-700 text-white"
+                className="btn-modern bg-destructive hover:bg-destructive/90 text-destructive-foreground"
               >
                 Yes, Sign Out
               </AlertDialogAction>
