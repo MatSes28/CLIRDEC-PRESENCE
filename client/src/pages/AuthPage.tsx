@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, User, Lock } from "lucide-react";
+import { AlertCircle, User, Lock, Zap, Activity, Users, Target, ArrowRight, CheckCircle, Shield, Monitor } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -52,77 +52,201 @@ export default function AuthPage() {
     loginMutation.mutate(loginForm);
   };
 
+  const features = [
+    {
+      icon: Activity,
+      title: "Real-time Monitoring",
+      description: "Track student attendance as it happens with live RFID scanning"
+    },
+    {
+      icon: Users,
+      title: "Student Management", 
+      description: "Comprehensive student database with automated parent notifications"
+    },
+    {
+      icon: Target,
+      title: "Analytics & Reports",
+      description: "Detailed attendance analytics and exportable comprehensive reports"
+    },
+    {
+      icon: Shield,
+      title: "Secure & Reliable",
+      description: "Enterprise-grade security with 99.9% uptime guarantee"
+    }
+  ];
+
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex items-center justify-center gradient-primary">
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center animate-pulse">
+            <div className="w-6 h-6 bg-white/80 rounded-full"></div>
+          </div>
+          <div className="text-white/80 font-medium">Loading CLIRDEC Presence...</div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen w-full flex">
-      {/* Left side - Branding */}
-      <div className="flex-1 bg-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-5xl font-bold text-gray-800 tracking-wider">PRESENCE</h1>
-          <p className="text-lg text-gray-600 mt-2 font-medium">ATTENDANCE MANAGEMENT SYSTEM</p>
+      {/* Left side - Modern Branding & Features */}
+      <div className="flex-1 relative overflow-hidden gradient-primary">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute -top-20 -right-20 w-96 h-96 bg-white/20 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-white/10 rounded-full blur-2xl"></div>
+          <div className="absolute top-1/2 left-1/4 w-32 h-32 bg-white/5 rounded-full blur-xl"></div>
+        </div>
+        
+        <div className="relative z-10 h-full flex flex-col justify-center px-16">
+          <div className="mb-12">
+            <div className="flex items-center space-x-4 mb-8">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                <Zap className="h-10 w-10 text-white" />
+              </div>
+              <div>
+                <h1 className="text-5xl font-bold text-white tracking-tight">CLIRDEC</h1>
+                <p className="text-xl text-white/80 font-medium">Presence System</p>
+              </div>
+            </div>
+            <p className="text-white/70 text-lg leading-relaxed max-w-lg">
+              Advanced attendance management system for Central Luzon State University's 
+              Information Technology department. Seamlessly track, monitor, and analyze 
+              student attendance with cutting-edge RFID technology.
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            <h3 className="text-2xl font-bold text-white mb-6">Key Features</h3>
+            <div className="grid grid-cols-1 gap-6">
+              {features.map((feature, index) => {
+                const Icon = feature.icon;
+                return (
+                  <div 
+                    key={feature.title} 
+                    className={`flex items-start space-x-4 animate-fade-in-up stagger-${index + 1}`}
+                  >
+                    <div className="p-3 rounded-xl bg-white/10 backdrop-blur-sm">
+                      <Icon className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-white text-lg">{feature.title}</h4>
+                      <p className="text-white/70 text-sm leading-relaxed">{feature.description}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mt-16 p-6 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20">
+            <div className="flex items-center space-x-3 mb-4">
+              <CheckCircle className="h-5 w-5 text-white" />
+              <span className="text-white font-semibold">System Status</span>
+            </div>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <div className="text-white/60">Uptime</div>
+                <div className="text-white font-mono">99.9%</div>
+              </div>
+              <div>
+                <div className="text-white/60">Active Users</div>
+                <div className="text-white font-mono">1,247</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Right side - Login Form */}
-      <div className="flex-1 flex items-center justify-center" style={{ backgroundColor: '#2596be' }}>
-        <div className="w-full max-w-md px-8">
+      {/* Right side - Modern Login Form */}
+      <div className="flex-1 flex items-center justify-center p-16 bg-background">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gradient mb-2">Welcome Back</h2>
+            <p className="text-muted-foreground">Sign in to access the attendance management system</p>
+          </div>
+
           {error && (
-            <Alert variant="destructive" className="mb-6">
+            <Alert variant="destructive" className="mb-6 border-destructive/50 bg-destructive/5">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
-          <div className="space-y-8">
-            <h2 className="text-4xl font-bold text-white text-center tracking-wider">LOGIN</h2>
-            
+          <div className="card-elevated p-8">
             <form onSubmit={handleLogin} className="space-y-6">
               <div className="space-y-2">
-                <label className="text-white text-sm font-medium">Username</label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={loginForm.email}
-                  onChange={(e) => setLoginForm({...loginForm, email: e.target.value})}
-                  required
-                  className="h-12 bg-white border-0 text-gray-800 placeholder:text-gray-500"
-                />
+                <Label htmlFor="email" className="text-sm font-semibold text-foreground">
+                  Email Address
+                </Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    value={loginForm.email}
+                    onChange={(e) => setLoginForm({...loginForm, email: e.target.value})}
+                    required
+                    placeholder="admin@clsu.edu.ph"
+                    className="pl-10 h-12 rounded-xl border-border/50 focus:border-primary transition-all duration-200"
+                  />
+                </div>
               </div>
               
               <div className="space-y-2">
-                <label className="text-white text-sm font-medium">Password</label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={loginForm.password}
-                  onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
-                  required
-                  className="h-12 bg-white border-0 text-gray-800 placeholder:text-gray-500"
-                />
+                <Label htmlFor="password" className="text-sm font-semibold text-foreground">
+                  Password
+                </Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type="password"
+                    value={loginForm.password}
+                    onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
+                    required
+                    placeholder="Enter your password"
+                    className="pl-10 h-12 rounded-xl border-border/50 focus:border-primary transition-all duration-200"
+                  />
+                </div>
               </div>
-              
-              <div className="pt-4">
-                <Button 
-                  type="submit" 
-                  className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 h-12 text-base font-semibold"
-                  disabled={loginMutation.isPending}
-                >
-                  {loginMutation.isPending ? "LOGGING IN..." : "LOGIN"}
-                </Button>
-              </div>
+
+              <Button 
+                type="submit" 
+                disabled={loginMutation.isPending}
+                className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold transition-all duration-200 hover:scale-[1.02] group"
+              >
+                {loginMutation.isPending ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground animate-spin"></div>
+                    <span>Signing In...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <span>Sign In</span>
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </div>
+                )}
+              </Button>
             </form>
-            
-            <div className="mt-8 p-4 bg-white/10 rounded-lg">
-              <p className="font-semibold mb-2 text-xs text-white">Demo Accounts:</p>
-              <p className="text-xs text-white/90">Admin: admin@clsu.edu.ph / admin123</p>
-              <p className="text-xs text-white/90">Faculty: faculty@clsu.edu.ph / faculty123</p>
+
+            <div className="mt-8 pt-6 border-t border-border/50">
+              <div className="text-center text-sm text-muted-foreground">
+                Need help? Contact IT Support
+              </div>
+              <div className="text-center text-xs text-muted-foreground mt-2 mono">
+                support@clsu.edu.ph
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 text-center">
+            <div className="flex items-center justify-center space-x-2 text-xs text-muted-foreground">
+              <Monitor className="h-3 w-3" />
+              <span>Developed for Central Luzon State University</span>
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              Information Technology Department
             </div>
           </div>
         </div>
