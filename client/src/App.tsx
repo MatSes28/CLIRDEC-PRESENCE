@@ -46,7 +46,7 @@ function Router() {
             <Sidebar />
             <div className="flex-1 ml-80 flex flex-col min-h-screen">
               <TopBar />
-              <main className="flex-1 overflow-auto p-6 space-y-6">
+              <main className="flex-1 overflow-auto p-8 space-y-8">
                 <Switch>
                   <Route path="/" component={Dashboard} />
                   <Route path="/attendance" component={LiveAttendance} />

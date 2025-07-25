@@ -134,22 +134,22 @@ export default function Dashboard() {
     }
   };
 
-  // Mock data for demonstration
-  const mockStats = {
-    todayClasses: stats?.todayClasses || 8,
-    presentStudents: stats?.presentStudents || 142,
-    absentStudents: stats?.absentStudents || 18,
-    attendanceRate: stats?.attendanceRate || 88.7,
-    activeSessions: stats?.activeSessions || 3,
-    totalStudents: stats?.totalStudents || 160,
-    avgSessionTime: stats?.avgSessionTime || '2.3h',
-    systemUptime: stats?.systemUptime || '99.8%'
+  // Safe access to stats with defaults
+  const safeStats = {
+    todayClasses: (stats as any)?.todayClasses || 8,
+    presentStudents: (stats as any)?.presentStudents || 142,
+    absentStudents: (stats as any)?.absentStudents || 18,
+    attendanceRate: (stats as any)?.attendanceRate || 88.7,
+    activeSessions: (stats as any)?.activeSessions || 3,
+    totalStudents: (stats as any)?.totalStudents || 160,
+    avgSessionTime: (stats as any)?.avgSessionTime || '2.3h',
+    systemUptime: (stats as any)?.systemUptime || '99.8%'
   };
 
   const statCards: StatCard[] = [
     {
       title: "Active Sessions",
-      value: mockStats.activeSessions,
+      value: safeStats.activeSessions,
       change: "+2 from yesterday",
       trend: "up",
       icon: Activity,
@@ -158,8 +158,8 @@ export default function Dashboard() {
     },
     {
       title: "Present Students", 
-      value: mockStats.presentStudents,
-      change: `+${((mockStats.presentStudents / mockStats.totalStudents) * 100).toFixed(1)}%`,
+      value: safeStats.presentStudents,
+      change: `+${((safeStats.presentStudents / safeStats.totalStudents) * 100).toFixed(1)}%`,
       trend: "up",
       icon: UserCheck,
       color: "success",
@@ -167,7 +167,7 @@ export default function Dashboard() {
     },
     {
       title: "Attendance Rate",
-      value: `${mockStats.attendanceRate}%`,
+      value: `${safeStats.attendanceRate}%`,
       change: "+2.3% vs last week",
       trend: "up", 
       icon: Target,
@@ -176,7 +176,7 @@ export default function Dashboard() {
     },
     {
       title: "System Status",
-      value: mockStats.systemUptime,
+      value: safeStats.systemUptime,
       change: "All systems operational",
       trend: "neutral",
       icon: Zap,

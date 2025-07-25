@@ -89,7 +89,7 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="fixed inset-0 w-full h-full flex overflow-hidden">
+    <div className="auth-page fixed inset-0 w-full h-full flex overflow-hidden">
       {/* Left side - Modern Branding & Features */}
       <div className="w-1/2 relative overflow-hidden gradient-primary">
         <div className="absolute inset-0 opacity-10">

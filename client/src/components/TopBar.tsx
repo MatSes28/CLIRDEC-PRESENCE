@@ -73,10 +73,10 @@ export default function TopBar() {
   });
 
   return (
-    <div className="h-20 glass border-b border-border/20 px-8 flex items-center justify-between backdrop-blur-sm">
+    <div className="h-24 glass border-b border-border/20 px-8 flex items-center justify-between backdrop-blur-sm">
       <div className="flex-1">
-        <h1 className="text-2xl font-bold text-gradient">{pageInfo.title}</h1>
-        <p className="text-sm text-muted-foreground mt-1">{pageInfo.subtitle}</p>
+        <h1 className="text-3xl font-bold text-gradient mb-1">{pageInfo.title}</h1>
+        <p className="text-sm text-muted-foreground">{pageInfo.subtitle}</p>
       </div>
       
       <div className="flex items-center space-x-6">
