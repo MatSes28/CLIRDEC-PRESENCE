@@ -61,21 +61,12 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen w-full flex items-center justify-center bg-blue-50">
       <div className="w-full max-w-md">
         <Card className="shadow-lg">
           <CardHeader className="text-center pb-6">
-            {/* CLSU Logo */}
-            <div className="w-20 h-20 mx-auto mb-4">
-              <svg viewBox="0 0 100 100" className="w-full h-full">
-                <circle cx="50" cy="50" r="45" fill="#0f7b0f" stroke="#0f7b0f" strokeWidth="2"/>
-                <circle cx="50" cy="50" r="35" fill="white"/>
-                <text x="50" y="45" textAnchor="middle" className="text-xs font-bold fill-green-700">CLSU</text>
-                <text x="50" y="58" textAnchor="middle" className="text-xs fill-green-700">1907</text>
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold text-gray-800">CLIRDEC PRESENCE</h1>
-            <p className="text-gray-600">Attendance Monitoring System</p>
+            <h1 className="text-3xl font-bold text-blue-800 mb-2">CLIRDEC PRESENCE</h1>
+            <p className="text-blue-600">Attendance Monitoring System</p>
           </CardHeader>
           
           <CardContent>
@@ -87,7 +78,7 @@ export default function AuthPage() {
             )}
 
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-gray-800">Login</h2>
+              <h2 className="text-xl font-semibold text-blue-800">Login</h2>
               
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
@@ -118,7 +109,7 @@ export default function AuthPage() {
                 
                 <Button 
                   type="submit" 
-                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                   disabled={loginMutation.isPending}
                 >
                   {loginMutation.isPending ? "Logging in..." : "Login"}
