@@ -56,22 +56,22 @@ export default function AuthPage() {
     {
       icon: Activity,
       title: "Real-time Monitoring",
-      description: "Track student attendance as it happens with live RFID scanning"
+      description: "Track student attendance with live RFID and proximity sensor validation"
     },
     {
       icon: Users,
-      title: "Student Management", 
-      description: "Comprehensive student database with automated parent notifications"
+      title: "Ghost Attendance Prevention", 
+      description: "Dual validation system prevents false attendance through physical presence verification"
     },
     {
       icon: Target,
-      title: "Analytics & Reports",
-      description: "Detailed attendance analytics and exportable comprehensive reports"
+      title: "Laboratory Management",
+      description: "Monitor computer usage and student engagement in laboratory classes"
     },
     {
       icon: Shield,
-      title: "Secure & Reliable",
-      description: "Enterprise-grade security with 99.9% uptime guarantee"
+      title: "Automated Reports",
+      description: "Generate downloadable attendance reports with timestamps and entry/exit logs"
     }
   ];
 
@@ -109,10 +109,13 @@ export default function AuthPage() {
                 <p className="text-lg text-white/80 font-medium">Presence System</p>
               </div>
             </div>
+            <p className="text-white/70 text-sm leading-relaxed max-w-lg mb-3">
+              <span className="font-semibold text-white/90">PROXIMITY AND RFID-ENABLED SMART ENTRY FOR NOTATION OF CLASSROOM ENGAGEMENT</span>
+            </p>
             <p className="text-white/70 text-base leading-relaxed max-w-lg">
-              Advanced attendance management system for Central Luzon State University's 
+              IoT-based attendance monitoring system for Central Luzon State University's 
               Information Technology department. Seamlessly track, monitor, and analyze 
-              student attendance with cutting-edge RFID technology.
+              student attendance with cutting-edge RFID and proximity sensor technology.
             </p>
           </div>
 
