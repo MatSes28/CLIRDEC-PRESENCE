@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, User, Lock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -61,9 +61,9 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-blue-50">
+    <div className="min-h-screen w-full flex items-center justify-center bg-white">
       <div className="w-full max-w-md">
-        <Card className="shadow-lg">
+        <Card className="shadow-lg border-0">
           <CardHeader className="text-center pb-6">
             <h1 className="text-3xl font-bold text-blue-800 mb-2">CLIRDEC PRESENCE</h1>
             <p className="text-blue-600">Attendance Monitoring System</p>
@@ -81,38 +81,38 @@ export default function AuthPage() {
               <h2 className="text-xl font-semibold text-blue-800">Login</h2>
               
               <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     id="email"
                     type="email"
-                    placeholder="email"
+                    placeholder="Username"
                     value={loginForm.email}
                     onChange={(e) => setLoginForm({...loginForm, email: e.target.value})}
                     required
-                    className="bg-blue-50"
+                    className="pl-10 bg-gray-200 border-0 rounded-full h-12 placeholder:text-gray-500"
                   />
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     id="password"
                     type="password"
-                    placeholder="password"
+                    placeholder="Password"
                     value={loginForm.password}
                     onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
                     required
-                    className="bg-blue-50"
+                    className="pl-10 bg-gray-200 border-0 rounded-full h-12 placeholder:text-gray-500"
                   />
                 </div>
                 
                 <Button 
                   type="submit" 
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  className="w-full bg-green-500 hover:bg-green-600 text-white rounded-full h-12 text-lg font-semibold mt-6"
                   disabled={loginMutation.isPending}
                 >
-                  {loginMutation.isPending ? "Logging in..." : "Login"}
+                  {loginMutation.isPending ? "LOGGING IN..." : "LOGIN"}
                 </Button>
               </form>
               
