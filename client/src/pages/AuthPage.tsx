@@ -3,26 +3,16 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { GraduationCap, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocation } from "wouter";
 
 interface LoginData {
   email: string;
   password: string;
-}
-
-interface RegisterData {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  facultyId: string;
-  role: string;
 }
 
 export default function AuthPage() {
@@ -34,15 +24,6 @@ export default function AuthPage() {
   const [loginForm, setLoginForm] = useState<LoginData>({
     email: "",
     password: ""
-  });
-
-  const [registerForm, setRegisterForm] = useState<RegisterData>({
-    email: "",
-    password: "",
-    firstName: "",
-    lastName: "",
-    facultyId: "",
-    role: "faculty"
   });
 
   // Redirect if already authenticated
@@ -65,30 +46,10 @@ export default function AuthPage() {
     },
   });
 
-  const registerMutation = useMutation({
-    mutationFn: async (credentials: RegisterData) => {
-      const res = await apiRequest("POST", "/api/register", credentials);
-      return await res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      setLocation("/");
-    },
-    onError: (error: Error) => {
-      setError(error.message || "Registration failed. Please try again.");
-    },
-  });
-
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     loginMutation.mutate(loginForm);
-  };
-
-  const handleRegister = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    registerMutation.mutate(registerForm);
   };
 
   if (isLoading) {
@@ -100,16 +61,21 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen w-full flex">
-      {/* Left side - Form */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center pb-8">
-            <div className="w-16 h-16 bg-primary rounded-full mx-auto mb-4 flex items-center justify-center">
-              <GraduationCap className="h-8 w-8 text-white" />
+    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
+      <div className="w-full max-w-md">
+        <Card className="shadow-lg">
+          <CardHeader className="text-center pb-6">
+            {/* CLSU Logo */}
+            <div className="w-20 h-20 mx-auto mb-4">
+              <svg viewBox="0 0 100 100" className="w-full h-full">
+                <circle cx="50" cy="50" r="45" fill="#0f7b0f" stroke="#0f7b0f" strokeWidth="2"/>
+                <circle cx="50" cy="50" r="35" fill="white"/>
+                <text x="50" y="45" textAnchor="middle" className="text-xs font-bold fill-green-700">CLSU</text>
+                <text x="50" y="58" textAnchor="middle" className="text-xs fill-green-700">1907</text>
+              </svg>
             </div>
-            <h1 className="text-2xl font-bold">CLIRDEC: PRESENCE</h1>
-            <p className="text-muted-foreground">Faculty Access Portal</p>
+            <h1 className="text-2xl font-bold text-gray-800">CLIRDEC PRESENCE</h1>
+            <p className="text-gray-600">Attendance Monitoring System</p>
           </CardHeader>
           
           <CardContent>
@@ -120,143 +86,64 @@ export default function AuthPage() {
               </Alert>
             )}
 
-            <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="register">Register</TabsTrigger>
-              </TabsList>
+            <div className="space-y-6">
+              <h2 className="text-xl font-semibold text-gray-800">Login</h2>
               
-              <TabsContent value="login" className="space-y-4">
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="faculty@clsu.edu.ph"
-                      value={loginForm.email}
-                      onChange={(e) => setLoginForm({...loginForm, email: e.target.value})}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={loginForm.password}
-                      onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
-                      required
-                    />
-                  </div>
-                  
-                  <Button 
-                    type="submit" 
-                    className="w-full"
-                    disabled={loginMutation.isPending}
-                  >
-                    {loginMutation.isPending ? "Signing in..." : "Sign In"}
-                  </Button>
-                </form>
-                
-                <div className="text-center text-sm text-muted-foreground">
-                  <p>Demo Accounts:</p>
-                  <p>Admin: admin@clsu.edu.ph / admin123</p>
-                  <p>Faculty: faculty@clsu.edu.ph / faculty123</p>
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="BSIT"
+                    value={loginForm.email}
+                    onChange={(e) => setLoginForm({...loginForm, email: e.target.value})}
+                    required
+                    className="bg-blue-50"
+                  />
                 </div>
-              </TabsContent>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••••"
+                    value={loginForm.password}
+                    onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
+                    required
+                    className="bg-blue-50"
+                  />
+                </div>
+                
+                <Button 
+                  type="submit" 
+                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  disabled={loginMutation.isPending}
+                >
+                  {loginMutation.isPending ? "Logging in..." : "Login"}
+                </Button>
+              </form>
               
-              <TabsContent value="register" className="space-y-4">
-                <form onSubmit={handleRegister} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="firstName">First Name</Label>
-                      <Input
-                        id="firstName"
-                        value={registerForm.firstName}
-                        onChange={(e) => setRegisterForm({...registerForm, firstName: e.target.value})}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="lastName">Last Name</Label>
-                      <Input
-                        id="lastName"
-                        value={registerForm.lastName}
-                        onChange={(e) => setRegisterForm({...registerForm, lastName: e.target.value})}
-                        required
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="regEmail">Email</Label>
-                    <Input
-                      id="regEmail"
-                      type="email"
-                      placeholder="your.name@clsu.edu.ph"
-                      value={registerForm.email}
-                      onChange={(e) => setRegisterForm({...registerForm, email: e.target.value})}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="facultyId">Faculty ID</Label>
-                    <Input
-                      id="facultyId"
-                      placeholder="FAC001"
-                      value={registerForm.facultyId}
-                      onChange={(e) => setRegisterForm({...registerForm, facultyId: e.target.value})}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="regPassword">Password</Label>
-                    <Input
-                      id="regPassword"
-                      type="password"
-                      value={registerForm.password}
-                      onChange={(e) => setRegisterForm({...registerForm, password: e.target.value})}
-                      required
-                    />
-                  </div>
-                  
-                  <Button 
-                    type="submit" 
-                    className="w-full"
-                    disabled={registerMutation.isPending}
-                  >
-                    {registerMutation.isPending ? "Creating Account..." : "Create Account"}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
+              <div className="text-center text-sm space-y-2">
+                <a href="#" className="text-blue-600 hover:underline">Forgot password?</a>
+                <div className="flex justify-between text-blue-600">
+                  <a href="#" className="hover:underline">Log in using Applicant ID</a>
+                </div>
+              </div>
+              
+              <div className="text-center text-sm text-gray-600">
+                <p>Not registered yet? <a href="#" className="text-blue-600 hover:underline">Create an account</a></p>
+              </div>
+              
+              <div className="mt-4 p-3 bg-gray-100 rounded text-xs text-gray-600">
+                <p className="font-semibold mb-1">Demo Accounts:</p>
+                <p>Admin: admin@clsu.edu.ph / admin123</p>
+                <p>Faculty: faculty@clsu.edu.ph / faculty123</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
-      </div>
-      
-      {/* Right side - Hero section */}
-      <div className="flex-1 bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center p-8">
-        <div className="max-w-md text-center">
-          <h2 className="text-3xl font-bold mb-4">Attendance Monitoring System</h2>
-          <p className="text-lg text-muted-foreground mb-6">
-            Monitor student attendance with RFID technology and automated notifications for enhanced classroom management.
-          </p>
-          
-          <div className="space-y-4">
-            <div className="bg-white/50 rounded-lg p-4">
-              <h3 className="font-semibold">Admin Features</h3>
-              <p className="text-sm text-muted-foreground">Full system control, user management, and configuration</p>
-            </div>
-            <div className="bg-white/50 rounded-lg p-4">
-              <h3 className="font-semibold">Faculty Features</h3>
-              <p className="text-sm text-muted-foreground">Class management, attendance monitoring, and reporting</p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

@@ -142,7 +142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Subject management routes
   app.get('/api/subjects', requireAdminOrFaculty, async (req: any, res) => {
     try {
-      const professorId = req.user.claims.sub;
+      const professorId = req.user.id;
       const subjects = await storage.getSubjectsByProfessor(professorId);
       res.json(subjects);
     } catch (error) {
@@ -153,7 +153,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/subjects', requireAdminOrFaculty, async (req: any, res) => {
     try {
-      const professorId = req.user.claims.sub;
+      const professorId = req.user.id;
       const subjectData = insertSubjectSchema.parse({ ...req.body, professorId });
       const subject = await storage.createSubject(subjectData);
       res.status(201).json(subject);
@@ -166,7 +166,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/subjects/:id', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
-      const professorId = req.user.claims.sub;
+      const professorId = req.user.id;
       const subjectData = insertSubjectSchema.partial().parse({ ...req.body, professorId });
       const subject = await storage.updateSubject(id, subjectData);
       res.json(subject);
@@ -190,7 +190,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Schedule management routes
   app.get('/api/schedules', requireAdminOrFaculty, async (req: any, res) => {
     try {
-      const professorId = req.user.claims.sub;
+      const professorId = req.user.id;
       const schedules = await storage.getSchedulesByProfessor(professorId);
       res.json(schedules);
     } catch (error) {
@@ -201,7 +201,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/schedules', requireAdminOrFaculty, async (req: any, res) => {
     try {
-      const professorId = req.user.claims.sub;
+      const professorId = req.user.id;
       const scheduleData = insertScheduleSchema.parse({ ...req.body, professorId });
       const schedule = await storage.createSchedule(scheduleData);
       res.status(201).json(schedule);
@@ -214,7 +214,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/schedules/:id', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
-      const professorId = req.user.claims.sub;
+      const professorId = req.user.id;
       const scheduleData = insertScheduleSchema.partial().parse({ ...req.body, professorId });
       const schedule = await storage.updateSchedule(id, scheduleData);
       res.json(schedule);
@@ -238,7 +238,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Class session management routes
   app.get('/api/sessions/active', requireAdminOrFaculty, async (req: any, res) => {
     try {
-      const professorId = req.user.claims.sub;
+      const professorId = req.user.id;
       const activeSession = await storage.getActiveSession(professorId);
       res.json(activeSession);
     } catch (error) {
@@ -249,7 +249,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/sessions', requireAdminOrFaculty, async (req: any, res) => {
     try {
-      const professorId = req.user.claims.sub;
+      const professorId = req.user.id;
       const sessionData = insertClassSessionSchema.parse({ ...req.body, professorId });
       const session = await storage.createClassSession(sessionData);
       res.status(201).json(session);
@@ -443,7 +443,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/reports/daily/:date', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const date = new Date(req.params.date);
-      const professorId = req.user.claims.sub;
+      const professorId = req.user.id;
       
       // Get sessions for the day
       const sessions = await storage.getClassSessionsByDate(date);
@@ -567,7 +567,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Schedule file upload route
   app.post('/api/schedules/upload', requireAdminOrFaculty, async (req: any, res) => {
     try {
-      const professorId = req.user.claims.sub;
+      const professorId = req.user.id;
       
       // For now, just return success. In a real implementation, you would:
       // 1. Parse the uploaded CSV/Excel file
@@ -589,7 +589,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/reports/export', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const { range, subject, section, format } = req.query;
-      const professorId = req.user.claims.sub;
+      const professorId = req.user.id;
       
       // Generate mock report data
       const reportData = {
@@ -639,7 +639,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/reports/generate', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const { range, subject, section } = req.query;
-      const professorId = req.user.claims.sub;
+      const professorId = req.user.id;
       
       // Mock report generation
       const reportData = {
@@ -665,7 +665,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Notifications route
   app.post('/api/notifications/send', requireAdminOrFaculty, async (req: any, res) => {
     try {
-      const professorId = req.user.claims.sub;
+      const professorId = req.user.id;
       
       // Get recent sessions and attendance data
       const today = new Date();
@@ -743,7 +743,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/notifications/send-email', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const { studentId, recipientType, subject, message, priority, type } = req.body;
-      const professorId = req.user.claims.sub;
+      const professorId = req.user.id;
       
       // Get student information
       const student = await storage.getStudent(studentId);

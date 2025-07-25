@@ -31,7 +31,10 @@ function Router() {
   return (
     <Switch>
       {!isAuthenticated ? (
-        <Route path="/" component={AuthPage} />
+        <>
+          <Route path="/" component={AuthPage} />
+          <Route component={AuthPage} />
+        </>
       ) : (
         <>
           <div className="flex min-h-screen">
