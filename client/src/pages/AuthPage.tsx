@@ -98,40 +98,40 @@ export default function AuthPage() {
           <div className="absolute top-1/2 left-1/4 w-32 h-32 bg-white/5 rounded-full blur-xl"></div>
         </div>
         
-        <div className="relative z-10 h-full flex flex-col justify-center px-16">
-          <div className="mb-12">
-            <div className="flex items-center space-x-4 mb-8">
-              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                <Zap className="h-10 w-10 text-white" />
+        <div className="relative z-10 h-full flex flex-col justify-center px-16 py-8">
+          <div className="mb-8">
+            <div className="flex items-center space-x-4 mb-6">
+              <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                <Zap className="h-8 w-8 text-white" />
               </div>
               <div>
-                <h1 className="text-5xl font-bold text-white tracking-tight">CLIRDEC</h1>
-                <p className="text-xl text-white/80 font-medium">Presence System</p>
+                <h1 className="text-4xl font-bold text-white tracking-tight">CLIRDEC</h1>
+                <p className="text-lg text-white/80 font-medium">Presence System</p>
               </div>
             </div>
-            <p className="text-white/70 text-lg leading-relaxed max-w-lg">
+            <p className="text-white/70 text-base leading-relaxed max-w-lg">
               Advanced attendance management system for Central Luzon State University's 
               Information Technology department. Seamlessly track, monitor, and analyze 
               student attendance with cutting-edge RFID technology.
             </p>
           </div>
 
-          <div className="space-y-6">
-            <h3 className="text-2xl font-bold text-white mb-6">Key Features</h3>
-            <div className="grid grid-cols-1 gap-6">
+          <div className="space-y-4">
+            <h3 className="text-xl font-bold text-white mb-4">Key Features</h3>
+            <div className="grid grid-cols-1 gap-4">
               {features.map((feature, index) => {
                 const Icon = feature.icon;
                 return (
                   <div 
                     key={feature.title} 
-                    className={`flex items-start space-x-4 animate-fade-in-up stagger-${index + 1}`}
+                    className="flex items-start space-x-3"
                   >
-                    <div className="p-3 rounded-xl bg-white/10 backdrop-blur-sm">
-                      <Icon className="h-6 w-6 text-white" />
+                    <div className="p-2 rounded-lg bg-white/10 backdrop-blur-sm">
+                      <Icon className="h-4 w-4 text-white" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-white text-lg">{feature.title}</h4>
-                      <p className="text-white/70 text-sm leading-relaxed">{feature.description}</p>
+                      <h4 className="font-semibold text-white text-sm">{feature.title}</h4>
+                      <p className="text-white/70 text-xs leading-relaxed">{feature.description}</p>
                     </div>
                   </div>
                 );
@@ -139,12 +139,12 @@ export default function AuthPage() {
             </div>
           </div>
 
-          <div className="mt-16 p-6 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20">
-            <div className="flex items-center space-x-3 mb-4">
-              <CheckCircle className="h-5 w-5 text-white" />
-              <span className="text-white font-semibold">System Status</span>
+          <div className="mt-8 p-4 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20">
+            <div className="flex items-center space-x-2 mb-3">
+              <CheckCircle className="h-4 w-4 text-white" />
+              <span className="text-white font-semibold text-sm">System Status</span>
             </div>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-2 gap-3 text-xs">
               <div>
                 <div className="text-white/60">Uptime</div>
                 <div className="text-white font-mono">99.9%</div>
@@ -159,8 +159,8 @@ export default function AuthPage() {
       </div>
 
       {/* Right side - Modern Login Form */}
-      <div className="flex-1 flex items-center justify-center p-16 bg-background overflow-y-auto">
-        <div className="w-full max-w-md">
+      <div className="flex-1 flex items-center justify-center p-8 bg-background">
+        <div className="w-full max-w-sm">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gradient mb-2">Welcome Back</h2>
             <p className="text-muted-foreground">Sign in to access the attendance management system</p>
