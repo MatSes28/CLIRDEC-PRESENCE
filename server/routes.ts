@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, requireAuth, requireAdmin, requireAdminOrFaculty } from "./auth";
 import { 
   insertStudentSchema, 
   insertClassroomSchema, 
@@ -17,24 +17,14 @@ import { checkAutoStartSessions } from "./services/scheduleService";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
-  await setupAuth(app);
+  setupAuth(app);
 
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
+
 
   // Dashboard statistics
-  app.get('/api/dashboard/stats', isAuthenticated, async (req: any, res) => {
+  app.get('/api/dashboard/stats', requireAdminOrFaculty, async (req: any, res) => {
     try {
-      const professorId = req.user.claims.sub;
+      const professorId = req.user.id;
       const today = new Date();
       
       // Get today's sessions
@@ -71,7 +61,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Student management routes
-  app.get('/api/students', isAuthenticated, async (req, res) => {
+  app.get('/api/students', requireAdminOrFaculty, async (req, res) => {
     try {
       const students = await storage.getStudents();
       res.json(students);
@@ -81,7 +71,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/students', isAuthenticated, async (req, res) => {
+  app.post('/api/students', requireAdminOrFaculty, async (req, res) => {
     try {
       const studentData = insertStudentSchema.parse(req.body);
       const student = await storage.createStudent(studentData);
@@ -92,7 +82,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/students/:id', isAuthenticated, async (req, res) => {
+  app.put('/api/students/:id', requireAdminOrFaculty, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const studentData = insertStudentSchema.partial().parse(req.body);
@@ -104,7 +94,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/students/:id', isAuthenticated, async (req, res) => {
+  app.delete('/api/students/:id', requireAdminOrFaculty, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       await storage.deleteStudent(id);
@@ -116,7 +106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Classroom management routes
-  app.get('/api/classrooms', isAuthenticated, async (req, res) => {
+  app.get('/api/classrooms', requireAdminOrFaculty, async (req, res) => {
     try {
       const classrooms = await storage.getClassrooms();
       res.json(classrooms);
@@ -126,7 +116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/classrooms', isAuthenticated, async (req, res) => {
+  app.post('/api/classrooms', requireAdminOrFaculty, async (req, res) => {
     try {
       const classroomData = insertClassroomSchema.parse(req.body);
       const classroom = await storage.createClassroom(classroomData);
@@ -137,7 +127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/classrooms/:id', isAuthenticated, async (req, res) => {
+  app.put('/api/classrooms/:id', requireAdminOrFaculty, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const classroomData = insertClassroomSchema.partial().parse(req.body);
@@ -150,7 +140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Subject management routes
-  app.get('/api/subjects', isAuthenticated, async (req: any, res) => {
+  app.get('/api/subjects', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const professorId = req.user.claims.sub;
       const subjects = await storage.getSubjectsByProfessor(professorId);
@@ -161,7 +151,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/subjects', isAuthenticated, async (req: any, res) => {
+  app.post('/api/subjects', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const professorId = req.user.claims.sub;
       const subjectData = insertSubjectSchema.parse({ ...req.body, professorId });
@@ -173,7 +163,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/subjects/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/subjects/:id', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
       const professorId = req.user.claims.sub;
@@ -186,7 +176,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/subjects/:id', isAuthenticated, async (req, res) => {
+  app.delete('/api/subjects/:id', requireAdminOrFaculty, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       await storage.deleteSubject(id);
@@ -198,7 +188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Schedule management routes
-  app.get('/api/schedules', isAuthenticated, async (req: any, res) => {
+  app.get('/api/schedules', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const professorId = req.user.claims.sub;
       const schedules = await storage.getSchedulesByProfessor(professorId);
@@ -209,7 +199,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/schedules', isAuthenticated, async (req: any, res) => {
+  app.post('/api/schedules', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const professorId = req.user.claims.sub;
       const scheduleData = insertScheduleSchema.parse({ ...req.body, professorId });
@@ -221,7 +211,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/schedules/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/schedules/:id', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
       const professorId = req.user.claims.sub;
@@ -234,7 +224,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/schedules/:id', isAuthenticated, async (req, res) => {
+  app.delete('/api/schedules/:id', requireAdminOrFaculty, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       await storage.deleteSchedule(id);
@@ -246,7 +236,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Class session management routes
-  app.get('/api/sessions/active', isAuthenticated, async (req: any, res) => {
+  app.get('/api/sessions/active', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const professorId = req.user.claims.sub;
       const activeSession = await storage.getActiveSession(professorId);
@@ -257,7 +247,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/sessions', isAuthenticated, async (req: any, res) => {
+  app.post('/api/sessions', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const professorId = req.user.claims.sub;
       const sessionData = insertClassSessionSchema.parse({ ...req.body, professorId });
@@ -269,7 +259,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/sessions/:id', isAuthenticated, async (req, res) => {
+  app.put('/api/sessions/:id', requireAdminOrFaculty, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const sessionData = insertClassSessionSchema.partial().parse(req.body);
@@ -281,7 +271,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/sessions/:id/end', isAuthenticated, async (req, res) => {
+  app.post('/api/sessions/:id/end', requireAdminOrFaculty, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const endTime = new Date();
@@ -297,7 +287,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Attendance management routes
-  app.get('/api/attendance/:sessionId', isAuthenticated, async (req, res) => {
+  app.get('/api/attendance/:sessionId', requireAdminOrFaculty, async (req, res) => {
     try {
       const sessionId = parseInt(req.params.sessionId);
       const attendance = await storage.getAttendanceBySession(sessionId);
@@ -308,7 +298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/attendance', isAuthenticated, async (req, res) => {
+  app.post('/api/attendance', requireAdminOrFaculty, async (req, res) => {
     try {
       const attendanceData = insertAttendanceSchema.parse(req.body);
       const attendance = await storage.createAttendance(attendanceData);
@@ -320,7 +310,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // RFID simulation routes
-  app.post('/api/rfid/simulate', isAuthenticated, async (req, res) => {
+  app.post('/api/rfid/simulate', requireAdminOrFaculty, async (req, res) => {
     try {
       const { rfidCardId, sessionId } = req.body;
       const result = await simulateRFIDTap(rfidCardId, sessionId);
@@ -332,7 +322,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Computer management routes
-  app.get('/api/computers', isAuthenticated, async (req, res) => {
+  app.get('/api/computers', requireAdminOrFaculty, async (req, res) => {
     try {
       const { classroomId } = req.query;
       const computers = classroomId 
@@ -345,7 +335,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/computers', isAuthenticated, async (req, res) => {
+  app.post('/api/computers', requireAdminOrFaculty, async (req, res) => {
     try {
       const computerData = insertComputerSchema.parse(req.body);
       const computer = await storage.createComputer(computerData);
@@ -356,7 +346,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/computers/:id', isAuthenticated, async (req, res) => {
+  app.put('/api/computers/:id', requireAdminOrFaculty, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const computerData = insertComputerSchema.partial().parse(req.body);
@@ -368,7 +358,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/computers/:id', isAuthenticated, async (req, res) => {
+  app.delete('/api/computers/:id', requireAdminOrFaculty, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       await storage.deleteComputer(id);
@@ -379,7 +369,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/computers/:id/assign', isAuthenticated, async (req, res) => {
+  app.put('/api/computers/:id/assign', requireAdminOrFaculty, async (req, res) => {
     try {
       const computerId = parseInt(req.params.id);
       const { studentId } = req.body;
@@ -391,7 +381,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/computers/:id/release', isAuthenticated, async (req, res) => {
+  app.put('/api/computers/:id/release', requireAdminOrFaculty, async (req, res) => {
     try {
       const computerId = parseInt(req.params.id);
       const computer = await storage.releaseComputer(computerId);
@@ -403,7 +393,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Email notification routes
-  app.post('/api/notifications/send', isAuthenticated, async (req, res) => {
+  app.post('/api/notifications/send', requireAdminOrFaculty, async (req, res) => {
     try {
       const { studentId, type, customMessage } = req.body;
       await sendEmailNotification(studentId, type, customMessage);
@@ -415,7 +405,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // System settings routes
-  app.get('/api/settings/:key', isAuthenticated, async (req, res) => {
+  app.get('/api/settings/:key', requireAdminOrFaculty, async (req, res) => {
     try {
       const key = req.params.key;
       const setting = await storage.getSystemSetting(key);
@@ -426,7 +416,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/settings/:key', isAuthenticated, async (req, res) => {
+  app.put('/api/settings/:key', requireAdminOrFaculty, async (req, res) => {
     try {
       const key = req.params.key;
       const { value, description } = req.body;
@@ -439,7 +429,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Reports routes
-  app.get('/api/reports/attendance/:sessionId', isAuthenticated, async (req, res) => {
+  app.get('/api/reports/attendance/:sessionId', requireAdminOrFaculty, async (req, res) => {
     try {
       const sessionId = parseInt(req.params.sessionId);
       const attendanceRecords = await storage.getAttendanceBySession(sessionId);
@@ -450,7 +440,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/reports/daily/:date', isAuthenticated, async (req: any, res) => {
+  app.get('/api/reports/daily/:date', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const date = new Date(req.params.date);
       const professorId = req.user.claims.sub;
@@ -487,7 +477,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/reports/student/:studentId', isAuthenticated, async (req, res) => {
+  app.get('/api/reports/student/:studentId', requireAdminOrFaculty, async (req, res) => {
     try {
       const studentId = parseInt(req.params.studentId);
       const { startDate, endDate } = req.query;
@@ -532,7 +522,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export routes for downloading reports
-  app.get('/api/reports/export/csv/:type', isAuthenticated, async (req: any, res) => {
+  app.get('/api/reports/export/csv/:type', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const { type } = req.params;
       const { sessionId, date, studentId } = req.query;
@@ -564,7 +554,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Auto-start session check (called periodically)
-  app.post('/api/schedules/check-auto-start', isAuthenticated, async (req, res) => {
+  app.post('/api/schedules/check-auto-start', requireAdminOrFaculty, async (req, res) => {
     try {
       const result = await checkAutoStartSessions();
       res.json(result);
@@ -575,7 +565,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Schedule file upload route
-  app.post('/api/schedules/upload', isAuthenticated, async (req: any, res) => {
+  app.post('/api/schedules/upload', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const professorId = req.user.claims.sub;
       
@@ -596,7 +586,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Reports export routes
-  app.get('/api/reports/export', isAuthenticated, async (req: any, res) => {
+  app.get('/api/reports/export', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const { range, subject, section, format } = req.query;
       const professorId = req.user.claims.sub;
@@ -646,7 +636,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/reports/generate', isAuthenticated, async (req: any, res) => {
+  app.get('/api/reports/generate', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const { range, subject, section } = req.query;
       const professorId = req.user.claims.sub;
@@ -673,7 +663,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Notifications route
-  app.post('/api/notifications/send', isAuthenticated, async (req: any, res) => {
+  app.post('/api/notifications/send', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const professorId = req.user.claims.sub;
       
@@ -721,7 +711,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update student information
-  app.put('/api/students/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/students/:id', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const studentId = parseInt(req.params.id);
       const { firstName, lastName, studentId: studentIdCode, email, parentEmail, parentName, year, section, rfidCardId } = req.body;
@@ -750,7 +740,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Send email to student/parent
-  app.post('/api/notifications/send-email', isAuthenticated, async (req: any, res) => {
+  app.post('/api/notifications/send-email', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const { studentId, recipientType, subject, message, priority, type } = req.body;
       const professorId = req.user.claims.sub;
@@ -837,7 +827,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get attendance behavior analysis for all students
-  app.get('/api/attendance/behavior-analysis', isAuthenticated, async (req: any, res) => {
+  app.get('/api/attendance/behavior-analysis', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const { analyzeStudentAttendanceBehavior } = await import('./services/attendanceMonitor');
       const students = await storage.getStudents();
@@ -871,7 +861,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Manually trigger attendance monitoring for all students
-  app.post('/api/attendance/trigger-monitoring', isAuthenticated, async (req: any, res) => {
+  app.post('/api/attendance/trigger-monitoring', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const { checkAllStudentsAttendanceBehavior } = await import('./services/attendanceMonitor');
       await checkAllStudentsAttendanceBehavior();
@@ -887,7 +877,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get attendance alerts history
-  app.get('/api/attendance/alerts', isAuthenticated, async (req: any, res) => {
+  app.get('/api/attendance/alerts', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const alerts = await storage.getUnsentNotifications();
       const sentAlerts = []; // Would get from database
@@ -904,7 +894,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get automated monitoring settings
-  app.get('/api/settings/attendance-monitoring', isAuthenticated, async (req: any, res) => {
+  app.get('/api/settings/attendance-monitoring', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const settings = {
         enabled: await storage.getSystemSetting('attendance_monitoring_enabled') || { value: 'true' },
@@ -928,7 +918,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update automated monitoring settings
-  app.put('/api/settings/attendance-monitoring', isAuthenticated, async (req: any, res) => {
+  app.put('/api/settings/attendance-monitoring', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const { enabled, thresholds, notifications } = req.body;
       

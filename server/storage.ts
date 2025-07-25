@@ -33,8 +33,10 @@ import { db } from "./db";
 import { eq, and, gte, lte, desc, asc } from "drizzle-orm";
 
 export interface IStorage {
-  // User operations - required for Replit Auth
+  // User operations
   getUser(id: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: Partial<User>): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
 
   // Student operations
@@ -116,6 +118,8 @@ export class MemStorage implements IStorage {
   }
 
   private initializeSampleData() {
+    // Sample data initialization - users will be created through seedData.ts with proper password hashing
+
     // Add sample classrooms
     this.createClassroom({ name: "Lab 204", location: "CLIRDEC Building", capacity: 30, computers: 25 });
     this.createClassroom({ name: "Room 301", location: "Main Building", capacity: 40, computers: 0 });
@@ -177,9 +181,33 @@ export class MemStorage implements IStorage {
     }
   }
 
-  // User operations - required for Replit Auth
+  // User operations
   async getUser(id: string): Promise<User | undefined> {
     return this.users.get(id);
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.email === email);
+  }
+
+  async createUser(userData: Partial<User>): Promise<User> {
+    const id = userData.id || Math.random().toString(36).substr(2, 9);
+    const user: User = {
+      id,
+      email: userData.email!,
+      password: userData.password!,
+      firstName: userData.firstName!,
+      lastName: userData.lastName!,
+      role: userData.role || "faculty",
+      facultyId: userData.facultyId || null,
+      department: userData.department || "Information Technology",
+      profileImageUrl: userData.profileImageUrl || null,
+      isActive: userData.isActive ?? true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.users.set(id, user);
+    return user;
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {

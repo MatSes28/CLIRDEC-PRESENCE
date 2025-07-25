@@ -1,8 +1,41 @@
 import { storage } from "./storage";
+import { scrypt, randomBytes } from "crypto";
+import { promisify } from "util";
+
+const scryptAsync = promisify(scrypt);
+
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+}
 
 export async function seedDatabase() {
   try {
     console.log("Seeding database with sample data...");
+
+    // Create sample users with hashed passwords
+    await storage.createUser({
+      email: "admin@clsu.edu.ph",
+      password: await hashPassword("admin123"),
+      firstName: "System",
+      lastName: "Administrator",
+      role: "admin",
+      facultyId: "ADMIN001",
+      department: "Information Technology"
+    });
+
+    await storage.createUser({
+      email: "faculty@clsu.edu.ph", 
+      password: await hashPassword("faculty123"),
+      firstName: "Faculty",
+      lastName: "Member",
+      role: "faculty",
+      facultyId: "FAC001",
+      department: "Information Technology"
+    });
+
+    console.log("Created sample users: admin@clsu.edu.ph and faculty@clsu.edu.ph");
 
     // Create sample classrooms
     const classroom1 = await storage.createClassroom({

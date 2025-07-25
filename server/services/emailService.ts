@@ -248,7 +248,7 @@ export async function processEmailQueue(): Promise<void> {
           from: FROM_EMAIL,
           subject: notification.subject,
           html: notification.content,
-          text: notification.content.replace(/<[^>]*>/g, '') // Strip HTML tags for text version
+          text: notification.content?.replace(/<[^>]*>/g, '') || '' // Strip HTML tags for text version
         });
         
         await storage.markNotificationAsSent(notification.id);
