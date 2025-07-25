@@ -343,3 +343,18 @@
 .progress-poor {
   background-color: hsl(0, 84.2%, 60.2%);
 }
+
+/* Fix scrolling issues - prevent duplicate login pages */
+html, body {
+  height: 100vh;
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+
+#root {
+  height: 100vh;
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
