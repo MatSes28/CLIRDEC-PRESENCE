@@ -105,3 +105,5 @@ CLIRDEC: PRESENCE is a comprehensive attendance monitoring system designed for C
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+Color theme: #2596be (rgb(37, 150, 190)) - consistent blue theme throughout system
+Login design: Split-screen layout with branding on left, login form on right

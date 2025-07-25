@@ -13,24 +13,24 @@
   --card-foreground: hsl(224, 71%, 4%);
   --border: hsl(220, 13%, 91%);
   --input: hsl(220, 13%, 91%);
-  --primary: hsl(217, 91%, 60%);
+  --primary: hsl(197, 69%, 45%);
   --primary-foreground: hsl(0, 0%, 100%);
   --secondary: hsl(220, 14%, 96%);
   --secondary-foreground: hsl(220, 9%, 46%);
-  --accent: hsl(217, 91%, 60%);
+  --accent: hsl(197, 69%, 45%);
   --accent-foreground: hsl(0, 0%, 100%);
   --destructive: hsl(0, 84.2%, 60.2%);
   --destructive-foreground: hsl(60, 9.1%, 97.8%);
-  --ring: hsl(217, 91%, 60%);
+  --ring: hsl(197, 69%, 45%);
   --radius: 0.5rem;
   --sidebar-background: hsl(0, 0%, 98%);
   --sidebar-foreground: hsl(220, 9%, 46%);
-  --sidebar-primary: hsl(217, 91%, 60%);
+  --sidebar-primary: hsl(197, 69%, 45%);
   --sidebar-primary-foreground: hsl(0, 0%, 100%);
   --sidebar-accent: hsl(220, 14%, 96%);
   --sidebar-accent-foreground: hsl(220, 9%, 46%);
   --sidebar-border: hsl(220, 13%, 91%);
-  --sidebar-ring: hsl(217, 91%, 60%);
+  --sidebar-ring: hsl(197, 69%, 45%);
 }
 
 .dark {
@@ -44,24 +44,24 @@
   --card-foreground: hsl(0, 0%, 98%);
   --border: hsl(215, 28%, 17%);
   --input: hsl(215, 28%, 17%);
-  --primary: hsl(217, 91%, 60%);
+  --primary: hsl(197, 69%, 45%);
   --primary-foreground: hsl(0, 0%, 100%);
   --secondary: hsl(215, 28%, 17%);
   --secondary-foreground: hsl(210, 40%, 98%);
-  --accent: hsl(217, 91%, 60%);
+  --accent: hsl(197, 69%, 45%);
   --accent-foreground: hsl(0, 0%, 100%);
   --destructive: hsl(0, 62.8%, 30.6%);
   --destructive-foreground: hsl(0, 0%, 98%);
-  --ring: hsl(217, 91%, 60%);
+  --ring: hsl(197, 69%, 45%);
   --radius: 0.5rem;
   --sidebar-background: hsl(224, 71%, 4%);
   --sidebar-foreground: hsl(217, 10%, 65%);
-  --sidebar-primary: hsl(217, 91%, 60%);
+  --sidebar-primary: hsl(197, 69%, 45%);
   --sidebar-primary-foreground: hsl(0, 0%, 100%);
   --sidebar-accent: hsl(215, 28%, 17%);
   --sidebar-accent-foreground: hsl(217, 10%, 65%);
   --sidebar-border: hsl(215, 28%, 17%);
-  --sidebar-ring: hsl(217, 91%, 60%);
+  --sidebar-ring: hsl(197, 69%, 45%);
 }
 
 @layer base {
