@@ -14,19 +14,24 @@ export function useAuth() {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("GET", "/api/logout");
+      const response = await fetch("/api/logout", {
+        method: "POST",
+        credentials: "include",
+      });
       return response;
     },
     onSuccess: () => {
-      queryClient.setQueryData(["/api/user"], null);
+      // Clear all cached data
       queryClient.clear();
-      setLocation("/");
+      queryClient.setQueryData(["/api/user"], null);
+      // Force redirect to auth page
+      window.location.href = "/";
     },
     onError: () => {
-      // Even if logout fails on server, clear local state
-      queryClient.setQueryData(["/api/user"], null);
+      // Even if logout fails on server, clear local state and redirect
       queryClient.clear();
-      setLocation("/");
+      queryClient.setQueryData(["/api/user"], null);
+      window.location.href = "/";
     }
   });
 

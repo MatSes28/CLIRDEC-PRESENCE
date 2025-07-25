@@ -129,12 +129,22 @@ export function setupAuth(app: Express) {
     res.status(200).json(req.user);
   });
 
-  app.post("/api/logout", (req, res, next) => {
-    req.logout((err) => {
+  // Handle both GET and POST logout requests
+  const logoutHandler = (req: any, res: any, next: any) => {
+    req.logout((err: any) => {
       if (err) return next(err);
-      res.sendStatus(200);
+      req.session.destroy((destroyErr: any) => {
+        if (destroyErr) {
+          console.error("Session destroy error:", destroyErr);
+        }
+        res.clearCookie('connect.sid');
+        res.sendStatus(200);
+      });
     });
-  });
+  };
+
+  app.post("/api/logout", logoutHandler);
+  app.get("/api/logout", logoutHandler);
 
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) {
