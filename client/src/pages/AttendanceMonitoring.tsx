@@ -73,24 +73,7 @@ export default function AttendanceMonitoring() {
 
   // Get monitoring settings
   const { data: monitoringSettings } = useQuery({
-    queryKey: ['/api/settings/attendance-monitoring'],
-    onSuccess: (data) => {
-      if (data) {
-        setSettings({
-          enabled: data.enabled?.value === 'true',
-          thresholds: {
-            critical: parseInt(data.thresholds.critical?.value || '50'),
-            concerning: parseInt(data.thresholds.concerning?.value || '60'),
-            consecutiveAbsences: parseInt(data.thresholds.consecutiveAbsences?.value || '3'),
-            lateArrivalsWeekly: parseInt(data.thresholds.lateArrivalsWeekly?.value || '3')
-          },
-          notifications: {
-            cooldownDays: parseInt(data.notifications.cooldownDays?.value || '7'),
-            checkInterval: parseInt(data.notifications.checkInterval?.value || '6')
-          }
-        });
-      }
-    }
+    queryKey: ['/api/settings/attendance-monitoring']
   });
 
   // Trigger manual monitoring
@@ -156,9 +139,9 @@ export default function AttendanceMonitoring() {
     updateSettingsMutation.mutate(settings);
   };
 
-  const criticalStudents = behaviorAnalysis?.filter((b: AttendanceBehavior) => b.behaviorLevel === 'critical') || [];
-  const concerningStudents = behaviorAnalysis?.filter((b: AttendanceBehavior) => b.behaviorLevel === 'concerning') || [];
-  const studentsRequiringAlerts = behaviorAnalysis?.filter((b: AttendanceBehavior) => b.requiresAlert) || [];
+  const criticalStudents = (behaviorAnalysis as AttendanceBehavior[])?.filter((b: AttendanceBehavior) => b.behaviorLevel === 'critical') || [];
+  const concerningStudents = (behaviorAnalysis as AttendanceBehavior[])?.filter((b: AttendanceBehavior) => b.behaviorLevel === 'concerning') || [];
+  const studentsRequiringAlerts = (behaviorAnalysis as AttendanceBehavior[])?.filter((b: AttendanceBehavior) => b.requiresAlert) || [];
 
   return (
     <div className="p-6 space-y-6">
@@ -223,7 +206,7 @@ export default function AttendanceMonitoring() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Students</p>
-                <p className="text-2xl font-bold">{behaviorAnalysis?.length || 0}</p>
+                <p className="text-2xl font-bold">{(behaviorAnalysis as AttendanceBehavior[])?.length || 0}</p>
               </div>
               <Users className="h-8 w-8 text-muted-foreground" />
             </div>
@@ -261,7 +244,7 @@ export default function AttendanceMonitoring() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {behaviorAnalysis?.map((behavior: AttendanceBehavior) => (
+                  {(behaviorAnalysis as AttendanceBehavior[])?.map((behavior: AttendanceBehavior) => (
                     <div key={behavior.studentId} className="border rounded-lg p-4">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center space-x-3">
@@ -333,17 +316,17 @@ export default function AttendanceMonitoring() {
                 <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                   <div>
                     <p className="font-medium">Pending Alerts</p>
-                    <p className="text-sm text-muted-foreground">{alerts?.pending?.length || 0} alerts queued for sending</p>
+                    <p className="text-sm text-muted-foreground">{(alerts as any)?.pending?.length || 0} alerts queued for sending</p>
                   </div>
-                  <Badge variant="outline">{alerts?.pending?.length || 0}</Badge>
+                  <Badge variant="outline">{(alerts as any)?.pending?.length || 0}</Badge>
                 </div>
                 
                 <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                   <div>
                     <p className="font-medium">Sent Alerts</p>
-                    <p className="text-sm text-muted-foreground">{alerts?.sent?.length || 0} alerts sent successfully</p>
+                    <p className="text-sm text-muted-foreground">{(alerts as any)?.sent?.length || 0} alerts sent successfully</p>
                   </div>
-                  <Badge variant="secondary">{alerts?.sent?.length || 0}</Badge>
+                  <Badge variant="secondary">{(alerts as any)?.sent?.length || 0}</Badge>
                 </div>
               </div>
             </CardContent>

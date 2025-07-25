@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import AuthPage from "@/pages/AuthPage";
 import Dashboard from "@/pages/Dashboard";
+import EnhancedDashboard from "@/pages/EnhancedDashboard";
 import LiveAttendance from "@/pages/LiveAttendance";
 import Schedule from "@/pages/Schedule";
 import Students from "@/pages/Students";
@@ -16,6 +17,9 @@ import AttendanceMonitoring from "@/pages/AttendanceMonitoring";
 import NotFound from "@/pages/not-found";
 import Sidebar from "@/components/Sidebar";
 import TopBar from "@/components/TopBar";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { WebSocketProvider } from "@/components/WebSocketProvider";
+import RealTimeNotifications from "@/components/RealTimeNotifications";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -42,13 +46,14 @@ function Router() {
         </>
       ) : (
         <>
-          <div className="flex min-h-screen">
+          {/* Desktop Layout */}
+          <div className="hidden lg:flex min-h-screen">
             <Sidebar />
             <div className="flex-1 ml-80 flex flex-col min-h-screen">
               <TopBar />
               <main className="flex-1 overflow-auto p-8 space-y-8">
                 <Switch>
-                  <Route path="/" component={Dashboard} />
+                  <Route path="/" component={EnhancedDashboard} />
                   <Route path="/attendance" component={LiveAttendance} />
                   <Route path="/schedule" component={Schedule} />
                   <Route path="/students" component={Students} />
@@ -61,6 +66,24 @@ function Router() {
               </main>
             </div>
           </div>
+
+          {/* Mobile Layout */}
+          <div className="lg:hidden min-h-screen">
+            <TopBar />
+            <main className="p-4 space-y-4">
+              <Switch>
+                <Route path="/" component={EnhancedDashboard} />
+                <Route path="/attendance" component={LiveAttendance} />
+                <Route path="/schedule" component={Schedule} />
+                <Route path="/students" component={Students} />
+                <Route path="/computers" component={Computers} />
+                <Route path="/reports" component={Reports} />
+                <Route path="/monitoring" component={AttendanceMonitoring} />
+                <Route path="/settings" component={Settings} />
+                <Route component={NotFound} />
+              </Switch>
+            </main>
+          </div>
         </>
       )}
     </Switch>
@@ -70,10 +93,17 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
+      <ThemeProvider>
+        <WebSocketProvider>
+          <TooltipProvider>
+            <div className="min-h-screen bg-background text-foreground">
+              <Router />
+              <Toaster />
+              <RealTimeNotifications />
+            </div>
+          </TooltipProvider>
+        </WebSocketProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

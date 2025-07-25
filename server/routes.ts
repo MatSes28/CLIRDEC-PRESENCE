@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { setupAuth, requireAuth, requireAdmin, requireAdminOrFaculty } from "./auth";
 import { 
@@ -14,10 +15,22 @@ import {
 import { sendEmailNotification } from "./services/emailService";
 import { simulateRFIDTap } from "./services/rfidSimulator";
 import { checkAutoStartSessions } from "./services/scheduleService";
+import { performanceMonitor } from "./services/performanceMonitor";
+import { generateAttendanceTrendData, generateStudentPerformanceData } from "./services/reportingService";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   setupAuth(app);
+
+  // Performance monitoring middleware
+  app.use((req, res, next) => {
+    const start = Date.now();
+    res.on('finish', () => {
+      const responseTime = Date.now() - start;
+      performanceMonitor.recordMetric(responseTime);
+    });
+    next();
+  });
 
 
 
@@ -684,7 +697,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const student = await storage.getStudent(record.studentId);
             if (student?.parentEmail) {
               await sendEmailNotification(
-                student.parentEmail,
+                parseInt(student.id.toString()),
                 'student_absent',
                 {
                   studentName: `${student.firstName} ${student.lastName}`,
@@ -880,7 +893,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/attendance/alerts', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const alerts = await storage.getUnsentNotifications();
-      const sentAlerts = []; // Would get from database
+      const sentAlerts: any[] = []; // Would get from database
       
       res.json({
         pending: alerts,
@@ -958,6 +971,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create HTTP server
   const httpServer = createServer(app);
+  
+  // WebSocket server for real-time notifications
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  
+  wss.on('connection', (ws: WebSocket) => {
+    console.log('New WebSocket connection established');
+    
+    ws.on('message', (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        console.log('WebSocket message received:', data);
+      } catch (error) {
+        console.error('Invalid WebSocket message:', error);
+      }
+    });
+    
+    ws.on('close', () => {
+      console.log('WebSocket connection closed');
+    });
+    
+    // Send welcome message
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        type: 'system',
+        title: 'Connected',
+        message: 'Real-time notifications active',
+        timestamp: new Date()
+      }));
+    }
+  });
+
+  // Broadcast notification to all connected clients
+  const broadcastNotification = (notification: any) => {
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify(notification));
+      }
+    });
+  };
+
+  // Add notification broadcaster to global scope for use in other services
+  (global as any).broadcastNotification = broadcastNotification;
+
+  // Additional API routes for enhanced features
+  
+  // Performance metrics API
+  app.get('/api/performance/metrics', requireAdminOrFaculty, (req, res) => {
+    res.json({
+      metrics: performanceMonitor.getMetrics(),
+      averageResponseTime: performanceMonitor.getAverageResponseTime(),
+      uptime: performanceMonitor.getUptime()
+    });
+  });
+
+  // Reporting APIs for analytics
+  app.get('/api/reports/attendance-trend', requireAdminOrFaculty, async (req, res) => {
+    try {
+      const trendData = await generateAttendanceTrendData();
+      res.json(trendData);
+    } catch (error) {
+      console.error("Error fetching attendance trend:", error);
+      res.status(500).json({ message: "Failed to fetch attendance trend data" });
+    }
+  });
+
+  app.get('/api/reports/student-performance', requireAdminOrFaculty, async (req, res) => {
+    try {
+      const performanceData = await generateStudentPerformanceData();
+      res.json(performanceData);
+    } catch (error) {
+      console.error("Error fetching student performance:", error);
+      res.status(500).json({ message: "Failed to fetch student performance data" });
+    }
+  });
+  
   return httpServer;
 }
