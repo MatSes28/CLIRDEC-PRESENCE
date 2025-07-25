@@ -1,6 +1,17 @@
 import { Link, useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { 
   LayoutDashboard,
@@ -93,15 +104,35 @@ export default function Sidebar() {
             <p className="text-xs text-gray-500 capitalize">{user?.role || 'Faculty'} • IT Department</p>
           </div>
         </div>
-        <Button 
-          variant="ghost" 
-          onClick={logout}
-          disabled={isLoggingOut}
-          className="w-full justify-start text-gray-700 hover:text-red-600 hover:bg-red-50 transition-colors duration-200"
-        >
-          <LogOut className="mr-2 h-4 w-4" />
-          {isLoggingOut ? "Signing Out..." : "Sign Out"}
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button 
+              variant="ghost" 
+              disabled={isLoggingOut}
+              className="w-full justify-start text-gray-700 hover:text-red-600 hover:bg-red-50 transition-colors duration-200"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              {isLoggingOut ? "Signing Out..." : "Sign Out"}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Sign Out Confirmation</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to sign out? You will need to log in again to access the system.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Go Back</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={logout}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Yes, Sign Out
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
