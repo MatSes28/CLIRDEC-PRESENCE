@@ -7,12 +7,16 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+// Python FastAPI backend configuration
+const API_BASE_URL = 'http://localhost:8000';
+
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
+  const fullUrl = url.startsWith('/') ? `${API_BASE_URL}${url}` : url;
+  const res = await fetch(fullUrl, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
@@ -24,12 +28,15 @@ export async function apiRequest(
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
+
 export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
+    const endpoint = queryKey[0] as string;
+    const url = endpoint.startsWith('/') ? `${API_BASE_URL}${endpoint}` : endpoint;
+    const res = await fetch(url, {
       credentials: "include",
     });
 

@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus, Trash2, Users, Shield, GraduationCap } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import apiClient from "@/lib/api";
 
 interface User {
   id: string;
@@ -42,16 +42,12 @@ export default function UserManagement() {
   // Fetch users
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['/api/users'],
-    queryFn: () => apiRequest('/api/users')
+    queryFn: () => apiClient.get('/api/users')
   });
 
   // Create user mutation
   const createUserMutation = useMutation({
-    mutationFn: (userData: typeof newUser) => apiRequest('/api/users', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userData)
-    }),
+    mutationFn: (userData: typeof newUser) => apiClient.post('/api/users', userData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
       setIsCreateDialogOpen(false);
@@ -80,9 +76,7 @@ export default function UserManagement() {
 
   // Delete user mutation
   const deleteUserMutation = useMutation({
-    mutationFn: (userId: string) => apiRequest(`/api/users/${userId}`, {
-      method: 'DELETE'
-    }),
+    mutationFn: (userId: string) => apiClient.delete(`/api/users/${userId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
       toast({
@@ -248,7 +242,7 @@ export default function UserManagement() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {users.length === 0 ? (
+              {!Array.isArray(users) || users.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   No users found
                 </div>

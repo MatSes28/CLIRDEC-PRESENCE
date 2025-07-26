@@ -6,10 +6,27 @@ from sqlalchemy import create_engine, MetaData
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 
-# Database URL from environment
+# Database URL from environment with comprehensive fallbacks
 DATABASE_URL = os.getenv("DATABASE_URL")
-if not DATABASE_URL:
-    raise ValueError("DATABASE_URL environment variable is not set")
+
+# Try to build DATABASE_URL from individual components if not available
+if not DATABASE_URL or DATABASE_URL.strip() == "":
+    PGHOST = os.getenv("PGHOST") 
+    PGPORT = os.getenv("PGPORT")
+    PGUSER = os.getenv("PGUSER")
+    PGPASSWORD = os.getenv("PGPASSWORD")
+    PGDATABASE = os.getenv("PGDATABASE")
+    
+    # Only build URL if we have actual values
+    if all([PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE]):
+        DATABASE_URL = f"postgresql://{PGUSER}:{PGPASSWORD}@{PGHOST}:{PGPORT}/{PGDATABASE}"
+        print(f"✅ Built DATABASE_URL from components: postgresql://{PGUSER}:***@{PGHOST}:{PGPORT}/{PGDATABASE}")
+    else:
+        print("❌ PostgreSQL database not configured. Checking database provisioning...")
+        
+        # Use in-memory SQLite for development if PostgreSQL not available
+        print("🔧 Falling back to SQLite for development")
+        DATABASE_URL = "sqlite:///./clirdec_presence.db"
 
 print(f"Connecting to database: {DATABASE_URL}")
 

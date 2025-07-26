@@ -13,6 +13,7 @@ dependencies = [
     "pydantic>=2.11.7",
     "python-jose[cryptography]>=3.5.0",
     "python-multipart>=0.0.20",
+    "sendgrid>=6.12.4",
     "sqlalchemy>=2.0.41",
-    "uvicorn>=0.35.0",
+    "uvicorn[standard]>=0.35.0",
 ]
