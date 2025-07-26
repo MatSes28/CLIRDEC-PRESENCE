@@ -15,17 +15,21 @@ CLIRDEC: PRESENCE is a comprehensive attendance monitoring system designed for C
 - **Authentication**: Session-based authentication with Replit Auth integration
 
 ### Backend Architecture (Updated January 26, 2025)
-- **Runtime**: Python 3.11 with FastAPI framework
-- **Language**: Python with Pydantic for data validation
-- **Database**: PostgreSQL with SQLAlchemy ORM for type-safe database operations
-- **Authentication**: JWT-based authentication with Python-JOSE
-- **Session Management**: Stateless JWT tokens with FastAPI security
+- **Runtime**: Node.js with Express.js framework
+- **Language**: TypeScript with Drizzle ORM for type-safe database operations
+- **Database**: PostgreSQL with connection pooling and error recovery
+- **Authentication**: Session-based authentication with Replit Auth integration
+- **WebSocket**: Real-time notifications via WebSocket server on port 5000
+- **Error Handling**: Comprehensive global error handlers for unhandled rejections
 
 ### Data Storage Solutions
-- **Primary Database**: In-memory storage with optimized performance for development and testing
-- **Session Storage**: MemoryStore for efficient session management without external dependencies
-- **Performance**: Optimized memory usage (~1.8MB) with reduced connection overhead
-- **Reliability**: Eliminated database connection failures with stable in-memory architecture
+- **Primary Database**: PostgreSQL with Drizzle ORM and connection pooling
+- **Session Storage**: In-memory session management for development
+- **Performance**: Optimized with error handling and connection recovery
+- **Reliability**: Global error handlers prevent unhandled promise rejections
+
+### Known Development Issues
+- **Vite HMR WebSocket**: Development environment shows `wss://localhost:undefined` errors from Vite's Hot Module Replacement. This is a Vite configuration issue that doesn't affect application functionality. Error suppression has been added to client-side code.
 
 ## Key Components
 
