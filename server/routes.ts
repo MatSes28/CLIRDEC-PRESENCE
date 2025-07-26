@@ -18,6 +18,9 @@ import { checkAutoStartSessions } from "./services/scheduleService";
 import { performanceMonitor } from "./services/performanceMonitor";
 import { generateAttendanceTrendData, generateStudentPerformanceData } from "./services/reportingService";
 
+// Import hash function for user password management
+import { hashPassword } from "./auth";
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
@@ -32,48 +35,148 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
+  // User management routes - Admin only
+  app.get('/api/users', requireAdmin, async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      // Remove passwords from response for security
+      const safeUsers = users.map(user => ({
+        ...user,
+        password: undefined
+      }));
+      res.json(safeUsers);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.post('/api/users', requireAdmin, async (req, res) => {
+    try {
+      const { email, password, firstName, lastName, role, facultyId, department } = req.body;
+      
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+
+      const user = await storage.createUser({
+        email,
+        password: await hashPassword(password),
+        firstName,
+        lastName,
+        role,
+        facultyId,
+        department: department || "Information Technology"
+      });
+
+      // Remove password from response
+      const { password: _, ...safeUser } = user;
+      res.status(201).json(safeUser);
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(400).json({ message: "Failed to create user" });
+    }
+  });
+
+  app.delete('/api/users/:id', requireAdmin, async (req, res) => {
+    try {
+      const userId = req.params.id;
+      
+      // Prevent admin from deleting themselves
+      if (userId === (req as any).user.id) {
+        return res.status(400).json({ message: "Cannot delete your own account" });
+      }
+
+      await storage.deleteUser(userId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(400).json({ message: "Failed to delete user" });
+    }
+  });
 
 
-  // Dashboard statistics
+
+  // Role-based dashboard statistics
   app.get('/api/dashboard/stats', requireAdminOrFaculty, async (req: any, res) => {
     try {
-      const professorId = req.user.id;
+      const currentUser = req.user;
       const today = new Date();
       
-      // Get today's sessions
-      const todaySessions = await storage.getClassSessionsByDate(today);
-      const profSessions = todaySessions.filter(s => s.professorId === professorId);
-      
-      // Get active session
-      const activeSession = await storage.getActiveSession(professorId);
-      
-      let presentCount = 0;
-      let absentCount = 0;
-      let totalStudents = 0;
-      
-      if (activeSession) {
-        const attendanceRecords = await storage.getAttendanceBySession(activeSession.id);
-        presentCount = attendanceRecords.filter(a => a.status === 'present' || a.status === 'late').length;
-        absentCount = attendanceRecords.filter(a => a.status === 'absent').length;
-        totalStudents = attendanceRecords.length;
+      if (currentUser.role === 'admin') {
+        // Admin gets system-wide statistics
+        const allSessions = await storage.getAllClassSessions();
+        const todaySessions = allSessions.filter(session => {
+          const sessionDate = new Date(session.createdAt).toDateString();
+          return sessionDate === today.toDateString();
+        });
+        
+        const students = await storage.getStudents();
+        const classrooms = await storage.getClassrooms();
+        const users = await storage.getAllUsers();
+        const faculty = users.filter(u => u.role === 'faculty');
+        
+        let totalPresent = 0, totalAbsent = 0, totalLate = 0;
+        
+        for (const session of todaySessions) {
+          const attendance = await storage.getAttendanceBySession(session.id);
+          totalPresent += attendance.filter(a => a.status === 'present').length;
+          totalAbsent += attendance.filter(a => a.status === 'absent').length;
+          totalLate += attendance.filter(a => a.status === 'late').length;
+        }
+        
+        res.json({
+          todayClasses: todaySessions.length,
+          presentStudents: totalPresent,
+          absentStudents: totalAbsent,
+          lateStudents: totalLate,
+          totalStudents: students.length,
+          totalClassrooms: classrooms.length,
+          totalFaculty: faculty.length,
+          attendanceRate: `${totalPresent + totalAbsent + totalLate > 0 ? Math.round((totalPresent / (totalPresent + totalAbsent + totalLate)) * 100) : 0}%`,
+          systemRole: 'admin'
+        });
+      } else {
+        // Faculty gets only their own class statistics
+        const professorId = currentUser.id;
+        const todaySessions = await storage.getClassSessionsByDate(today);
+        const profSessions = todaySessions.filter(s => s.professorId === professorId);
+        
+        const activeSession = await storage.getActiveSession(professorId);
+        
+        let presentCount = 0;
+        let absentCount = 0;
+        let lateCount = 0;
+        let totalStudents = 0;
+        
+        if (activeSession) {
+          const attendanceRecords = await storage.getAttendanceBySession(activeSession.id);
+          presentCount = attendanceRecords.filter(a => a.status === 'present').length;
+          lateCount = attendanceRecords.filter(a => a.status === 'late').length;
+          absentCount = attendanceRecords.filter(a => a.status === 'absent').length;
+          totalStudents = attendanceRecords.length;
+        }
+        
+        const attendanceRate = totalStudents > 0 ? Math.round(((presentCount + lateCount) / totalStudents) * 100) : 0;
+        
+        res.json({
+          todayClasses: profSessions.length,
+          presentStudents: presentCount,
+          absentStudents: absentCount,
+          lateStudents: lateCount,
+          attendanceRate: `${attendanceRate}%`,
+          activeSession,
+          systemRole: 'faculty'
+        });
       }
-      
-      const attendanceRate = totalStudents > 0 ? Math.round((presentCount / totalStudents) * 100) : 0;
-      
-      res.json({
-        todayClasses: profSessions.length,
-        presentStudents: presentCount,
-        absentStudents: absentCount,
-        attendanceRate: `${attendanceRate}%`,
-        activeSession
-      });
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
       res.status(500).json({ message: "Failed to fetch dashboard statistics" });
     }
   });
 
-  // Student management routes
+  // Student management routes - Admin only for user management
   app.get('/api/students', requireAdminOrFaculty, async (req, res) => {
     try {
       const students = await storage.getStudents();
@@ -84,7 +187,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/students', requireAdminOrFaculty, async (req, res) => {
+  app.post('/api/students', requireAdmin, async (req, res) => {
     try {
       const studentData = insertStudentSchema.parse(req.body);
       const student = await storage.createStudent(studentData);
@@ -95,7 +198,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/students/:id', requireAdminOrFaculty, async (req, res) => {
+  app.put('/api/students/:id', requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const studentData = insertStudentSchema.partial().parse(req.body);
@@ -107,7 +210,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/students/:id', requireAdminOrFaculty, async (req, res) => {
+  app.delete('/api/students/:id', requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       await storage.deleteStudent(id);
@@ -118,7 +221,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Classroom management routes
+  // Classroom management routes - Admin only for classroom management
   app.get('/api/classrooms', requireAdminOrFaculty, async (req, res) => {
     try {
       const classrooms = await storage.getClassrooms();
@@ -129,7 +232,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/classrooms', requireAdminOrFaculty, async (req, res) => {
+  app.post('/api/classrooms', requireAdmin, async (req, res) => {
     try {
       const classroomData = insertClassroomSchema.parse(req.body);
       const classroom = await storage.createClassroom(classroomData);
@@ -140,7 +243,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/classrooms/:id', requireAdminOrFaculty, async (req, res) => {
+  app.put('/api/classrooms/:id', requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const classroomData = insertClassroomSchema.partial().parse(req.body);
@@ -405,10 +508,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Email notification routes
-  app.post('/api/notifications/send', requireAdminOrFaculty, async (req, res) => {
+  // Email notification routes - Admin has full access, Faculty can send to their students
+  app.post('/api/notifications/send', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const { studentId, type, customMessage } = req.body;
+      const currentUser = req.user;
+      
+      // For faculty, add additional validation if needed (e.g., ensure they can only send to their students)
+      if (currentUser.role === 'faculty') {
+        // Could add logic here to verify student is in faculty's classes
+      }
+      
       await sendEmailNotification(studentId, type, customMessage);
       res.json({ message: "Notification queued for sending" });
     } catch (error) {
@@ -417,7 +527,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // System settings routes
+  // System settings routes - Admin only for system configuration
   app.get('/api/settings/:key', requireAdminOrFaculty, async (req, res) => {
     try {
       const key = req.params.key;
@@ -429,7 +539,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/settings/:key', requireAdminOrFaculty, async (req, res) => {
+  app.put('/api/settings/:key', requireAdmin, async (req, res) => {
     try {
       const key = req.params.key;
       const { value, description } = req.body;
@@ -874,7 +984,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Manually trigger attendance monitoring for all students
-  app.post('/api/attendance/trigger-monitoring', requireAdminOrFaculty, async (req: any, res) => {
+  app.post('/api/attendance/trigger-monitoring', requireAdmin, async (req: any, res) => {
     try {
       const { checkAllStudentsAttendanceBehavior } = await import('./services/attendanceMonitor');
       await checkAllStudentsAttendanceBehavior();
@@ -931,7 +1041,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update automated monitoring settings
-  app.put('/api/settings/attendance-monitoring', requireAdminOrFaculty, async (req: any, res) => {
+  app.put('/api/settings/attendance-monitoring', requireAdmin, async (req: any, res) => {
     try {
       const { enabled, thresholds, notifications } = req.body;
       

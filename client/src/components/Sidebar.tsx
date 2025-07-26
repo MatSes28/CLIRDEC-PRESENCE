@@ -82,6 +82,22 @@ export default function Sidebar() {
     },
   ];
 
+  // Filter navigation items based on user role
+  const filteredNavigationItems = user?.role === 'admin' 
+    ? [
+        ...navigationItems.slice(0, -1), // All items except settings
+        { 
+          path: "/users", 
+          icon: Users, 
+          label: "User Management",
+          description: "Faculty & admin accounts"
+        },
+        navigationItems[navigationItems.length - 1] // Settings last
+      ]
+    : navigationItems.filter(item => 
+        item.path !== "/monitoring" // Faculty can't access monitoring
+      );
+
   const isActive = (path: string) => {
     if (path === "/") {
       return location === "/";
@@ -115,7 +131,7 @@ export default function Sidebar() {
       
       {/* Modern Navigation */}
       <nav className="px-6 py-6 space-y-3">
-        {navigationItems.map((item, index) => {
+        {filteredNavigationItems.map((item, index) => {
           const Icon = item.icon;
           const active = isActive(item.path);
           

@@ -184,6 +184,18 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values()).find(user => user.email === email);
   }
 
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values()).filter(user => user.isActive);
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    this.users.delete(id);
+  }
+
+  async getAllClassSessions(): Promise<ClassSession[]> {
+    return Array.from(this.classSessions.values());
+  }
+
   async createUser(userData: Partial<User>): Promise<User> {
     const id = userData.id || Math.random().toString(36).substr(2, 9);
     const user: User = {

@@ -13,6 +13,7 @@ import Students from "@/pages/Students";
 import Computers from "@/pages/Computers";
 import Reports from "@/pages/Reports";
 import Settings from "@/pages/Settings";
+import UserManagement from "@/pages/UserManagement";
 import AttendanceMonitoring from "@/pages/AttendanceMonitoring";
 import NotFound from "@/pages/not-found";
 import Sidebar from "@/components/Sidebar";
@@ -59,6 +60,7 @@ function Router() {
                   <Route path="/students" component={Students} />
                   <Route path="/computers" component={Computers} />
                   <Route path="/reports" component={Reports} />
+                  <Route path="/users" component={UserManagement} />
                   <Route path="/monitoring" component={AttendanceMonitoring} />
                   <Route path="/settings" component={Settings} />
                   <Route component={NotFound} />
@@ -78,6 +80,7 @@ function Router() {
                 <Route path="/students" component={Students} />
                 <Route path="/computers" component={Computers} />
                 <Route path="/reports" component={Reports} />
+                <Route path="/users" component={UserManagement} />
                 <Route path="/monitoring" component={AttendanceMonitoring} />
                 <Route path="/settings" component={Settings} />
                 <Route component={NotFound} />
