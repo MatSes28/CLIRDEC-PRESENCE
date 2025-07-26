@@ -121,8 +121,8 @@ export class MemStorage implements IStorage {
     // Sample data initialization - users will be created through seedData.ts with proper password hashing
 
     // Add sample classrooms
-    this.createClassroom({ name: "Lab 204", location: "CLIRDEC Building", capacity: 30, computers: 25 });
-    this.createClassroom({ name: "Room 301", location: "Main Building", capacity: 40, computers: 0 });
+    this.createClassroom({ name: "Lab 204", location: "CLIRDEC Building", capacity: 30, type: "laboratory" });
+    this.createClassroom({ name: "Room 301", location: "Main Building", capacity: 40, type: "lecture" });
     
     // Add sample students with parent emails
     this.createStudent({
@@ -131,12 +131,10 @@ export class MemStorage implements IStorage {
       lastName: "Cruz",
       email: "juan.cruz@student.clsu.edu.ph",
       rfidCardId: "A1B2C3D4",
-      program: "BSIT",
       year: 3,
       section: "A",
       parentEmail: "parent.cruz@email.com",
       parentName: "Maria Cruz",
-      emergencyContact: "09171234567",
       isActive: true
     });
     
@@ -146,12 +144,10 @@ export class MemStorage implements IStorage {
       lastName: "Santos",
       email: "maria.santos@student.clsu.edu.ph",
       rfidCardId: "E5F6G7H8",
-      program: "BSIT",
       year: 3,
       section: "A",
       parentEmail: "parent.santos@email.com",
       parentName: "Jose Santos",
-      emergencyContact: "09181234567",
       isActive: true
     });
 
@@ -161,19 +157,17 @@ export class MemStorage implements IStorage {
       lastName: "Reyes",
       email: "carlos.reyes@student.clsu.edu.ph",
       rfidCardId: "I9J0K1L2",
-      program: "BSIT",
       year: 3,
       section: "B",
       parentEmail: "parent.reyes@email.com",
       parentName: "Ana Reyes",
-      emergencyContact: "09191234567",
       isActive: true
     });
 
     // Add sample computers
     for (let i = 1; i <= 25; i++) {
       this.createComputer({
-        computerName: `PC-${i.toString().padStart(2, '0')}`,
+        name: `PC-${i.toString().padStart(2, '0')}`,
         classroomId: 1, // Lab 204
         status: "available",
         assignedStudentId: null
@@ -261,7 +255,11 @@ export class MemStorage implements IStorage {
   }
 
   async createClassroom(classroom: InsertClassroom): Promise<Classroom> {
-    const newClassroom: Classroom = { ...classroom, id: this.nextId++ };
+    const newClassroom: Classroom = { 
+      ...classroom, 
+      id: this.nextId++, 
+      createdAt: new Date() 
+    };
     this.classrooms.set(newClassroom.id, newClassroom);
     return newClassroom;
   }
@@ -284,7 +282,11 @@ export class MemStorage implements IStorage {
   }
 
   async createSubject(subject: InsertSubject): Promise<Subject> {
-    const newSubject: Subject = { ...subject, id: this.nextId++ };
+    const newSubject: Subject = { 
+      ...subject, 
+      id: this.nextId++, 
+      createdAt: new Date() 
+    };
     this.subjects.set(newSubject.id, newSubject);
     return newSubject;
   }
@@ -311,7 +313,11 @@ export class MemStorage implements IStorage {
   }
 
   async createSchedule(schedule: InsertSchedule): Promise<Schedule> {
-    const newSchedule: Schedule = { ...schedule, id: this.nextId++ };
+    const newSchedule: Schedule = { 
+      ...schedule, 
+      id: this.nextId++, 
+      createdAt: new Date() 
+    };
     this.schedules.set(newSchedule.id, newSchedule);
     return newSchedule;
   }
@@ -330,11 +336,11 @@ export class MemStorage implements IStorage {
 
   // Class session operations
   async getActiveSession(professorId: string): Promise<ClassSession | undefined> {
-    return Array.from(this.classSessions.values()).find(s => s.professorId === professorId && s.isActive);
+    return Array.from(this.classSessions.values()).find(s => s.professorId === professorId && s.status === "active");
   }
 
   async createClassSession(session: InsertClassSession): Promise<ClassSession> {
-    const newSession: ClassSession = { ...session, id: this.nextId++, createdAt: new Date(), updatedAt: new Date() };
+    const newSession: ClassSession = { ...session, id: this.nextId++, createdAt: new Date() };
     this.classSessions.set(newSession.id, newSession);
     return newSession;
   }
@@ -342,7 +348,7 @@ export class MemStorage implements IStorage {
   async updateClassSession(id: number, session: Partial<InsertClassSession>): Promise<ClassSession> {
     const existing = this.classSessions.get(id);
     if (!existing) throw new Error("Class session not found");
-    const updated = { ...existing, ...session, updatedAt: new Date() };
+    const updated = { ...existing, ...session };
     this.classSessions.set(id, updated);
     return updated;
   }
@@ -387,7 +393,11 @@ export class MemStorage implements IStorage {
   }
 
   async createComputer(computer: InsertComputer): Promise<Computer> {
-    const newComputer: Computer = { ...computer, id: this.nextId++ };
+    const newComputer: Computer = { 
+      ...computer, 
+      id: this.nextId++, 
+      createdAt: new Date() 
+    };
     this.computers.set(newComputer.id, newComputer);
     return newComputer;
   }
@@ -425,8 +435,7 @@ export class MemStorage implements IStorage {
     const newNotification: EmailNotification = { 
       ...notification, 
       id: this.nextId++, 
-      createdAt: new Date(), 
-      updatedAt: new Date() 
+      createdAt: new Date()
     };
     this.emailNotifications.set(newNotification.id, newNotification);
     return newNotification;
@@ -451,10 +460,10 @@ export class MemStorage implements IStorage {
 
   async setSystemSetting(key: string, value: string, description?: string): Promise<SystemSetting> {
     const setting: SystemSetting = {
+      id: this.nextId++,
       key,
       value,
       description: description || null,
-      createdAt: new Date(),
       updatedAt: new Date(),
     };
     this.systemSettings.set(key, setting);
@@ -462,10 +471,24 @@ export class MemStorage implements IStorage {
   }
 }
 
+/* Currently disabled - using MemStorage for development
 export class DatabaseStorage implements IStorage {
   // User operations - required for Replit Auth
   async getUser(id: string): Promise<User | undefined> {
+    if (!db) throw new Error("Database not available");
     const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    if (!db) throw new Error("Database not available");
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(userData: Partial<User>): Promise<User> {
+    if (!db) throw new Error("Database not available");
+    const [user] = await db.insert(users).values(userData as any).returning();
     return user;
   }
 
@@ -746,7 +769,7 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return setting;
   }
-}
+} */
 
-// Temporarily using in-memory storage due to database connection issues
+// Using in-memory storage for optimal performance and reliability
 export const storage = new MemStorage();
