@@ -163,22 +163,33 @@ export async function checkAllStudentsAttendanceBehavior(): Promise<void> {
     const students = await storage.getStudents();
     let alertsSent = 0;
     
-    for (const student of students) {
-      try {
-        // Analyze each student's behavior
-        const behavior = await analyzeStudentAttendanceBehavior(student.id);
-        
-        if (behavior.requiresAlert) {
-          // Check if we've sent an alert recently to avoid spam
-          const recentAlert = await checkRecentAlert(student.id);
+    // Process students in smaller batches to reduce memory usage
+    const batchSize = 5;
+    for (let i = 0; i < students.length; i += batchSize) {
+      const batch = students.slice(i, i + batchSize);
+      
+      for (const student of batch) {
+        try {
+          // Analyze each student's behavior
+          const behavior = await analyzeStudentAttendanceBehavior(student.id);
           
-          if (!recentAlert) {
-            await sendAttendanceAlert(student, behavior);
-            alertsSent++;
+          if (behavior.requiresAlert) {
+            // Check if we've sent an alert recently to avoid spam
+            const recentAlert = await checkRecentAlert(student.id);
+            
+            if (!recentAlert) {
+              await sendAttendanceAlert(student, behavior);
+              alertsSent++;
+            }
           }
+        } catch (error) {
+          console.error(`Error analyzing behavior for student ${student.id}:`, error);
         }
-      } catch (error) {
-        console.error(`Error analyzing behavior for student ${student.id}:`, error);
+      }
+      
+      // Small delay between batches to prevent memory spikes
+      if (i + batchSize < students.length) {
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
     }
     
@@ -317,10 +328,14 @@ export async function startAttendanceMonitoring(): Promise<void> {
   // Run initial check
   await checkAllStudentsAttendanceBehavior();
   
-  // Set up interval to check every 6 hours (21600000 ms)
+  // Set up interval to check every 12 hours to reduce memory usage
   setInterval(async () => {
+    // Force garbage collection before each check to free memory
+    if (global.gc) {
+      global.gc();
+    }
     await checkAllStudentsAttendanceBehavior();
-  }, 6 * 60 * 60 * 1000);
+  }, 12 * 60 * 60 * 1000);
   
-  console.log('Automated attendance monitoring started - checking every 6 hours');
+  console.log('Automated attendance monitoring started - checking every 12 hours');
 }

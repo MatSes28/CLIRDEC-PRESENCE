@@ -75,14 +75,26 @@ app.use((req, res, next) => {
   }, () => {
     log(`serving on port ${port}`);
     
-    // Start automated attendance monitoring with reduced frequency for better performance
+    // Start automated attendance monitoring with optimized memory usage
     setTimeout(async () => {
       try {
+        // Force garbage collection to free memory before starting monitoring
+        if (global.gc) {
+          global.gc();
+        }
         const { startAttendanceMonitoring } = await import('./services/attendanceMonitor');
         await startAttendanceMonitoring();
       } catch (error) {
         console.error('Failed to start attendance monitoring:', error);
       }
-    }, 5000); // Delay startup to reduce initial memory pressure
+    }, 10000); // Increased delay to reduce memory pressure during startup
+
+    // Set up periodic memory cleanup every 30 minutes
+    setInterval(() => {
+      if (global.gc) {
+        global.gc();
+        console.log('Memory cleanup performed');
+      }
+    }, 30 * 60 * 1000);
   });
 })();
