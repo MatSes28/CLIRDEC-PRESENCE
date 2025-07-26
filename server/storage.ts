@@ -228,7 +228,15 @@ export class MemStorage implements IStorage {
   }
 
   async createStudent(student: InsertStudent): Promise<Student> {
-    const newStudent: Student = { ...student, id: this.nextId++, createdAt: new Date(), updatedAt: new Date() };
+    const newStudent: Student = { 
+      ...student, 
+      id: this.nextId++, 
+      email: student.email || null,
+      rfidCardId: student.rfidCardId || null,
+      isActive: student.isActive ?? true,
+      createdAt: new Date(), 
+      updatedAt: new Date() 
+    };
     this.students.set(newStudent.id, newStudent);
     return newStudent;
   }
@@ -257,7 +265,10 @@ export class MemStorage implements IStorage {
   async createClassroom(classroom: InsertClassroom): Promise<Classroom> {
     const newClassroom: Classroom = { 
       ...classroom, 
-      id: this.nextId++, 
+      id: this.nextId++,
+      location: classroom.location || null,
+      capacity: classroom.capacity || null,
+      isActive: classroom.isActive ?? true,
       createdAt: new Date() 
     };
     this.classrooms.set(newClassroom.id, newClassroom);
@@ -284,7 +295,9 @@ export class MemStorage implements IStorage {
   async createSubject(subject: InsertSubject): Promise<Subject> {
     const newSubject: Subject = { 
       ...subject, 
-      id: this.nextId++, 
+      id: this.nextId++,
+      description: subject.description || null,
+      professorId: subject.professorId || null,
       createdAt: new Date() 
     };
     this.subjects.set(newSubject.id, newSubject);
@@ -315,7 +328,12 @@ export class MemStorage implements IStorage {
   async createSchedule(schedule: InsertSchedule): Promise<Schedule> {
     const newSchedule: Schedule = { 
       ...schedule, 
-      id: this.nextId++, 
+      id: this.nextId++,
+      professorId: schedule.professorId || null,
+      subjectId: schedule.subjectId || null,
+      classroomId: schedule.classroomId || null,
+      autoStart: schedule.autoStart ?? true,
+      isActive: schedule.isActive ?? true,
       createdAt: new Date() 
     };
     this.schedules.set(newSchedule.id, newSchedule);
@@ -340,7 +358,16 @@ export class MemStorage implements IStorage {
   }
 
   async createClassSession(session: InsertClassSession): Promise<ClassSession> {
-    const newSession: ClassSession = { ...session, id: this.nextId++, createdAt: new Date() };
+    const newSession: ClassSession = { 
+      ...session, 
+      id: this.nextId++, 
+      professorId: session.professorId || null,
+      startTime: session.startTime || null,
+      endTime: session.endTime || null,
+      scheduleId: session.scheduleId || null,
+      status: session.status || null,
+      createdAt: new Date() 
+    };
     this.classSessions.set(newSession.id, newSession);
     return newSession;
   }
@@ -366,7 +393,19 @@ export class MemStorage implements IStorage {
   }
 
   async createAttendance(attendance: InsertAttendance): Promise<Attendance> {
-    const newAttendance: Attendance = { ...attendance, id: this.nextId++, createdAt: new Date(), updatedAt: new Date() };
+    const newAttendance: Attendance = { 
+      ...attendance, 
+      id: this.nextId++, 
+      studentId: attendance.studentId || null,
+      sessionId: attendance.sessionId || null,
+      status: attendance.status || null,
+      checkInTime: attendance.checkInTime || null,
+      checkOutTime: attendance.checkOutTime || null,
+      proximityValidated: attendance.proximityValidated ?? null,
+      computerId: attendance.computerId || null,
+      createdAt: new Date(), 
+      updatedAt: new Date() 
+    };
     this.attendance.set(newAttendance.id, newAttendance);
     return newAttendance;
   }
@@ -395,7 +434,12 @@ export class MemStorage implements IStorage {
   async createComputer(computer: InsertComputer): Promise<Computer> {
     const newComputer: Computer = { 
       ...computer, 
-      id: this.nextId++, 
+      id: this.nextId++,
+      classroomId: computer.classroomId || null,
+      ipAddress: computer.ipAddress || null,
+      status: computer.status || null,
+      assignedStudentId: computer.assignedStudentId || null,
+      isActive: computer.isActive ?? true,
       createdAt: new Date() 
     };
     this.computers.set(newComputer.id, newComputer);
@@ -434,7 +478,14 @@ export class MemStorage implements IStorage {
   async createEmailNotification(notification: InsertEmailNotification): Promise<EmailNotification> {
     const newNotification: EmailNotification = { 
       ...notification, 
-      id: this.nextId++, 
+      id: this.nextId++,
+      studentId: notification.studentId || null,
+      recipientName: notification.recipientName || null,
+      content: notification.content || null,
+      priority: notification.priority || null,
+      status: notification.status || null,
+      sentBy: notification.sentBy || null,
+      sentAt: notification.sentAt || null,
       createdAt: new Date()
     };
     this.emailNotifications.set(newNotification.id, newNotification);
