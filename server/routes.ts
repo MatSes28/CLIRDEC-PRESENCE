@@ -20,7 +20,7 @@ import { generateAttendanceTrendData, generateStudentPerformanceData } from "./s
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
-  setupAuth(app);
+  await setupAuth(app);
 
   // Performance monitoring middleware
   app.use((req, res, next) => {

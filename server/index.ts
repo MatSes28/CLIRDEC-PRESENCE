@@ -75,14 +75,14 @@ app.use((req, res, next) => {
   }, () => {
     log(`serving on port ${port}`);
     
-    // Start automated attendance monitoring
-    setImmediate(async () => {
+    // Start automated attendance monitoring with reduced frequency for better performance
+    setTimeout(async () => {
       try {
         const { startAttendanceMonitoring } = await import('./services/attendanceMonitor');
         await startAttendanceMonitoring();
       } catch (error) {
         console.error('Failed to start attendance monitoring:', error);
       }
-    });
+    }, 5000); // Delay startup to reduce initial memory pressure
   });
 })();
