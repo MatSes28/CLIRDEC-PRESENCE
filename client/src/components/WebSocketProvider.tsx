@@ -38,8 +38,16 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws`;
 
-    // Create WebSocket connection
-    const ws = new WebSocket(wsUrl);
+    console.log('Connecting to WebSocket:', wsUrl);
+
+    // Create WebSocket connection with error handling
+    let ws: WebSocket;
+    try {
+      ws = new WebSocket(wsUrl);
+    } catch (error) {
+      console.error('Failed to create WebSocket:', error);
+      return;
+    }
 
     ws.onopen = () => {
       console.log('WebSocket connected');
@@ -64,16 +72,24 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
       // Attempt to reconnect after 5 seconds
       setTimeout(() => {
         console.log('Attempting to reconnect WebSocket...');
-        // The useEffect will run again and create a new connection
+        if (window.location.pathname !== '/') {
+          // Only attempt reconnection if still on the app pages
+          setIsConnected(false);
+          setSocket(null);
+        }
       }, 5000);
     };
 
     ws.onerror = (error) => {
       console.error('WebSocket error:', error);
+      setIsConnected(false);
+      setSocket(null);
     };
 
     return () => {
-      ws.close();
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
     };
   }, []);
 

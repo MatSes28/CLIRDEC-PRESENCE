@@ -953,7 +953,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const behaviorAnalysis = [];
       for (const student of students) {
-        const behavior = await analyzeStudentAttendanceBehavior(student.id);
+        const behavior = await analyzeStudentAttendanceBehavior(student.id).catch(error => {
+          console.error(`Error analyzing behavior for student ${student.id}:`, error);
+          return { behaviorLevel: 'unknown', message: 'Analysis failed' };
+        });
         behaviorAnalysis.push({
           ...behavior,
           student: {
@@ -968,8 +971,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Sort by behavior priority (critical first)
       behaviorAnalysis.sort((a, b) => {
-        const priorities = { critical: 0, concerning: 1, average: 2, good: 3, excellent: 4 };
-        return priorities[a.behaviorLevel] - priorities[b.behaviorLevel];
+        const priorities: Record<string, number> = { critical: 0, concerning: 1, average: 2, good: 3, excellent: 4 };
+        return (priorities[a.behaviorLevel] ?? 5) - (priorities[b.behaviorLevel] ?? 5);
       });
       
       res.json(behaviorAnalysis);
