@@ -102,7 +102,7 @@ function App() {
             <div className="min-h-screen bg-background text-foreground">
               <Router />
               <Toaster />
-              <RealTimeNotifications />
+
             </div>
           </TooltipProvider>
         </WebSocketProvider>

@@ -7,8 +7,8 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-// Python FastAPI backend configuration
-const API_BASE_URL = 'http://localhost:8000';
+// Node.js Express backend configuration
+const API_BASE_URL = window.location.origin;
 
 export async function apiRequest(
   method: string,

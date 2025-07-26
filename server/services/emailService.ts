@@ -26,11 +26,12 @@ export async function sendEmailNotification(
     
     // Create notification record
     await storage.createEmailNotification({
-      studentId,
-      recipientEmail: student.parentEmail,
-      subject: template.subject,
-      content: template.html,
       type,
+      message: customMessage || template.text,
+      subject: template.subject,
+      recipientEmail: student.parentEmail,
+      studentId,
+      content: template.html,
       status: 'pending'
     });
 
@@ -246,8 +247,8 @@ export async function processEmailQueue(): Promise<void> {
         await sendEmail({
           to: notification.recipientEmail,
           from: FROM_EMAIL,
-          subject: notification.subject,
-          html: notification.content,
+          subject: notification.subject || '',
+          html: notification.content || '',
           text: notification.content?.replace(/<[^>]*>/g, '') || '' // Strip HTML tags for text version
         });
         

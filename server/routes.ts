@@ -108,6 +108,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Admin gets system-wide statistics
         const allSessions = await storage.getAllClassSessions();
         const todaySessions = allSessions.filter(session => {
+          if (!session.createdAt) return false;
           const sessionDate = new Date(session.createdAt).toDateString();
           return sessionDate === today.toDateString();
         });
@@ -808,13 +809,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (student?.parentEmail) {
               await sendEmailNotification(
                 parseInt(student.id.toString()),
-                'student_absent',
-                {
-                  studentName: `${student.firstName} ${student.lastName}`,
-                  subject: 'Class Session',
-                  date: today.toDateString(),
-                  time: session.startTime
-                }
+                'absence_alert',
+                `${student.firstName} ${student.lastName} was absent from ${session.startTime || 'class session'} on ${today.toDateString()}`
               );
               notificationsSent++;
             }
