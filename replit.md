@@ -14,18 +14,18 @@ CLIRDEC: PRESENCE is a comprehensive attendance monitoring system designed for C
 - **Routing**: Wouter for lightweight client-side routing
 - **Authentication**: Session-based authentication with Replit Auth integration
 
-### Backend Architecture
-- **Runtime**: Node.js with Express.js framework
-- **Language**: TypeScript with ES modules
-- **Database**: PostgreSQL with Drizzle ORM for type-safe database operations
-- **Authentication**: Replit Auth with OpenID Connect (OIDC)
-- **Session Management**: PostgreSQL-backed sessions with connect-pg-simple
+### Backend Architecture (Updated January 26, 2025)
+- **Runtime**: Python 3.11 with FastAPI framework
+- **Language**: Python with Pydantic for data validation
+- **Database**: PostgreSQL with SQLAlchemy ORM for type-safe database operations
+- **Authentication**: JWT-based authentication with Python-JOSE
+- **Session Management**: Stateless JWT tokens with FastAPI security
 
 ### Data Storage Solutions
 - **Primary Database**: PostgreSQL via Neon serverless for production scalability
-- **ORM**: Drizzle ORM with schema-first approach for type safety
-- **Session Storage**: PostgreSQL table-based session storage
-- **Migration System**: Drizzle Kit for database schema management
+- **ORM**: SQLAlchemy with declarative models for type safety
+- **Session Storage**: JWT token-based stateless authentication
+- **Migration System**: SQLAlchemy with Alembic for database schema management
 
 ## Key Components
 
