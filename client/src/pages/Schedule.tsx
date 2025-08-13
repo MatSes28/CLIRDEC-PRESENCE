@@ -186,12 +186,7 @@ export default function Schedule() {
                   ))}
                 
                 {/* Add Class Slot */}
-                <button 
-                  onClick={() => {
-                    alert("Add Class functionality will open a schedule creation dialog. This feature is coming soon!");
-                  }}
-                  className="w-full border-2 border-dashed border-muted-foreground/25 rounded-lg p-3 text-center text-muted-foreground hover:border-muted-foreground/50 hover:text-foreground transition-colors"
-                >
+                <button className="w-full border-2 border-dashed border-muted-foreground/25 rounded-lg p-3 text-center text-muted-foreground hover:border-muted-foreground/50 hover:text-foreground transition-colors">
                   <Plus className="h-4 w-4 mx-auto mb-1" />
                   <div className="text-xs">Add Class</div>
                 </button>

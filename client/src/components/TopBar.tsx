@@ -4,16 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Bell, Wifi } from "lucide-react";
-import NotificationPanel from "./NotificationPanel";
 
 export default function TopBar() {
   const [location] = useLocation();
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
-
-  const handleNotificationClick = () => {
-    setNotificationPanelOpen(!notificationPanelOpen);
-  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -80,7 +74,6 @@ export default function TopBar() {
   });
 
   return (
-    <>
     <div className="h-24 glass border-b border-border/20 px-8 flex items-center justify-between backdrop-blur-sm">
       <div className="flex-1">
         <h1 className="text-3xl font-bold text-gradient mb-1">{pageInfo.title}</h1>
@@ -101,12 +94,7 @@ export default function TopBar() {
         
         <div className="flex items-center space-x-2">
           <ThemeToggle />
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="relative hover:bg-muted/50 rounded-xl"
-            onClick={handleNotificationClick}
-          >
+          <Button variant="ghost" size="sm" className="relative hover:bg-muted/50 rounded-xl">
             <Bell className="h-5 w-5" />
             <div className="absolute -top-1 -right-1 h-5 w-5 bg-destructive rounded-full flex items-center justify-center">
               <span className="text-xs text-destructive-foreground font-bold">3</span>
@@ -115,11 +103,5 @@ export default function TopBar() {
         </div>
       </div>
     </div>
-    
-    <NotificationPanel 
-      isOpen={notificationPanelOpen} 
-      onClose={() => setNotificationPanelOpen(false)} 
-    />
-    </>
   );
 }

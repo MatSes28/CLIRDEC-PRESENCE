@@ -165,20 +165,11 @@ export default function Students() {
           <p className="text-muted-foreground">Manage student information and parent contact details</p>
         </div>
         <div className="flex space-x-3">
-          <Button 
-            variant="outline"
-            onClick={() => {
-              alert("Import Students functionality will allow bulk import from CSV/Excel files. This feature is coming soon!");
-            }}
-          >
+          <Button variant="outline">
             <FolderInput className="mr-2 h-4 w-4" />
             Import Students
           </Button>
-          <Button
-            onClick={() => {
-              alert("Add Student functionality will open a student registration form. This feature is coming soon!");
-            }}
-          >
+          <Button>
             <UserPlus className="mr-2 h-4 w-4" />
             Add Student
           </Button>
