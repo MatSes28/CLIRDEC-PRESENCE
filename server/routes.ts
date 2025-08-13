@@ -991,13 +991,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Missing required fields' });
       }
 
-      const student = await storage.getStudentById(studentId);
+      const students = await storage.getStudents();
+      const student = students.find(s => s.id === studentId);
       
       if (!student) {
         return res.status(404).json({ message: 'Student not found' });
       }
 
-      const { sendAttendanceAlert } = await import('./services/emailService');
+      const { sendEmailNotification } = await import('./services/emailService');
 
       const emailData = {
         studentName: `${student.firstName} ${student.lastName}`,
@@ -1009,7 +1010,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: type as 'urgent' | 'warning'
       };
 
-      await sendAttendanceAlert(emailData);
+      await sendEmailNotification(
+        emailData.parentEmail,
+        `Attendance Alert: ${emailData.studentName}`,
+        emailData.message
+      );
       
       res.json({ message: 'Notification sent successfully' });
     } catch (error) {

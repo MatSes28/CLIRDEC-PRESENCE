@@ -86,26 +86,33 @@ app.use((req, res, next) => {
   }, () => {
     log(`serving on port ${port}`);
     
-    // Start automated attendance monitoring with optimized memory usage
+    // Initialize memory optimization
+    if (global.gc) {
+      global.gc();
+      console.log('Initial memory cleanup completed');
+    }
+    
+    // Start automated attendance monitoring with memory optimization
     setTimeout(async () => {
       try {
-        // Force garbage collection to free memory before starting monitoring
-        if (global.gc) {
-          global.gc();
-        }
         const { startAttendanceMonitoring } = await import('./services/attendanceMonitor');
         await startAttendanceMonitoring();
       } catch (error) {
         console.error('Failed to start attendance monitoring:', error);
       }
-    }, 10000); // Increased delay to reduce memory pressure during startup
+    }, 5000); // Reduced delay
 
-    // Set up periodic memory cleanup every 30 minutes
+    // Aggressive memory cleanup every 5 minutes during high usage
     setInterval(() => {
-      if (global.gc) {
+      const memUsage = process.memoryUsage();
+      const memMB = Math.round(memUsage.rss / 1024 / 1024);
+      
+      if (memMB > 300 && global.gc) { // Trigger GC if over 300MB
         global.gc();
-        console.log('Memory cleanup performed');
+        const afterGC = process.memoryUsage();
+        const afterMB = Math.round(afterGC.rss / 1024 / 1024);
+        console.log(`Memory cleanup: ${memMB}MB → ${afterMB}MB (freed ${memMB - afterMB}MB)`);
       }
-    }, 30 * 60 * 1000);
+    }, 5 * 60 * 1000); // Every 5 minutes
   });
 })();
