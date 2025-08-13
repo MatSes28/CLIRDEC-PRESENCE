@@ -982,6 +982,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Send parent notification email (Admin/Faculty only)
+  app.post('/api/notifications/send-parent-email', requireAdminOrFaculty, async (req: any, res) => {
+    try {
+      const { studentId, parentEmail, type, behaviorLevel } = req.body;
+      
+      if (!studentId || !parentEmail || !type || !behaviorLevel) {
+        return res.status(400).json({ message: 'Missing required fields' });
+      }
+
+      const student = await storage.getStudentById(studentId);
+      
+      if (!student) {
+        return res.status(404).json({ message: 'Student not found' });
+      }
+
+      const { sendAttendanceAlert } = await import('./services/emailService');
+
+      const emailData = {
+        studentName: `${student.firstName} ${student.lastName}`,
+        studentId: student.studentId,
+        parentEmail,
+        message: type === 'urgent' ? 
+          'URGENT: Immediate attention required for critical attendance issues' :
+          'Warning: Concerning attendance pattern detected',
+        type: type as 'urgent' | 'warning'
+      };
+
+      await sendAttendanceAlert(emailData);
+      
+      res.json({ message: 'Notification sent successfully' });
+    } catch (error) {
+      console.error('Error sending parent notification:', error);
+      res.status(500).json({ message: 'Failed to send notification' });
+    }
+  });
+
+  // Mark intervention for student (Admin/Faculty only)
+  app.post('/api/attendance/mark-intervention', requireAdminOrFaculty, async (req: any, res) => {
+    try {
+      const { studentId } = req.body;
+      
+      if (!studentId) {
+        return res.status(400).json({ message: 'Student ID is required' });
+      }
+
+      // Log the intervention (in a real system, this would be stored in database)
+      console.log(`Intervention marked for student: ${studentId} by user: ${req.user?.email}`);
+      
+      res.json({ message: 'Intervention recorded successfully' });
+    } catch (error) {
+      console.error('Error marking intervention:', error);
+      res.status(500).json({ message: 'Failed to record intervention' });
+    }
+  });
+
   // Manually trigger attendance monitoring for all students
   app.post('/api/attendance/trigger-monitoring', requireAdmin, async (req: any, res) => {
     try {

@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import StartSessionModal from "@/components/StartSessionModal";
+import AttendanceBehaviorAlerts from "@/components/AttendanceBehaviorAlerts";
 
 interface StatCard {
   title: string;
@@ -329,6 +330,9 @@ export default function Dashboard() {
           );
         })}
       </div>
+
+      {/* Attendance Behavior Alerts */}
+      <AttendanceBehaviorAlerts className="mb-8" />
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
