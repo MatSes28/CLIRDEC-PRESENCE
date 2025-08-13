@@ -164,7 +164,7 @@ export async function checkAllStudentsAttendanceBehavior(): Promise<void> {
     let alertsSent = 0;
     
     // Process students in smaller batches to reduce memory usage
-    const batchSize = 5;
+    const batchSize = 3; // Reduced batch size for better memory management
     for (let i = 0; i < students.length; i += batchSize) {
       const batch = students.slice(i, i + batchSize);
       
@@ -182,14 +182,20 @@ export async function checkAllStudentsAttendanceBehavior(): Promise<void> {
               alertsSent++;
             }
           }
+          
+          // Force garbage collection after each student to prevent memory buildup
+          if (global.gc && i % 2 === 0) {
+            global.gc();
+          }
+          
         } catch (error) {
           console.error(`Error analyzing behavior for student ${student.id}:`, error);
         }
       }
       
-      // Small delay between batches to prevent memory spikes
+      // Longer delay between batches to prevent memory spikes and allow cleanup
       if (i + batchSize < students.length) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
     
@@ -328,14 +334,29 @@ export async function startAttendanceMonitoring(): Promise<void> {
   // Run initial check
   await checkAllStudentsAttendanceBehavior();
   
-  // Set up interval to check every 12 hours to reduce memory usage
+  // Set up interval to check every 24 hours to reduce memory usage significantly
   setInterval(async () => {
     // Force garbage collection before each check to free memory
     if (global.gc) {
       global.gc();
+      await new Promise(resolve => setTimeout(resolve, 500)); // Allow cleanup
     }
+    
+    // Import emergency memory optimizer for additional cleanup
+    try {
+      const { EmergencyMemoryOptimizer } = await import('../utils/emergencyMemoryOptimizer');
+      await EmergencyMemoryOptimizer.forceEmergencyCleanup();
+    } catch (error) {
+      console.log('Emergency optimizer not available');
+    }
+    
     await checkAllStudentsAttendanceBehavior();
-  }, 12 * 60 * 60 * 1000);
+    
+    // Force cleanup after processing
+    if (global.gc) {
+      global.gc();
+    }
+  }, 24 * 60 * 60 * 1000); // Changed to 24 hours from 12 hours
   
-  console.log('Automated attendance monitoring started - checking every 12 hours');
+  console.log('Automated attendance monitoring started - checking every 24 hours');
 }

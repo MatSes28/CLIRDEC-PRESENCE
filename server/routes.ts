@@ -1216,6 +1216,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch student performance data" });
     }
   });
+
+  // Memory monitoring and optimization endpoints
+  app.get('/api/system/memory-status', requireAdminOrFaculty, async (req, res) => {
+    try {
+      const { EmergencyMemoryOptimizer } = await import('./utils/emergencyMemoryOptimizer');
+      const { MemoryOptimizer } = await import('./utils/memoryOptimizer');
+      
+      const memoryReport = EmergencyMemoryOptimizer.getMemoryReport();
+      const basicStats = MemoryOptimizer.getMemoryStats();
+      
+      const fullReport = {
+        ...memoryReport,
+        basicStats,
+        recommendations: [],
+        lastOptimization: new Date().toISOString()
+      };
+
+      // Add recommendations based on memory status
+      if (memoryReport.status === 'CRITICAL') {
+        fullReport.recommendations.push('IMMEDIATE: Memory usage is critical - emergency cleanup recommended');
+      } else if (memoryReport.status === 'HIGH') {
+        fullReport.recommendations.push('WARNING: High memory usage detected - monitoring closely');
+      } else {
+        fullReport.recommendations.push('NORMAL: Memory usage is within acceptable limits');
+      }
+
+      res.json(fullReport);
+    } catch (error) {
+      console.error("Error fetching memory status:", error);
+      res.status(500).json({ message: "Failed to fetch memory status" });
+    }
+  });
+
+  app.post('/api/system/force-memory-cleanup', requireAdmin, async (req, res) => {
+    try {
+      const { EmergencyMemoryOptimizer } = await import('./utils/emergencyMemoryOptimizer');
+      const { MemoryOptimizer } = await import('./utils/memoryOptimizer');
+      
+      const before = process.memoryUsage();
+      
+      // Force emergency cleanup
+      await EmergencyMemoryOptimizer.forceEmergencyCleanup();
+      
+      // Additional manual cleanup
+      const gcResult = MemoryOptimizer.forceGarbageCollection();
+      
+      const after = process.memoryUsage();
+      const totalFreed = Math.round((before.rss - after.rss) / 1024 / 1024);
+      
+      res.json({
+        success: true,
+        message: `Memory cleanup completed: freed ${totalFreed}MB`,
+        before: Math.round(before.rss / 1024 / 1024),
+        after: Math.round(after.rss / 1024 / 1024),
+        freed: totalFreed,
+        gcResult
+      });
+    } catch (error) {
+      console.error("Error forcing memory cleanup:", error);
+      res.status(500).json({ message: "Failed to force memory cleanup" });
+    }
+  });
+
+  app.get('/api/system/optimize-settings', requireAdminOrFaculty, async (req, res) => {
+    try {
+      const settings = {
+        memoryThresholds: {
+          normal: '150MB',
+          high: '200MB', 
+          critical: '300MB'
+        },
+        optimizationIntervals: {
+          monitoring: '60 seconds',
+          cleanup: '2 minutes',
+          emergencyCheck: '1 minute'
+        },
+        activeOptimizations: [
+          'Emergency memory monitoring',
+          'Automatic garbage collection',
+          'Batch processing for notifications',
+          'Query result caching limits',
+          'WebSocket connection pooling'
+        ],
+        performanceFeatures: [
+          'Real-time memory monitoring',
+          'Automatic cleanup triggers',
+          'Memory usage alerts',
+          'Performance metrics tracking'
+        ]
+      };
+      
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching optimization settings:", error);
+      res.status(500).json({ message: "Failed to fetch optimization settings" });
+    }
+  });
   
   return httpServer;
 }

@@ -237,25 +237,49 @@ async function sendEmail(params: {
   }
 }
 
-// Process queued email notifications
+// Process queued email notifications with memory optimization
 export async function processEmailQueue(): Promise<void> {
   try {
     const pendingNotifications = await storage.getUnsentNotifications();
     
-    for (const notification of pendingNotifications) {
-      try {
-        await sendEmail({
-          to: notification.recipientEmail,
-          from: FROM_EMAIL,
-          subject: notification.subject || '',
-          html: notification.content || '',
-          text: notification.content?.replace(/<[^>]*>/g, '') || '' // Strip HTML tags for text version
-        });
-        
-        await storage.markNotificationAsSent(notification.id);
-      } catch (error) {
-        console.error(`Failed to send notification ${notification.id}:`, error);
+    // Process in smaller batches to reduce memory usage
+    const batchSize = 5;
+    let processed = 0;
+    
+    for (let i = 0; i < pendingNotifications.length; i += batchSize) {
+      const batch = pendingNotifications.slice(i, i + batchSize);
+      
+      for (const notification of batch) {
+        try {
+          await sendEmail({
+            to: notification.recipientEmail,
+            from: FROM_EMAIL,
+            subject: notification.subject || '',
+            html: notification.content || '',
+            text: notification.content?.replace(/<[^>]*>/g, '') || '' // Strip HTML tags for text version
+          });
+          
+          await storage.markNotificationAsSent(notification.id);
+          processed++;
+          
+          // Force garbage collection every few emails to prevent memory buildup
+          if (processed % 3 === 0 && global.gc) {
+            global.gc();
+          }
+          
+        } catch (error) {
+          console.error(`Failed to send notification ${notification.id}:`, error);
+        }
       }
+      
+      // Small delay between batches to prevent overwhelming the system
+      if (i + batchSize < pendingNotifications.length) {
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+    }
+    
+    if (processed > 0) {
+      console.log(`✅ Email queue processed: ${processed} emails sent`);
     }
   } catch (error) {
     console.error('Error processing email queue:', error);

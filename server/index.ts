@@ -117,7 +117,7 @@ app.use((req, res, next) => {
       const memUsage = process.memoryUsage();
       const memMB = Math.round(memUsage.rss / 1024 / 1024);
       
-      if (memMB > 250 && global.gc) { // More aggressive threshold at 250MB
+      if (memMB > 150 && global.gc) { // More aggressive threshold at 150MB
         global.gc();
         const afterGC = process.memoryUsage();
         const afterMB = Math.round(afterGC.rss / 1024 / 1024);

@@ -1,7 +1,7 @@
 // Emergency memory optimization for high memory usage scenarios
 export class EmergencyMemoryOptimizer {
-  private static readonly MAX_MEMORY_MB = 400;
-  private static readonly CRITICAL_MEMORY_MB = 500;
+  private static readonly MAX_MEMORY_MB = 200;
+  private static readonly CRITICAL_MEMORY_MB = 300;
   private static isOptimizing = false;
 
   static async forceEmergencyCleanup() {
