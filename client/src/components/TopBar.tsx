@@ -4,19 +4,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Bell, Wifi } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import NotificationPanel from "./NotificationPanel";
 
 export default function TopBar() {
   const [location] = useLocation();
   const [currentTime, setCurrentTime] = useState(new Date());
-  const { toast } = useToast();
+  const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
 
   const handleNotificationClick = () => {
-    toast({
-      title: "Notifications",
-      description: "You have 3 new notifications about attendance and system updates.",
-      duration: 4000,
-    });
+    setNotificationPanelOpen(!notificationPanelOpen);
   };
 
   useEffect(() => {
@@ -84,6 +80,7 @@ export default function TopBar() {
   });
 
   return (
+    <>
     <div className="h-24 glass border-b border-border/20 px-8 flex items-center justify-between backdrop-blur-sm">
       <div className="flex-1">
         <h1 className="text-3xl font-bold text-gradient mb-1">{pageInfo.title}</h1>
@@ -118,5 +115,11 @@ export default function TopBar() {
         </div>
       </div>
     </div>
+    
+    <NotificationPanel 
+      isOpen={notificationPanelOpen} 
+      onClose={() => setNotificationPanelOpen(false)} 
+    />
+    </>
   );
 }
