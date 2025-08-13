@@ -86,7 +86,17 @@ app.use((req, res, next) => {
   }, () => {
     log(`serving on port ${port}`);
     
-    // Initialize memory optimization
+    // Initialize emergency memory optimization  
+    setTimeout(async () => {
+      try {
+        const { EmergencyMemoryOptimizer } = await import('./utils/emergencyMemoryOptimizer');
+        await EmergencyMemoryOptimizer.forceEmergencyCleanup();
+        EmergencyMemoryOptimizer.startEmergencyMonitoring();
+      } catch (error) {
+        console.error('Failed to start emergency memory optimizer:', error);
+      }
+    }, 1000);
+    
     if (global.gc) {
       global.gc();
       console.log('Initial memory cleanup completed');
@@ -102,17 +112,17 @@ app.use((req, res, next) => {
       }
     }, 5000); // Reduced delay
 
-    // Aggressive memory cleanup every 5 minutes during high usage
+    // Emergency memory cleanup - every 2 minutes during high usage
     setInterval(() => {
       const memUsage = process.memoryUsage();
       const memMB = Math.round(memUsage.rss / 1024 / 1024);
       
-      if (memMB > 300 && global.gc) { // Trigger GC if over 300MB
+      if (memMB > 250 && global.gc) { // More aggressive threshold at 250MB
         global.gc();
         const afterGC = process.memoryUsage();
         const afterMB = Math.round(afterGC.rss / 1024 / 1024);
-        console.log(`Memory cleanup: ${memMB}MB → ${afterMB}MB (freed ${memMB - afterMB}MB)`);
+        console.log(`MEMORY OPTIMIZATION: ${memMB}MB → ${afterMB}MB (freed ${memMB - afterMB}MB)`);
       }
-    }, 5 * 60 * 1000); // Every 5 minutes
+    }, 2 * 60 * 1000); // Every 2 minutes for more aggressive cleanup
   });
 })();
