@@ -15,6 +15,9 @@ import Reports from "@/pages/Reports";
 import Settings from "@/pages/Settings";
 import UserManagement from "@/pages/UserManagement";
 import AttendanceMonitoring from "@/pages/AttendanceMonitoring";
+import IoTDevicesPage from "@/pages/IoTDevices";
+import SystemHealthPage from "@/pages/SystemHealth";
+import SystemTestingPage from "@/pages/SystemTesting";
 import NotFound from "@/pages/not-found";
 import Sidebar from "@/components/Sidebar";
 import TopBar from "@/components/TopBar";
@@ -62,6 +65,9 @@ function Router() {
                   <Route path="/reports" component={Reports} />
                   <Route path="/users" component={UserManagement} />
                   <Route path="/monitoring" component={AttendanceMonitoring} />
+                  <Route path="/iot" component={IoTDevicesPage} />
+                  <Route path="/health" component={SystemHealthPage} />
+                  <Route path="/testing" component={SystemTestingPage} />
                   <Route path="/settings" component={Settings} />
                   <Route component={NotFound} />
                 </Switch>

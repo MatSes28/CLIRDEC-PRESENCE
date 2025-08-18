@@ -24,7 +24,9 @@ import {
   Zap,
   Shield,
   Activity,
-  ArrowRight
+  ArrowRight,
+  Smartphone,
+  TestTube
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -67,6 +69,24 @@ export default function Sidebar() {
       icon: Shield, 
       label: "Monitor",
       description: "System oversight"
+    },
+    { 
+      path: "/iot", 
+      icon: Smartphone, 
+      label: "IoT Devices",
+      description: "ESP32 hardware"
+    },
+    { 
+      path: "/health", 
+      icon: Activity, 
+      label: "System Health",
+      description: "Performance monitor"
+    },
+    { 
+      path: "/testing", 
+      icon: TestTube, 
+      label: "System Testing",
+      description: "Test & simulate"
     },
     { 
       path: "/reports", 

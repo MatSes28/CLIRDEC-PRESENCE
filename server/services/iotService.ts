@@ -223,8 +223,7 @@ export class IoTDeviceManager {
           studentId: student.id,
           sessionId: classroomSession.id,
           checkInTime: currentTime,
-          status: isLate ? 'late' : 'present',
-          deviceId: deviceId
+          status: isLate ? 'late' : 'present'
         });
 
         this.sendToDevice(deviceId, {
