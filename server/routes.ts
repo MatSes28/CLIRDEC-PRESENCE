@@ -1012,8 +1012,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       await sendEmailNotification(
-        emailData.parentEmail,
-        `Attendance Alert: ${emailData.studentName}`,
+        studentId,
+        "absence_alert",
         emailData.message
       );
       
@@ -1230,21 +1230,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const memoryReport = EmergencyMemoryOptimizer.getMemoryReport();
       const basicStats = MemoryOptimizer.getMemoryStats();
       
+      const recommendations: string[] = [];
+      if (memoryReport.status === 'CRITICAL') {
+        recommendations.push('IMMEDIATE: Memory usage is critical - emergency cleanup recommended');
+      } else if (memoryReport.status === 'HIGH') {
+        recommendations.push('WARNING: High memory usage detected - monitoring closely');
+      } else {
+        recommendations.push('NORMAL: Memory usage is within acceptable limits');
+      }
+
       const fullReport = {
         ...memoryReport,
         basicStats,
-        recommendations: [],
+        recommendations,
         lastOptimization: new Date().toISOString()
       };
-
-      // Add recommendations based on memory status
-      if (memoryReport.status === 'CRITICAL') {
-        fullReport.recommendations.push('IMMEDIATE: Memory usage is critical - emergency cleanup recommended');
-      } else if (memoryReport.status === 'HIGH') {
-        fullReport.recommendations.push('WARNING: High memory usage detected - monitoring closely');
-      } else {
-        fullReport.recommendations.push('NORMAL: Memory usage is within acceptable limits');
-      }
 
       res.json(fullReport);
     } catch (error) {
