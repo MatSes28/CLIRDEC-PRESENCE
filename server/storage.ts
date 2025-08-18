@@ -69,12 +69,14 @@ export interface IStorage {
 
   // Class session operations
   getActiveSession(professorId: string): Promise<ClassSession | undefined>;
+  getActiveClassSessions(): Promise<ClassSession[]>;
   createClassSession(session: InsertClassSession): Promise<ClassSession>;
   updateClassSession(id: number, session: Partial<InsertClassSession>): Promise<ClassSession>;
   getClassSessionsByDate(date: Date): Promise<ClassSession[]>;
 
   // Attendance operations
   getAttendanceBySession(sessionId: number): Promise<Attendance[]>;
+  getAttendanceByStudentAndSession(studentId: number, sessionId: number): Promise<Attendance | undefined>;
   createAttendance(attendance: InsertAttendance): Promise<Attendance>;
   updateAttendance(id: number, attendance: Partial<InsertAttendance>): Promise<Attendance>;
   checkStudentAttendance(studentId: number, sessionId: number): Promise<Attendance | undefined>;
@@ -219,11 +221,20 @@ export class MemStorage implements IStorage {
   async upsertUser(userData: UpsertUser): Promise<User> {
     const user: User = {
       ...userData,
-      createdAt: new Date(),
+      createdAt: this.users.get(userData.id)?.createdAt || new Date(),
       updatedAt: new Date(),
     };
     this.users.set(userData.id, user);
     return user;
+  }
+
+  // Add missing storage methods for IoT service
+  async getActiveClassSessions(): Promise<ClassSession[]> {
+    return Array.from(this.classSessions.values()).filter(s => s.status === "active");
+  }
+
+  async getAttendanceByStudentAndSession(studentId: number, sessionId: number): Promise<Attendance | undefined> {
+    return Array.from(this.attendance.values()).find(a => a.studentId === studentId && a.sessionId === sessionId);
   }
 
   // Student operations

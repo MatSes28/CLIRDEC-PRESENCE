@@ -17,6 +17,7 @@ import { simulateRFIDTap } from "./services/rfidSimulator";
 import { checkAutoStartSessions } from "./services/scheduleService";
 import { performanceMonitor } from "./services/performanceMonitor";
 import { generateAttendanceTrendData, generateStudentPerformanceData } from "./services/reportingService";
+import { iotDeviceManager } from "./services/iotService";
 
 // Import hash function for user password management
 import { hashPassword } from "./auth";
@@ -1143,6 +1144,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create HTTP server
   const httpServer = createServer(app);
   
+  // Initialize IoT Device Manager
+  iotDeviceManager.init(httpServer);
+  
   // WebSocket server for real-time notifications
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
   
@@ -1311,6 +1315,141 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching optimization settings:", error);
       res.status(500).json({ message: "Failed to fetch optimization settings" });
+    }
+  });
+
+  // IoT Device Management Routes
+  app.get('/api/iot/devices', requireAdminOrFaculty, async (req, res) => {
+    try {
+      const devices = iotDeviceManager.getConnectedDevices();
+      res.json({
+        devices,
+        total: devices.length,
+        online: devices.filter(d => d.status === 'online').length,
+        offline: devices.filter(d => d.status === 'offline').length
+      });
+    } catch (error) {
+      console.error("Error fetching IoT devices:", error);
+      res.status(500).json({ message: "Failed to fetch IoT devices" });
+    }
+  });
+
+  app.get('/api/iot/devices/:deviceId', requireAdminOrFaculty, async (req, res) => {
+    try {
+      const deviceId = req.params.deviceId;
+      const device = iotDeviceManager.getDevice(deviceId);
+      
+      if (!device) {
+        return res.status(404).json({ message: "Device not found" });
+      }
+      
+      res.json(device);
+    } catch (error) {
+      console.error("Error fetching device details:", error);
+      res.status(500).json({ message: "Failed to fetch device details" });
+    }
+  });
+
+  app.post('/api/iot/devices/:deviceId/config', requireAdmin, async (req, res) => {
+    try {
+      const deviceId = req.params.deviceId;
+      const config = req.body;
+      
+      const success = iotDeviceManager.updateDeviceConfig(deviceId, config);
+      
+      if (success) {
+        res.json({ success: true, message: "Configuration sent to device" });
+      } else {
+        res.status(404).json({ message: "Device not found or offline" });
+      }
+    } catch (error) {
+      console.error("Error updating device config:", error);
+      res.status(500).json({ message: "Failed to update device configuration" });
+    }
+  });
+
+  app.post('/api/iot/devices/:deviceId/diagnostics', requireAdminOrFaculty, async (req, res) => {
+    try {
+      const deviceId = req.params.deviceId;
+      
+      const success = iotDeviceManager.requestDiagnostics(deviceId);
+      
+      if (success) {
+        res.json({ success: true, message: "Diagnostics request sent to device" });
+      } else {
+        res.status(404).json({ message: "Device not found or offline" });
+      }
+    } catch (error) {
+      console.error("Error requesting diagnostics:", error);
+      res.status(500).json({ message: "Failed to request diagnostics" });
+    }
+  });
+
+  app.post('/api/iot/broadcast', requireAdmin, async (req, res) => {
+    try {
+      const message = req.body;
+      iotDeviceManager.broadcastToDevices(message);
+      res.json({ success: true, message: "Message broadcasted to all devices" });
+    } catch (error) {
+      console.error("Error broadcasting message:", error);
+      res.status(500).json({ message: "Failed to broadcast message" });
+    }
+  });
+
+  app.get('/api/iot/setup-guide', requireAdminOrFaculty, async (req, res) => {
+    try {
+      const setupGuide = {
+        hardwareRequirements: [
+          "ESP32-WROOM-32 38-pin with USB Type-C",
+          "RC522 RFID Module (13.56 MHz)",
+          "HC-SR501 PIR Motion Sensor", 
+          "MIFARE RFID Cards/Tags",
+          "5V Power Supply",
+          "Jumper wires and breadboard"
+        ],
+        wiring: {
+          "RFID RC522": {
+            "VCC": "3.3V",
+            "RST": "GPIO 22",
+            "GND": "GND", 
+            "MISO": "GPIO 19",
+            "MOSI": "GPIO 23",
+            "SCK": "GPIO 18",
+            "SDA": "GPIO 5"
+          },
+          "PIR HC-SR501": {
+            "VCC": "5V",
+            "GND": "GND",
+            "OUT": "GPIO 4"
+          },
+          "LED": {
+            "Anode": "GPIO 2",
+            "Cathode": "GND"
+          }
+        },
+        configuration: {
+          wifiSSID: "Update in Arduino code",
+          wifiPassword: "Update in Arduino code", 
+          serverHost: req.get('host'),
+          serverPort: "443 (HTTPS)",
+          serverPath: "/iot"
+        },
+        steps: [
+          "Install Arduino IDE and ESP32 board support",
+          "Install required libraries: WebSocketsClient, ArduinoJson, MFRC522",
+          "Wire components according to diagram",
+          "Update WiFi credentials in code",
+          "Update server URL with your Replit domain",
+          "Upload code to ESP32",
+          "Monitor serial output for connection status",
+          "Register device in CLIRDEC admin panel"
+        ]
+      };
+      
+      res.json(setupGuide);
+    } catch (error) {
+      console.error("Error generating setup guide:", error);
+      res.status(500).json({ message: "Failed to generate setup guide" });
     }
   });
   
