@@ -529,6 +529,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Custom email sending for contact student functionality
+  app.post('/api/notifications/send-email', requireAdminOrFaculty, async (req: any, res) => {
+    try {
+      const { studentId, recipientType, subject, message, priority, type } = req.body;
+      const currentUser = req.user;
+      
+      const student = await storage.getStudent(studentId);
+      if (!student) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+
+      // Determine recipient email
+      let recipientEmail = '';
+      if (recipientType === 'parent') {
+        recipientEmail = student.parentEmail;
+      } else if (recipientType === 'student') {
+        recipientEmail = student.email || '';
+      }
+
+      if (!recipientEmail) {
+        return res.status(400).json({ message: "No email found for recipient" });
+      }
+
+      // Create notification record
+      await storage.createEmailNotification({
+        type: type || 'general_communication',
+        message: message,
+        subject: subject,
+        recipientEmail: recipientEmail,
+        studentId: studentId,
+        content: `<div style="font-family: Arial, sans-serif;">
+          <div style="background-color: #2596be; color: white; padding: 20px; text-align: center;">
+            <h1>CLIRDEC: PRESENCE</h1>
+            <p>Central Luzon State University - Attendance Monitoring System</p>
+          </div>
+          <div style="padding: 20px;">
+            <h2>${subject}</h2>
+            <p style="white-space: pre-line;">${message}</p>
+            <hr style="margin: 20px 0;">
+            <p style="color: #666; font-size: 12px;">
+              This message was sent regarding ${student.firstName} ${student.lastName} (${student.studentId})
+              <br>Date: ${new Date().toLocaleString()}
+            </p>
+          </div>
+        </div>`,
+        status: 'pending'
+      });
+
+      res.json({ message: "Email sent successfully" });
+    } catch (error) {
+      console.error("Error sending email:", error);
+      res.status(500).json({ message: "Failed to send email" });
+    }
+  });
+
   // System settings routes - Admin only for system configuration
   app.get('/api/settings/:key', requireAdminOrFaculty, async (req, res) => {
     try {

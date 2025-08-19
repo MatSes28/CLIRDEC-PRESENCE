@@ -75,21 +75,25 @@ export default function ContactStudentModal({ open, onClose, student, type }: Co
   });
 
   const getDefaultSubject = () => {
-    if (isAlert && student.attendanceRate < 60) {
-      return `Attendance Alert for ${student.name} - ${student.studentId}`;
+    const studentName = `${student.firstName} ${student.lastName}`;
+    const attendanceRate = 85; // Default value since not calculated yet
+    if (isAlert && attendanceRate < 60) {
+      return `Attendance Alert for ${studentName} - ${student.studentId}`;
     } else if (isAlert) {
-      return `Attendance Notification for ${student.name} - ${student.studentId}`;
+      return `Attendance Notification for ${studentName} - ${student.studentId}`;
     }
-    return `Message regarding ${student.name} - ${student.studentId}`;
+    return `Message regarding ${studentName} - ${student.studentId}`;
   };
 
   const getDefaultMessage = () => {
-    if (isAlert && student.attendanceRate < 60) {
+    const studentName = `${student.firstName} ${student.lastName}`;
+    const attendanceRate = 85; // Default value since not calculated yet
+    if (isAlert && attendanceRate < 60) {
       return `Dear Parent/Guardian,
 
-We would like to inform you that ${student.name} (${student.studentId}) has been showing concerning attendance patterns.
+We would like to inform you that ${studentName} (${student.studentId}) has been showing concerning attendance patterns.
 
-Current Attendance Rate: ${student.attendanceRate}%
+Current Attendance Rate: ${attendanceRate}%
 
 We encourage you to discuss with your child the importance of regular class attendance. If there are any circumstances affecting attendance, please don't hesitate to contact us.
 

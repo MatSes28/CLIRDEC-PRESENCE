@@ -32,17 +32,16 @@ export default function EditStudentModal({ open, onClose, student }: EditStudent
 
   useEffect(() => {
     if (student) {
-      const [firstName, ...lastNameParts] = student.name.split(' ');
       setFormData({
-        firstName: firstName || '',
-        lastName: lastNameParts.join(' ') || '',
+        firstName: student.firstName || '',
+        lastName: student.lastName || '',
         studentId: student.studentId || '',
         email: student.email || '',
         parentEmail: student.parentEmail || '',
         parentName: student.parentName || '',
-        year: student.year ? student.year.match(/\d+/)?.[0] || '3' : '3',
-        section: student.section?.replace('Section ', '') || 'A',
-        rfidCardId: student.rfidCard || ''
+        year: student.year ? student.year.toString() : '1',
+        section: student.section || 'A',
+        rfidCardId: student.rfidCardId || ''
       });
     }
   }, [student]);
