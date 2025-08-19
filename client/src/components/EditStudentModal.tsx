@@ -79,15 +79,7 @@ export default function EditStudentModal({ open, onClose, student }: EditStudent
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.firstName || !formData.lastName || !formData.studentId || !formData.email) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields",
-        variant: "destructive"
-      });
-      return;
-    }
-
+    // No required field validation - user can edit any field they want
     updateStudentMutation.mutate(formData);
   };
 
@@ -112,7 +104,7 @@ export default function EditStudentModal({ open, onClose, student }: EditStudent
             <h3 className="text-lg font-medium">Personal Information</h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="firstName">First Name *</Label>
+                <Label htmlFor="firstName">First Name</Label>
                 <Input
                   id="firstName"
                   value={formData.firstName}
@@ -121,7 +113,7 @@ export default function EditStudentModal({ open, onClose, student }: EditStudent
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name *</Label>
+                <Label htmlFor="lastName">Last Name</Label>
                 <Input
                   id="lastName"
                   value={formData.lastName}
@@ -133,7 +125,7 @@ export default function EditStudentModal({ open, onClose, student }: EditStudent
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="studentId">Student ID *</Label>
+                <Label htmlFor="studentId">Student ID</Label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -146,7 +138,7 @@ export default function EditStudentModal({ open, onClose, student }: EditStudent
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Student Email *</Label>
+                <Label htmlFor="email">Student Email</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
