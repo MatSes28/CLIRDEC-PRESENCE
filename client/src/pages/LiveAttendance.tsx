@@ -95,39 +95,8 @@ export default function LiveAttendance() {
     }
   };
 
-  // Mock student data for current session
-  const mockStudents = [
-    {
-      id: 1,
-      name: 'Maria Santos',
-      studentId: '2021-IT-001',
-      year: '3rd Year IT',
-      status: 'present',
-      checkInTime: '10:02 AM',
-      computer: 'PC-12',
-      profileImage: 'https://images.unsplash.com/photo-1494790108755-2616b68fad91?w=100&h=100&fit=crop&crop=face'
-    },
-    {
-      id: 2,
-      name: 'Juan Dela Cruz',
-      studentId: '2021-IT-002',
-      year: '3rd Year IT',
-      status: 'late',
-      checkInTime: '10:15 AM',
-      computer: 'PC-08',
-      profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face'
-    },
-    {
-      id: 3,
-      name: 'Anna Rodriguez',
-      studentId: '2021-IT-003',
-      year: '3rd Year IT',
-      status: 'absent',
-      checkInTime: '--',
-      computer: '--',
-      profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face'
-    }
-  ];
+  // Use real attendance data from API or display empty state
+  const displayStudents = attendance?.length > 0 ? attendance : [];
 
   return (
     <div className="p-6 space-y-6">
@@ -186,46 +155,52 @@ export default function LiveAttendance() {
               </div>
               
               <div className="divide-y divide-border">
-                {mockStudents.map((student) => (
-                  <div key={student.id} className="grid grid-cols-6 gap-4 py-4 px-6 items-center">
-                    <div className="flex items-center space-x-3">
-                      <img 
-                        src={student.profileImage} 
-                        alt={student.name}
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
+                {displayStudents.length > 0 ? (
+                  displayStudents.map((record: any) => (
+                    <div key={record.id} className="grid grid-cols-6 gap-4 py-4 px-6 items-center">
                       <div>
-                        <div className="font-medium">{student.name}</div>
-                        <div className="text-sm text-muted-foreground">{student.year}</div>
+                        <div className="font-medium">{record.student?.firstName} {record.student?.lastName}</div>
+                        <div className="text-sm text-muted-foreground">Year {record.student?.year} - {record.student?.section}</div>
+                      </div>
+                      
+                      <div className="font-mono text-sm">{record.student?.studentId}</div>
+                      
+                      <div>
+                        <Badge className={getStatusColor(record.status || 'absent')}>
+                          {(record.status || 'absent').charAt(0).toUpperCase() + (record.status || 'absent').slice(1)}
+                        </Badge>
+                      </div>
+                      
+                      <div className="font-mono text-sm">
+                        {record.checkInTime ? new Date(record.checkInTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--'}
+                      </div>
+                      <div className="font-mono text-sm">{record.computerId ? `PC-${record.computerId}` : '--'}</div>
+                      
+                      <div className="flex space-x-2">
+                        {record.status === 'present' || record.status === 'late' ? (
+                          <Button size="sm" variant="outline">
+                            <Monitor className="mr-1 h-3 w-3" />
+                            Monitor
+                          </Button>
+                        ) : (
+                          <Button size="sm" variant="outline">
+                            <Phone className="mr-1 h-3 w-3" />
+                            Contact
+                          </Button>
+                        )}
                       </div>
                     </div>
-                    
-                    <div className="font-mono text-sm">{student.studentId}</div>
-                    
-                    <div>
-                      <Badge className={getStatusColor(student.status)}>
-                        {student.status.charAt(0).toUpperCase() + student.status.slice(1)}
-                      </Badge>
+                  ))
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="text-muted-foreground">
+                      {!activeSession ? 'No active class session' : 'No attendance records yet'}
                     </div>
-                    
-                    <div className="font-mono text-sm">{student.checkInTime}</div>
-                    <div className="font-mono text-sm">{student.computer}</div>
-                    
-                    <div className="flex space-x-2">
-                      {student.status === 'present' || student.status === 'late' ? (
-                        <Button size="sm" variant="outline">
-                          <Monitor className="mr-1 h-3 w-3" />
-                          Monitor
-                        </Button>
-                      ) : (
-                        <Button size="sm" variant="outline">
-                          <Phone className="mr-1 h-3 w-3" />
-                          Contact
-                        </Button>
-                      )}
+                    <div className="text-sm text-muted-foreground mt-2">
+                      {!activeSession ? 'Start a class session to begin monitoring attendance' : 'Students will appear here when they tap their RFID cards'}
                     </div>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>
