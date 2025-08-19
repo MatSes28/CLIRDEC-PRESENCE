@@ -17,6 +17,7 @@ import {
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { GenderAvatar } from "@/components/GenderAvatar";
+import AddStudentModal from "@/components/AddStudentModal";
 import EditStudentModal from "@/components/EditStudentModal";
 import ViewStudentModal from "@/components/ViewStudentModal";
 import ContactStudentModal from "@/components/ContactStudentModal";
@@ -26,6 +27,7 @@ export default function Students() {
   const [selectedYear, setSelectedYear] = useState("all");
   const [selectedSection, setSelectedSection] = useState("all");
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [contactModalOpen, setContactModalOpen] = useState(false);
@@ -38,17 +40,21 @@ export default function Students() {
   });
 
   // Use actual student data from API
-  const studentsData = students || [];
+  const studentsData = Array.isArray(students) ? students : [];
 
   const filteredStudents = studentsData.filter((student: any) => {
     const fullName = `${student.firstName} ${student.lastName}`;
     const matchesSearch = fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          student.studentId.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesYear = selectedYear === "all" || student.year.toString() === selectedYear;
-    const matchesSection = selectedSection === "all" || student.section === selectedSection;
+    const matchesSection = selectedSection === "all" || student.section.toLowerCase().includes(selectedSection.toLowerCase());
     
     return matchesSearch && matchesYear && matchesSection;
   });
+
+  // Get unique years and sections for filter options
+  const availableYears = Array.from(new Set(studentsData.map((s: any) => s.year.toString()))).sort();
+  const availableSections = Array.from(new Set(studentsData.map((s: any) => s.section))).sort();
 
   const getAttendanceColor = (rate: number) => {
     if (rate >= 80) return 'bg-secondary';
@@ -96,6 +102,7 @@ export default function Students() {
   };
 
   const closeModals = () => {
+    setAddModalOpen(false);
     setEditModalOpen(false);
     setViewModalOpen(false);
     setContactModalOpen(false);
@@ -126,7 +133,7 @@ export default function Students() {
             <FolderInput className="mr-2 h-4 w-4" />
             Import Students
           </Button>
-          <Button>
+          <Button onClick={() => setAddModalOpen(true)}>
             <UserPlus className="mr-2 h-4 w-4" />
             Add Student
           </Button>
@@ -152,10 +159,11 @@ export default function Students() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Years</SelectItem>
-                <SelectItem value="1st">1st Year</SelectItem>
-                <SelectItem value="2nd">2nd Year</SelectItem>
-                <SelectItem value="3rd">3rd Year</SelectItem>
-                <SelectItem value="4th">4th Year</SelectItem>
+                {availableYears.map(year => (
+                  <SelectItem key={year} value={year}>
+                    {year === "1" ? "1st" : year === "2" ? "2nd" : year === "3" ? "3rd" : year === "4" ? "4th" : `${year}`} Year
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Select value={selectedSection} onValueChange={setSelectedSection}>
@@ -164,9 +172,9 @@ export default function Students() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Sections</SelectItem>
-                <SelectItem value="A">Section A</SelectItem>
-                <SelectItem value="B">Section B</SelectItem>
-                <SelectItem value="C">Section C</SelectItem>
+                {availableSections.map(section => (
+                  <SelectItem key={section} value={section}>Section {section}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -313,6 +321,11 @@ export default function Students() {
       </div>
 
       {/* Modals */}
+      <AddStudentModal
+        open={addModalOpen}
+        onClose={closeModals}
+      />
+      
       <EditStudentModal
         open={editModalOpen}
         onClose={closeModals}
