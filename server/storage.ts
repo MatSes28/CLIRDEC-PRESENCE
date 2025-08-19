@@ -209,7 +209,7 @@ export class MemStorage implements IStorage {
       role: userData.role || "faculty",
       facultyId: userData.facultyId || null,
       department: userData.department || "Information Technology",
-      profileImageUrl: userData.profileImageUrl || null,
+      gender: userData.gender || "male",
       isActive: userData.isActive ?? true,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -219,9 +219,9 @@ export class MemStorage implements IStorage {
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
-    const existingUser = this.users.get(userData.id);
+    const existingUser = this.users.get(userData.id!);
     const user: User = {
-      id: userData.id,
+      id: userData.id!,
       email: userData.email || existingUser?.email || '',
       password: userData.password || existingUser?.password || '',
       firstName: userData.firstName || existingUser?.firstName || '',
@@ -229,12 +229,12 @@ export class MemStorage implements IStorage {
       role: userData.role || existingUser?.role || 'faculty',
       facultyId: userData.facultyId ?? existingUser?.facultyId ?? null,
       department: userData.department ?? existingUser?.department ?? "Information Technology",
-      profileImageUrl: userData.profileImageUrl ?? existingUser?.profileImageUrl ?? null,
+      gender: userData.gender ?? existingUser?.gender ?? "male",
       isActive: userData.isActive ?? existingUser?.isActive ?? true,
       createdAt: existingUser?.createdAt || new Date(),
       updatedAt: new Date(),
     };
-    this.users.set(userData.id, user);
+    this.users.set(userData.id!, user);
     return user;
   }
 
@@ -265,6 +265,7 @@ export class MemStorage implements IStorage {
       ...student, 
       id: this.nextId++, 
       email: student.email || null,
+      gender: student.gender || "male",
       rfidCardId: student.rfidCardId || null,
       isActive: student.isActive ?? true,
       createdAt: new Date(), 
@@ -555,7 +556,7 @@ export class MemStorage implements IStorage {
   }
 }
 
-/* Currently disabled - using MemStorage for development
+/* Currently disabled due to database connection issues
 export class DatabaseStorage implements IStorage {
   // User operations - required for Replit Auth
   async getUser(id: string): Promise<User | undefined> {
@@ -855,5 +856,5 @@ export class DatabaseStorage implements IStorage {
   }
 } */
 
-// Using in-memory storage for optimal performance and reliability
+// Using in-memory storage for development - ensures data persistence during session
 export const storage = new MemStorage();
