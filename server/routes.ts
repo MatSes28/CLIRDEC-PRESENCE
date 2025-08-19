@@ -529,6 +529,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test SendGrid configuration
+  app.get('/api/notifications/test-sendgrid', requireAdminOrFaculty, async (req: any, res) => {
+    try {
+      const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+      if (!SENDGRID_API_KEY) {
+        return res.status(400).json({ message: "SendGrid API key not configured" });
+      }
+
+      const FROM_EMAIL = process.env.FROM_EMAIL || "clirdec.presence@clsu.edu.ph";
+      
+      const sgMail = await import('@sendgrid/mail');
+      sgMail.default.setApiKey(SENDGRID_API_KEY);
+      
+      // Test with a simple email in sandbox mode
+      await sgMail.default.send({
+        to: 'test@example.com',
+        from: FROM_EMAIL,
+        subject: 'CLIRDEC SendGrid Test',
+        text: 'This is a test email from CLIRDEC Presence system.'
+      } as any);
+      
+      res.json({ 
+        message: "SendGrid test successful",
+        from_email: FROM_EMAIL,
+        api_key_configured: true
+      });
+    } catch (error: any) {
+      console.error('SendGrid test error:', error);
+      res.status(500).json({ 
+        message: "SendGrid test failed", 
+        error: error.message,
+        code: error.code
+      });
+    }
+  });
+
   // Custom email sending for contact student functionality
   app.post('/api/notifications/send-email', requireAdminOrFaculty, async (req: any, res) => {
     try {
@@ -552,32 +588,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No email found for recipient" });
       }
 
-      // Create notification record
-      await storage.createEmailNotification({
-        type: type || 'general_communication',
-        message: message,
-        subject: subject,
-        recipientEmail: recipientEmail,
-        studentId: studentId,
-        content: `<div style="font-family: Arial, sans-serif;">
-          <div style="background-color: #2596be; color: white; padding: 20px; text-align: center;">
-            <h1>CLIRDEC: PRESENCE</h1>
-            <p>Central Luzon State University - Attendance Monitoring System</p>
-          </div>
-          <div style="padding: 20px;">
-            <h2>${subject}</h2>
-            <p style="white-space: pre-line;">${message}</p>
-            <hr style="margin: 20px 0;">
-            <p style="color: #666; font-size: 12px;">
-              This message was sent regarding ${student.firstName} ${student.lastName} (${student.studentId})
-              <br>Date: ${new Date().toLocaleString()}
-            </p>
-          </div>
-        </div>`,
-        status: 'pending'
-      });
+      // Create email content
+      const emailContent = `<div style="font-family: Arial, sans-serif;">
+        <div style="background-color: #2596be; color: white; padding: 20px; text-align: center;">
+          <h1>CLIRDEC: PRESENCE</h1>
+          <p>Central Luzon State University - Attendance Monitoring System</p>
+        </div>
+        <div style="padding: 20px;">
+          <h2>${subject}</h2>
+          <p style="white-space: pre-line;">${message}</p>
+          <hr style="margin: 20px 0;">
+          <p style="color: #666; font-size: 12px;">
+            This message was sent regarding ${student.firstName} ${student.lastName} (${student.studentId})
+            <br>Date: ${new Date().toLocaleString()}
+          </p>
+        </div>
+      </div>`;
 
-      res.json({ message: "Email sent successfully" });
+      // Send email immediately via SendGrid
+      const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+      const FROM_EMAIL = process.env.FROM_EMAIL || "clirdec.presence@clsu.edu.ph";
+
+      if (SENDGRID_API_KEY) {
+        try {
+          const sgMail = await import('@sendgrid/mail');
+          sgMail.default.setApiKey(SENDGRID_API_KEY);
+          
+          await sgMail.default.send({
+            to: recipientEmail,
+            from: FROM_EMAIL,
+            subject: subject,
+            html: emailContent,
+            text: message
+          });
+          
+          console.log(`✅ Email sent successfully to ${recipientEmail}`);
+          
+          // Also create notification record for tracking
+          await storage.createEmailNotification({
+            type: type || 'general_communication',
+            message: message,
+            subject: subject,
+            recipientEmail: recipientEmail,
+            studentId: studentId,
+            content: emailContent,
+            status: 'sent'
+          });
+          
+          res.json({ message: "Email sent successfully" });
+        } catch (error: any) {
+          console.error('SendGrid error:', error);
+          
+          let errorMessage = "Failed to send email via SendGrid";
+          if (error.code === 403) {
+            errorMessage = "SendGrid authentication failed. Please verify your API key has Mail Send permissions and the 'from' email address is verified in SendGrid.";
+          } else if (error.code === 400) {
+            errorMessage = "SendGrid request error. Please verify the 'from' email address is properly formatted and verified.";
+          }
+          
+          res.status(500).json({ 
+            message: errorMessage, 
+            error: error.message,
+            suggestion: "In SendGrid dashboard: 1) Verify your sender email, 2) Check API key permissions include 'Mail Send'"
+          });
+        }
+      } else {
+        // No API key available
+        console.log(`❌ No SendGrid API key - email not sent to ${recipientEmail}`);
+        res.status(500).json({ message: "SendGrid API key not configured" });
+      }
     } catch (error) {
       console.error("Error sending email:", error);
       res.status(500).json({ message: "Failed to send email" });
