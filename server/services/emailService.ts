@@ -2,7 +2,7 @@ import { storage } from "../storage";
 
 // Email service configuration
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || process.env.EMAIL_API_KEY || "";
-const FROM_EMAIL = process.env.FROM_EMAIL || "clirdec.presence@clsu.edu.ph";
+const FROM_EMAIL = process.env.FROM_EMAIL || "matt.feria@clsu2.edu.ph";
 
 interface EmailTemplate {
   subject: string;

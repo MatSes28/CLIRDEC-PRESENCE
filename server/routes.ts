@@ -537,7 +537,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "SendGrid API key not configured" });
       }
 
-      const FROM_EMAIL = process.env.FROM_EMAIL || "clirdec.presence@clsu.edu.ph";
+      const FROM_EMAIL = process.env.FROM_EMAIL || "matt.feria@clsu2.edu.ph";
       
       const sgMail = await import('@sendgrid/mail');
       sgMail.default.setApiKey(SENDGRID_API_KEY);
@@ -607,7 +607,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Send email immediately via SendGrid
       const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
-      const FROM_EMAIL = process.env.FROM_EMAIL || "clirdec.presence@clsu.edu.ph";
+      const FROM_EMAIL = process.env.FROM_EMAIL || "matt.feria@clsu2.edu.ph";
 
       if (SENDGRID_API_KEY) {
         try {
