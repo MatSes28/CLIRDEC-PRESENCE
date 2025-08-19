@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,7 +32,19 @@ export default function AddStudentModal({ open, onClose }: AddStudentModalProps)
 
   const createStudentMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const response = await apiRequest('POST', '/api/students', data);
+      const response = await fetch('/api/students', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create student');
+      }
+      
       return response.json();
     },
     onSuccess: () => {
@@ -41,8 +53,8 @@ export default function AddStudentModal({ open, onClose }: AddStudentModalProps)
         description: "Student added successfully",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/students'] });
-      onClose();
       resetForm();
+      onClose();
     },
     onError: (error: any) => {
       toast({
@@ -92,6 +104,9 @@ export default function AddStudentModal({ open, onClose }: AddStudentModalProps)
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Add New Student</DialogTitle>
+          <DialogDescription>
+            Fill in the student information below to add them to the system.
+          </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">

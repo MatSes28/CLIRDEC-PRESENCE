@@ -26,8 +26,8 @@ export default function LiveAttendance() {
   });
 
   const { data: attendance, isLoading: attendanceLoading } = useQuery({
-    queryKey: ['/api/attendance', activeSession?.id],
-    enabled: !!activeSession?.id,
+    queryKey: ['/api/attendance', (activeSession as any)?.id],
+    enabled: !!(activeSession as any)?.id,
   });
 
   const refreshMutation = useMutation({
@@ -57,7 +57,7 @@ export default function LiveAttendance() {
     try {
       const response = await apiRequest('POST', '/api/rfid/simulate', {
         rfidCardId,
-        sessionId: activeSession.id
+        sessionId: (activeSession as any).id
       });
       
       const result = await response.json();
@@ -96,7 +96,7 @@ export default function LiveAttendance() {
   };
 
   // Use real attendance data from API or display empty state
-  const displayStudents = attendance?.length > 0 ? attendance : [];
+  const displayStudents = Array.isArray(attendance) && attendance.length > 0 ? attendance : [];
 
   return (
     <div className="p-6 space-y-6">
@@ -156,7 +156,7 @@ export default function LiveAttendance() {
               
               <div className="divide-y divide-border">
                 {displayStudents.length > 0 ? (
-                  displayStudents.map((record: any) => (
+                  (displayStudents as any[]).map((record: any) => (
                     <div key={record.id} className="grid grid-cols-6 gap-4 py-4 px-6 items-center">
                       <div>
                         <div className="font-medium">{record.student?.firstName} {record.student?.lastName}</div>

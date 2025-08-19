@@ -159,7 +159,7 @@ export default function Students() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Years</SelectItem>
-                {availableYears.map(year => (
+                {availableYears.filter(year => year && year.trim() !== '').map(year => (
                   <SelectItem key={year} value={year}>
                     {year === "1" ? "1st" : year === "2" ? "2nd" : year === "3" ? "3rd" : year === "4" ? "4th" : `${year}`} Year
                   </SelectItem>
@@ -172,7 +172,7 @@ export default function Students() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Sections</SelectItem>
-                {availableSections.map(section => (
+                {availableSections.filter(section => section && section.trim() !== '').map(section => (
                   <SelectItem key={section} value={section}>Section {section}</SelectItem>
                 ))}
               </SelectContent>
