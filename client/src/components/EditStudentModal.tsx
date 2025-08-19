@@ -32,6 +32,7 @@ export default function EditStudentModal({ open, onClose, student }: EditStudent
 
   useEffect(() => {
     if (student) {
+      console.log('Setting form data for student:', student); // Debug log
       setFormData({
         firstName: student.firstName || '',
         lastName: student.lastName || '',
@@ -39,8 +40,8 @@ export default function EditStudentModal({ open, onClose, student }: EditStudent
         email: student.email || '',
         parentEmail: student.parentEmail || '',
         parentName: student.parentName || '',
-        year: student.year ? student.year.toString() : '1',
-        section: student.section || 'A',
+        year: student.year ? student.year.toString() : '',
+        section: student.section || '',
         rfidCardId: student.rfidCardId || ''
       });
     }
@@ -50,10 +51,7 @@ export default function EditStudentModal({ open, onClose, student }: EditStudent
     mutationFn: async (data: any) => {
       const response = await fetch(`/api/students/${student.id}`, {
         method: 'PUT',
-        body: JSON.stringify({
-          ...data,
-          year: parseInt(data.year)
-        }),
+        body: JSON.stringify(data),
         headers: { 'Content-Type': 'application/json' }
       });
       if (!response.ok) throw new Error('Failed to update student');

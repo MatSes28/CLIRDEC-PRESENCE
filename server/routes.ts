@@ -203,8 +203,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/students/:id', requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const studentData = insertStudentSchema.partial().parse(req.body);
-      const student = await storage.updateStudent(id, studentData);
+      
+      // Handle the update more flexibly - remove empty/null values
+      const rawData = req.body;
+      const cleanData: any = {};
+      
+      // Only include fields that have actual values
+      if (rawData.firstName && rawData.firstName.trim()) cleanData.firstName = rawData.firstName.trim();
+      if (rawData.lastName && rawData.lastName.trim()) cleanData.lastName = rawData.lastName.trim();
+      if (rawData.studentId && rawData.studentId.trim()) cleanData.studentId = rawData.studentId.trim();
+      if (rawData.email && rawData.email.trim()) cleanData.email = rawData.email.trim();
+      if (rawData.parentEmail && rawData.parentEmail.trim()) cleanData.parentEmail = rawData.parentEmail.trim();
+      if (rawData.parentName && rawData.parentName.trim()) cleanData.parentName = rawData.parentName.trim();
+      if (rawData.section && rawData.section.trim()) cleanData.section = rawData.section.trim();
+      if (rawData.rfidCardId && rawData.rfidCardId.trim()) cleanData.rfidCardId = rawData.rfidCardId.trim();
+      if (rawData.year && parseInt(rawData.year)) cleanData.year = parseInt(rawData.year);
+      
+      console.log('Updating student with clean data:', cleanData);
+      
+      const student = await storage.updateStudent(id, cleanData);
       res.json(student);
     } catch (error) {
       console.error("Error updating student:", error);
