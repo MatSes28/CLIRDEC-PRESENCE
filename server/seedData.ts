@@ -21,6 +21,7 @@ export async function seedDatabase() {
       firstName: "System",
       lastName: "Administrator",
       role: "admin",
+      gender: "male",
       facultyId: "ADMIN001",
       department: "Information Technology"
     });
@@ -31,6 +32,7 @@ export async function seedDatabase() {
       firstName: "Faculty",
       lastName: "Member",
       role: "faculty",
+      gender: "female",
       facultyId: "FAC001",
       department: "Information Technology"
     });
@@ -76,15 +78,17 @@ export async function seedDatabase() {
     // Note: Subjects will be created when a professor logs in and creates them
     // through the UI, as they need to be associated with a specific professorId
 
-    // Create sample students
+    // Create sample students with gender for clean avatar display
     const students = [
       {
         studentId: "2021-IT-001",
         firstName: "Maria",
         lastName: "Santos",
+        gender: "female",
         year: 3,
         email: "maria.santos@student.clsu.edu.ph",
         parentEmail: "parent.santos@gmail.com",
+        parentName: "Roberto Santos",
         rfidCardId: "RFID001",
         section: "3IT-A"
       },
@@ -92,9 +96,11 @@ export async function seedDatabase() {
         studentId: "2021-IT-002", 
         firstName: "Juan",
         lastName: "Dela Cruz",
+        gender: "male",
         year: 3,
         email: "juan.delacruz@student.clsu.edu.ph",
         parentEmail: "parent.delacruz@gmail.com",
+        parentName: "Carmen Dela Cruz",
         rfidCardId: "RFID002",
         section: "3IT-A"
       },
@@ -102,9 +108,11 @@ export async function seedDatabase() {
         studentId: "2021-IT-003",
         firstName: "Anna",
         lastName: "Rodriguez", 
+        gender: "female",
         year: 3,
         email: "anna.rodriguez@student.clsu.edu.ph",
         parentEmail: "parent.rodriguez@gmail.com",
+        parentName: "Miguel Rodriguez",
         rfidCardId: "RFID003",
         section: "3IT-A"
       },
@@ -112,9 +120,11 @@ export async function seedDatabase() {
         studentId: "2021-IT-004",
         firstName: "Carlos",
         lastName: "Mendez",
+        gender: "male",
         year: 3,
         email: "carlos.mendez@student.clsu.edu.ph", 
         parentEmail: "parent.mendez@gmail.com",
+        parentName: "Sofia Mendez",
         rfidCardId: "RFID004",
         section: "3IT-A"
       },
@@ -122,9 +132,11 @@ export async function seedDatabase() {
         studentId: "2021-IT-005",
         firstName: "Lisa",
         lastName: "Garcia",
+        gender: "female",
         year: 3,
         email: "lisa.garcia@student.clsu.edu.ph",
-        parentEmail: "parent.garcia@gmail.com", 
+        parentEmail: "parent.garcia@gmail.com",
+        parentName: "Pedro Garcia", 
         rfidCardId: "RFID005",
         section: "3IT-B"
       }

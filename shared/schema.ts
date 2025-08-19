@@ -37,7 +37,7 @@ export const users = pgTable("users", {
   role: varchar("role").notNull().default("faculty"), // 'admin' or 'faculty'
   facultyId: varchar("faculty_id").unique(),
   department: varchar("department").default("Information Technology"),
-  profileImageUrl: varchar("profile_image_url"),
+  gender: varchar("gender").default("male"), // 'male' or 'female' for avatar styling
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -50,6 +50,7 @@ export const students = pgTable("students", {
   firstName: varchar("first_name").notNull(),
   lastName: varchar("last_name").notNull(),
   email: varchar("email"),
+  gender: varchar("gender").notNull().default("male"), // 'male' or 'female' for avatar styling
   year: integer("year").notNull(),
   section: varchar("section").notNull(),
   rfidCardId: varchar("rfid_card_id").unique(),

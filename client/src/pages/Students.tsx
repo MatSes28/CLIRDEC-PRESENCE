@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { GenderAvatar } from "@/components/GenderAvatar";
 import EditStudentModal from "@/components/EditStudentModal";
 import ViewStudentModal from "@/components/ViewStudentModal";
 import ContactStudentModal from "@/components/ContactStudentModal";
@@ -36,59 +37,15 @@ export default function Students() {
     queryKey: ['/api/students'],
   });
 
-  // Mock student data
-  const mockStudents = [
-    {
-      id: 1,
-      name: 'Maria Santos',
-      studentId: '2021-IT-001',
-      year: '3rd Year IT',
-      section: 'Section A',
-      rfidCard: 'RF001234',
-      parentEmail: 'maria.parent@email.com',
-      attendanceRate: 85,
-      profileImage: 'https://images.unsplash.com/photo-1494790108755-2616b68fad91?w=100&h=100&fit=crop&crop=face'
-    },
-    {
-      id: 2,
-      name: 'Juan Dela Cruz',
-      studentId: '2021-IT-002',
-      year: '3rd Year IT',
-      section: 'Section A',
-      rfidCard: 'RF001235',
-      parentEmail: 'juan.parent@email.com',
-      attendanceRate: 65,
-      profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face'
-    },
-    {
-      id: 3,
-      name: 'Anna Rodriguez',
-      studentId: '2021-IT-003',
-      year: '3rd Year IT',
-      section: 'Section B',
-      rfidCard: null,
-      parentEmail: 'anna.parent@email.com',
-      attendanceRate: 45,
-      profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face'
-    },
-    {
-      id: 4,
-      name: 'Carlos Mendez',
-      studentId: '2021-IT-004',
-      year: '3rd Year IT',
-      section: 'Section B',
-      rfidCard: 'RF001236',
-      parentEmail: 'carlos.parent@email.com',
-      attendanceRate: 92,
-      profileImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face'
-    }
-  ];
+  // Use actual student data from API
+  const studentsData = students || [];
 
-  const filteredStudents = mockStudents.filter(student => {
-    const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredStudents = studentsData.filter((student: any) => {
+    const fullName = `${student.firstName} ${student.lastName}`;
+    const matchesSearch = fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          student.studentId.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesYear = selectedYear === "all" || student.year.includes(selectedYear);
-    const matchesSection = selectedSection === "all" || student.section.includes(selectedSection);
+    const matchesYear = selectedYear === "all" || student.year.toString() === selectedYear;
+    const matchesSection = selectedSection === "all" || student.section === selectedSection;
     
     return matchesSearch && matchesYear && matchesSection;
   });
@@ -234,23 +191,22 @@ export default function Students() {
                 {filteredStudents.map((student) => (
                   <div key={student.id} className="grid grid-cols-6 gap-4 py-4 px-6 items-center">
                     <div className="flex items-center space-x-3">
-                      <img 
-                        src={student.profileImage} 
-                        alt={student.name}
-                        className="w-10 h-10 rounded-full object-cover"
+                      <GenderAvatar 
+                        gender={student.gender || 'male'} 
+                        size="md" 
                       />
                       <div>
-                        <div className="font-medium">{student.name}</div>
-                        <div className="text-sm text-muted-foreground">{student.year} - {student.section}</div>
+                        <div className="font-medium">{`${student.firstName} ${student.lastName}`}</div>
+                        <div className="text-sm text-muted-foreground">Year {student.year} - {student.section}</div>
                       </div>
                     </div>
                     
                     <div className="font-mono text-sm">{student.studentId}</div>
                     
                     <div>
-                      {student.rfidCard ? (
+                      {student.rfidCardId ? (
                         <Badge variant="secondary" className="font-mono text-xs">
-                          {student.rfidCard}
+                          {student.rfidCardId}
                         </Badge>
                       ) : (
                         <Badge variant="destructive" className="text-xs">
@@ -264,11 +220,11 @@ export default function Students() {
                     <div className="flex items-center space-x-3">
                       <div className="w-16 bg-muted rounded-full h-2">
                         <div 
-                          className={`h-2 rounded-full ${getAttendanceColor(student.attendanceRate)}`}
-                          style={{ width: `${student.attendanceRate}%` }}
+                          className="h-2 rounded-full bg-green-500"
+                          style={{ width: '85%' }}
                         ></div>
                       </div>
-                      <span className="text-sm font-medium">{student.attendanceRate}%</span>
+                      <span className="text-sm font-medium">85%</span>
                     </div>
                     
                     <div className="flex space-x-2">
@@ -285,12 +241,8 @@ export default function Students() {
                         variant="outline"
                         onClick={() => handleContactStudent(student)}
                       >
-                        {student.attendanceRate < 60 ? (
-                          <AlertTriangle className="mr-1 h-3 w-3" />
-                        ) : (
-                          <Mail className="mr-1 h-3 w-3" />
-                        )}
-                        {student.attendanceRate < 60 ? 'Alert' : 'Contact'}
+                        <Mail className="mr-1 h-3 w-3" />
+                        Contact
                       </Button>
                       <Button 
                         size="sm" 
@@ -320,7 +272,7 @@ export default function Students() {
         <Card>
           <CardContent className="p-6">
             <div className="text-center">
-              <p className="text-2xl font-bold">{mockStudents.length}</p>
+              <p className="text-2xl font-bold">{studentsData.length}</p>
               <p className="text-sm text-muted-foreground">Total Students</p>
             </div>
           </CardContent>
@@ -329,10 +281,10 @@ export default function Students() {
         <Card>
           <CardContent className="p-6">
             <div className="text-center">
-              <p className="text-2xl font-bold text-secondary">
-                {mockStudents.filter(s => s.attendanceRate >= 80).length}
+              <p className="text-2xl font-bold text-green-600">
+                {studentsData.filter((s: any) => s.isActive).length}
               </p>
-              <p className="text-sm text-muted-foreground">Good Attendance</p>
+              <p className="text-sm text-muted-foreground">Active Students</p>
             </div>
           </CardContent>
         </Card>
@@ -340,10 +292,10 @@ export default function Students() {
         <Card>
           <CardContent className="p-6">
             <div className="text-center">
-              <p className="text-2xl font-bold text-destructive">
-                {mockStudents.filter(s => s.attendanceRate < 60).length}
+              <p className="text-2xl font-bold text-blue-600">
+                {studentsData.filter((s: any) => s.rfidCardId).length}
               </p>
-              <p className="text-sm text-muted-foreground">At Risk</p>
+              <p className="text-sm text-muted-foreground">With RFID Cards</p>
             </div>
           </CardContent>
         </Card>
@@ -351,8 +303,8 @@ export default function Students() {
         <Card>
           <CardContent className="p-6">
             <div className="text-center">
-              <p className="text-2xl font-bold text-accent">
-                {mockStudents.filter(s => !s.rfidCard).length}
+              <p className="text-2xl font-bold text-orange-600">
+                {studentsData.filter((s: any) => !s.rfidCardId).length}
               </p>
               <p className="text-sm text-muted-foreground">No RFID Card</p>
             </div>

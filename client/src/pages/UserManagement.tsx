@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus, Trash2, Users, Shield, GraduationCap } from "lucide-react";
+import { GenderAvatar } from "@/components/GenderAvatar";
 import apiClient from "@/lib/api";
 
 interface User {
@@ -18,6 +19,7 @@ interface User {
   firstName: string;
   lastName: string;
   role: 'admin' | 'faculty';
+  gender?: 'male' | 'female';
   facultyId?: string;
   department: string;
   isActive: boolean;
@@ -32,6 +34,7 @@ export default function UserManagement() {
     firstName: '',
     lastName: '',
     role: 'faculty' as 'admin' | 'faculty',
+    gender: 'male' as 'male' | 'female',
     facultyId: '',
     department: 'Information Technology'
   });
@@ -57,6 +60,7 @@ export default function UserManagement() {
         firstName: '',
         lastName: '',
         role: 'faculty',
+        gender: 'male',
         facultyId: '',
         department: 'Information Technology'
       });
@@ -212,6 +216,22 @@ export default function UserManagement() {
               )}
               
               <div>
+                <Label htmlFor="gender">Gender</Label>
+                <Select
+                  value={newUser.gender}
+                  onValueChange={(value: 'male' | 'female') => setNewUser({ ...newUser, gender: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
                 <Label htmlFor="department">Department</Label>
                 <Input
                   id="department"
@@ -254,11 +274,10 @@ export default function UserManagement() {
                   >
                     <div className="flex items-center space-x-4">
                       <div className="flex-shrink-0">
-                        {user.role === 'admin' ? (
-                          <Shield className="w-8 h-8 text-red-500" />
-                        ) : (
-                          <GraduationCap className="w-8 h-8 text-blue-500" />
-                        )}
+                        <GenderAvatar 
+                          gender={user.gender || 'male'} 
+                          size="lg" 
+                        />
                       </div>
                       <div>
                         <div className="font-medium">
