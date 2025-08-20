@@ -17,7 +17,15 @@ export class IoTDeviceManager {
     this.iotWss.on('connection', (ws: WebSocket, req) => {
       console.log('📱 New IoT device attempting connection');
       
+      // Send immediate welcome message to test connection
+      ws.send(JSON.stringify({
+        type: 'welcome',
+        message: 'Connected to CLIRDEC server',
+        timestamp: new Date().toISOString()
+      }));
+      
       ws.on('message', async (message) => {
+        console.log('📨 Raw message received:', message.toString());
         try {
           const data = JSON.parse(message.toString());
           console.log('📨 IoT message received:', data.type, 'from device:', data.deviceId);
