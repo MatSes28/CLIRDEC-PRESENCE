@@ -41,9 +41,9 @@
 #define MODE_BUTTON_PIN 0  // Boot button
 #define BUZZER_PIN 25
 
-// WiFi credentials (UPDATE THESE WITH YOUR WIFI)
-const char* ssid = "YOUR_WIFI_SSID";
-const char* password = "YOUR_WIFI_PASSWORD";
+// WiFi credentials (UPDATED WITH YOUR WIFI)
+const char* ssid = "Kupal kaba boss?";
+const char* password = "MatMir@12030908";
 
 // Server configuration (UPDATE WITH YOUR REPLIT URL)
 const char* websocket_server = "074a6fe2-37da-4c7c-8871-ee86e87c61f9-00-3sseewv3uked8.sisko.replit.dev";
