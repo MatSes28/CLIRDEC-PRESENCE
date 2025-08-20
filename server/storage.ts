@@ -556,8 +556,8 @@ export class MemStorage implements IStorage {
   }
 }
 
-/* Currently disabled due to database connection issues
-export class DatabaseStorage implements IStorage {
+// PostgreSQL database storage implementation
+export class DbStorage implements IStorage {
   // User operations - required for Replit Auth
   async getUser(id: string): Promise<User | undefined> {
     if (!db) throw new Error("Database not available");
@@ -854,7 +854,23 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return setting;
   }
-} */
+}
 
-// Using in-memory storage for development - ensures data persistence during session
-export const storage = new MemStorage();
+// Create appropriate storage instance based on database availability
+async function createStorage() {
+  try {
+    if (db) {
+      console.log("✓ Using PostgreSQL database storage");
+      return new DbStorage();
+    } else {
+      console.log("⚠️  Database not available, falling back to in-memory storage");
+      return new MemStorage();
+    }
+  } catch (error) {
+    console.error("Error connecting to database, using in-memory storage:", error);
+    return new MemStorage();
+  }
+}
+
+// Initialize storage - will use PostgreSQL if available, otherwise fallback to memory
+export const storage = db ? new DbStorage() : new MemStorage();

@@ -31,9 +31,10 @@ interface WebSocketProviderProps {
 export function WebSocketProvider({ children }: WebSocketProviderProps) {
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [reconnectAttempts, setReconnectAttempts] = useState(0);
   const { toast } = useToast();
 
-  useEffect(() => {
+  const connectWebSocket = () => {
     // Determine WebSocket URL
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws`;
@@ -46,13 +47,14 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
       ws = new WebSocket(wsUrl);
     } catch (error) {
       console.error('Failed to create WebSocket:', error);
-      return;
+      return null;
     }
 
     ws.onopen = () => {
       console.log('WebSocket connected');
       setIsConnected(true);
       setSocket(ws);
+      setReconnectAttempts(0);
     };
 
     ws.onmessage = (event) => {
@@ -69,23 +71,27 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
       setIsConnected(false);
       setSocket(null);
       
-      // Attempt to reconnect after 5 seconds
-      setTimeout(() => {
-        console.log('Attempting to reconnect WebSocket...');
-        if (window.location.pathname !== '/') {
-          // Only attempt reconnection if still on the app pages
-          setIsConnected(false);
-          setSocket(null);
-        }
-      }, 5000);
+      // Attempt to reconnect after 5 seconds if not on auth page and not too many attempts
+      if (window.location.pathname !== '/' && reconnectAttempts < 5) {
+        setTimeout(() => {
+          console.log('Attempting to reconnect WebSocket...');
+          setReconnectAttempts(prev => prev + 1);
+          connectWebSocket();
+        }, 5000);
+      }
     };
 
     ws.onerror = (error) => {
       console.error('WebSocket error:', error);
       setIsConnected(false);
-      setSocket(null);
     };
 
+    return ws;
+  };
+
+  useEffect(() => {
+    const ws = connectWebSocket();
+    
     return () => {
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.close();
