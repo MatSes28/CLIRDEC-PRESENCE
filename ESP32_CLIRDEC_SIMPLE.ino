@@ -1,6 +1,6 @@
 /*
- * CLIRDEC: PRESENCE - Safe ESP32 IoT Device
- * Corruption-resistant firmware with watchdog protection
+ * CLIRDEC: PRESENCE - Simple ESP32 IoT Device
+ * Simplified version without watchdog (for compatibility)
  * 
  * Hardware: ESP32-WROOM-32 with RC522 RFID + HC-SR501 PIR
  * 
@@ -18,9 +18,6 @@
  *   VCC -> 5V
  *   GND -> GND
  *   OUT -> GPIO 4
- * 
- * Status LED: GPIO 2 (Built-in)
- * Mode Button: GPIO 0 (Boot button)
  */
 
 #include <WiFi.h>
@@ -29,7 +26,6 @@
 #include <SPI.h>
 #include <MFRC522.h>
 #include <Preferences.h>
-#include <esp_task_wdt.h>
 
 // Hardware pins
 #define SS_PIN 5
@@ -37,7 +33,6 @@
 #define PIR_PIN 4
 #define LED_PIN 2
 #define MODE_BUTTON_PIN 0
-#define BUZZER_PIN 25
 
 // WiFi credentials - UPDATE THESE WITH YOUR NETWORK
 const char* ssid = "YOUR_WIFI_SSID";
@@ -65,15 +60,12 @@ String deviceId;
 bool isOnline = false;
 bool wifiConnected = false;
 unsigned long lastHeartbeat = 0;
-unsigned long lastWatchdogReset = 0;
 unsigned long lastWiFiCheck = 0;
 
 // Timing constants
 const unsigned long HEARTBEAT_INTERVAL = 30000;     // 30 seconds
-const unsigned long WATCHDOG_TIMEOUT = 60000;       // 60 seconds
 const unsigned long WIFI_CHECK_INTERVAL = 10000;    // 10 seconds
 const unsigned long RFID_COOLDOWN = 2000;           // 2 seconds
-const unsigned long BUTTON_DEBOUNCE = 200;          // 200ms
 
 // RFID state
 String lastUID = "";
@@ -86,10 +78,8 @@ unsigned long lastButtonTime = 0;
 // Safety and recovery
 int reconnectAttempts = 0;
 const int MAX_RECONNECT_ATTEMPTS = 5;
-bool systemHealthy = true;
 
 void setup() {
-  // Initialize serial communication
   Serial.begin(115200);
   delay(1000);
   
@@ -103,15 +93,6 @@ void setup() {
   deviceId.toUpperCase();
   
   Serial.println("Device ID: " + deviceId);
-  
-  // Initialize watchdog timer (new API)
-  esp_task_wdt_config_t wdt_config = {
-    .timeout_ms = WATCHDOG_TIMEOUT,
-    .idle_core_mask = (1 << portNUM_PROCESSORS) - 1,
-    .trigger_panic = true
-  };
-  esp_task_wdt_init(&wdt_config);
-  esp_task_wdt_add(NULL);
   
   // Initialize hardware
   initializeHardware();
@@ -131,24 +112,14 @@ void setup() {
   
   Serial.println("✅ Initialization complete");
   indicateReady();
-  
-  lastWatchdogReset = millis();
 }
 
 void loop() {
-  // Feed watchdog timer
-  unsigned long now = millis();
-  if (now - lastWatchdogReset > 30000) {
-    esp_task_wdt_reset();
-    lastWatchdogReset = now;
-  }
-  
   // Check mode switch
   checkModeSwitch();
   
   // Check RFID
   if (checkRFID()) {
-    // RFID card detected - blink LED
     blinkLED(2, 100);
   }
   
@@ -157,6 +128,7 @@ void loop() {
     webSocket.loop();
     
     // Check WiFi connection periodically
+    unsigned long now = millis();
     if (now - lastWiFiCheck > WIFI_CHECK_INTERVAL) {
       checkWiFiConnection();
       lastWiFiCheck = now;
@@ -227,7 +199,6 @@ void initWiFiMode() {
     delay(500);
     Serial.print(".");
     attempts++;
-    esp_task_wdt_reset();
   }
   
   if (WiFi.status() == WL_CONNECTED) {
@@ -504,7 +475,7 @@ void checkWiFiConnection() {
 void checkModeSwitch() {
   unsigned long now = millis();
   
-  if (now - lastButtonTime < BUTTON_DEBOUNCE) return;
+  if (now - lastButtonTime < 200) return; // Debounce
   
   bool buttonState = digitalRead(MODE_BUTTON_PIN);
   
@@ -513,14 +484,9 @@ void checkModeSwitch() {
     lastButtonTime = now;
     
     if (buttonState == LOW) {
-      // Button pressed - start timer for long press
-      static unsigned long pressStartTime = now;
-      
-      // Check for long press (3 seconds)
-      if (now - pressStartTime > 3000) {
-        switchMode();
-        pressStartTime = now + 10000; // Prevent multiple switches
-      }
+      // Button pressed - simple mode switch
+      delay(100); // Simple debounce
+      switchMode();
     }
   }
 }
