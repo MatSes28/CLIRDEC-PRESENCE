@@ -1,6 +1,17 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { storage } from '../storage';
 
+interface DeviceInfo {
+  deviceId: string;
+  deviceType: string;
+  ipAddress: string;
+  macAddress: string;
+  lastSeen: Date;
+  status: 'online' | 'offline';
+  capabilities: string[];
+  classroomId?: string;
+}
+
 // IoT Device Management Service for ESP32 Integration
 export class IoTDeviceManager {
   private connectedDevices = new Map<string, WebSocket>();
@@ -84,13 +95,17 @@ export class IoTDeviceManager {
           break;
         
         default:
-          console.log(`⚠️ Unknown IoT message type: ${data.type}`);
+          console.log(`⚠️ Unknown message type: ${data.type}`);
+          ws.send(JSON.stringify({
+            type: 'error',
+            message: `Unknown message type: ${data.type}`
+          }));
       }
     } catch (error) {
       console.error('❌ Error handling IoT message:', error);
-      ws.send(JSON.stringify({ 
-        type: 'error', 
-        message: 'Failed to process message' 
+      ws.send(JSON.stringify({
+        type: 'error',
+        message: 'Server error processing message'
       }));
     }
   }
@@ -119,53 +134,53 @@ export class IoTDeviceManager {
         }
       }
 
-    const deviceInfo: DeviceInfo = {
-      deviceId,
-      classroomId: classroomId || 1, // Default classroom
-      type: data.deviceType || 'dual_mode',
-      lastSeen: new Date(),
-      status: 'online',
-      ipAddress: data.ipAddress,
-      macAddress: data.macAddress,
-      firmwareVersion: data.firmwareVersion,
-      capabilities: data.capabilities || ['rfid_scan', 'presence_detection', 'mode_switching']
-    };
+      // Store device information
+      const deviceInfo: DeviceInfo = {
+        deviceId,
+        deviceType: data.deviceType || 'esp32',
+        ipAddress: data.ipAddress || 'unknown',
+        macAddress: data.macAddress || 'unknown',
+        lastSeen: new Date(),
+        status: 'online',
+        capabilities: data.capabilities || [],
+        classroomId: classroomId
+      };
 
-    // Store device connection
-    this.connectedDevices.set(deviceId, ws);
-    this.deviceInfo.set(deviceId, deviceInfo);
+      // Store device connection
+      this.connectedDevices.set(deviceId, ws);
+      this.deviceInfo.set(deviceId, deviceInfo);
 
-    // Get classroom info (optional, don't fail if not found)
-    let classroomName = 'Unassigned';
-    if (classroomId) {
-      const classroom = await storage.getClassroom(classroomId);
-      if (classroom) {
-        classroomName = classroom.name;
+      // Get classroom info (optional, don't fail if not found)
+      let classroomName = 'Unassigned';
+      if (classroomId) {
+        const classroom = await storage.getClassroom(classroomId);
+        if (classroom) {
+          classroomName = classroom.name;
+        }
       }
-    }
 
-    // Send successful registration response
-    const registrationResponse = {
-      type: 'registration_success',
-      deviceId,
-      classroomId: classroomId,
-      classroomName: classroomName,
-      serverTime: new Date().toISOString(),
-      settings: {
-        scanTimeout: 5000,
-        presenceTimeout: 30000,
-        heartbeatInterval: 30000
-      }
-    };
+      // Send successful registration response
+      const registrationResponse = {
+        type: 'registration_success',
+        deviceId,
+        classroomId: classroomId,
+        classroomName: classroomName,
+        serverTime: new Date().toISOString(),
+        settings: {
+          scanTimeout: 5000,
+          presenceTimeout: 30000,
+          heartbeatInterval: 30000
+        }
+      };
 
-    ws.send(JSON.stringify(registrationResponse));
-    console.log(`✅ IoT device registered: ${deviceId} (${data.currentMode || 'wifi'} mode) in ${classroomName}`);
+      ws.send(JSON.stringify(registrationResponse));
+      console.log(`✅ IoT device registered: ${deviceId} (${data.currentMode || 'wifi'} mode) in ${classroomName}`);
 
-    // Notify web clients about new device
-    this.broadcastToWebClients({
-      type: 'device_connected',
-      device: deviceInfo
-    });
+      // Notify web clients about new device
+      this.broadcastToWebClients({
+        type: 'device_connected',
+        device: deviceInfo
+      });
 
     } catch (error) {
       console.error('❌ Error during device registration:', error);
@@ -208,10 +223,10 @@ export class IoTDeviceManager {
 
       // Check for active class session in the device's classroom
       const activeSession = await storage.getActiveSession();
-      const classroomSession = activeSession && activeSession.classroomId === deviceInfo.classroomId ? activeSession : null;
+      const classroomSession = activeSession && activeSession.scheduleId ? activeSession : null;
 
       if (!classroomSession) {
-        console.log(`⚠️ No active session in classroom ${deviceInfo.classroomId}`);
+        console.log(`⚠️ No active session`);
         this.sendToDevice(deviceId, {
           type: 'scan_result',
           status: 'no_session',
@@ -223,10 +238,8 @@ export class IoTDeviceManager {
       }
 
       // Check if student is already marked for this session
-      const existingAttendance = await storage.getAttendanceByStudentAndSession(
-        student.id, 
-        classroomSession.id
-      );
+      const sessionAttendance = await storage.getAttendanceBySession(classroomSession.id!);
+      const existingAttendance = sessionAttendance.find(a => a.studentId === student.id);
 
       let attendanceStatus = 'checked_in';
       if (existingAttendance) {
@@ -281,166 +294,67 @@ export class IoTDeviceManager {
     }
   }
 
-  // Handle presence detection from PIR sensor
-  private async handlePresenceDetection(data: PresenceData): Promise<void> {
-    const { deviceId, presenceDetected, timestamp } = data;
+  // Handle presence detection from ESP32
+  private async handlePresenceDetection(data: any): Promise<void> {
+    console.log(`👁️ Presence ${data.presenceDetected ? 'detected' : 'cleared'} from device ${data.deviceId}`);
     
-    console.log(`👁️ Presence ${presenceDetected ? 'detected' : 'cleared'} from device ${deviceId}`);
-
-    // Update device status
-    const deviceInfo = this.deviceInfo.get(deviceId);
-    if (deviceInfo) {
-      deviceInfo.lastPresenceDetection = presenceDetected ? new Date() : undefined;
-    }
-
-    // Broadcast presence update to web clients
+    // Store presence data and notify web clients
     this.broadcastToWebClients({
       type: 'presence_update',
-      deviceId,
-      classroomId: deviceInfo?.classroomId,
-      presenceDetected,
-      timestamp: new Date(timestamp)
+      deviceId: data.deviceId,
+      presenceDetected: data.presenceDetected,
+      timestamp: new Date()
     });
   }
 
   // Handle device status updates
-  private async handleDeviceStatus(data: DeviceStatusData): Promise<void> {
-    const { deviceId, status, batteryLevel, temperature, humidity } = data;
-    
-    const deviceInfo = this.deviceInfo.get(deviceId);
+  private async handleDeviceStatus(data: any): Promise<void> {
+    const deviceInfo = this.deviceInfo.get(data.deviceId);
     if (deviceInfo) {
-      deviceInfo.status = status;
       deviceInfo.lastSeen = new Date();
-      deviceInfo.batteryLevel = batteryLevel;
-      deviceInfo.temperature = temperature;
-      deviceInfo.humidity = humidity;
+      deviceInfo.status = 'online';
     }
-
-    console.log(`📊 Device ${deviceId} status: ${status}`);
   }
 
-  // Handle heartbeat from device
-  private async handleHeartbeat(ws: WebSocket, data: HeartbeatData): Promise<void> {
-    const { deviceId } = data;
-    
-    const deviceInfo = this.deviceInfo.get(deviceId);
+  // Handle heartbeat messages
+  private async handleHeartbeat(ws: WebSocket, data: any): Promise<void> {
+    const deviceInfo = this.deviceInfo.get(data.deviceId);
     if (deviceInfo) {
       deviceInfo.lastSeen = new Date();
+      deviceInfo.status = 'online';
     }
-
-    // Send heartbeat acknowledgment
+    
+    // Optional: send heartbeat response
     ws.send(JSON.stringify({
       type: 'heartbeat_ack',
-      serverTime: new Date().toISOString()
+      timestamp: new Date().toISOString()
     }));
   }
 
-  // Send message to specific IoT device
-  public sendToDevice(deviceId: string, message: any): boolean {
-    const device = this.connectedDevices.get(deviceId);
-    if (device && device.readyState === WebSocket.OPEN) {
-      device.send(JSON.stringify(message));
-      return true;
-    }
-    return false;
-  }
-
-  // Broadcast to all connected IoT devices
-  public broadcastToDevices(message: any): void {
-    const messageStr = JSON.stringify(message);
-    this.connectedDevices.forEach((device) => {
-      if (device.readyState === WebSocket.OPEN) {
-        device.send(messageStr);
-      }
-    });
-  }
-
-  // Broadcast to web clients (dashboard users)
+  // Broadcast message to all web clients
   private broadcastToWebClients(message: any): void {
     // Use global broadcast function if available
-    if (typeof (global as any).broadcastNotification === 'function') {
+    if ((global as any).broadcastNotification) {
       (global as any).broadcastNotification(message);
     }
   }
 
-  // Get all connected devices
-  public getConnectedDevices(): DeviceInfo[] {
+  // Get connected devices list for API
+  public getConnectedDevices(): Array<DeviceInfo> {
     return Array.from(this.deviceInfo.values());
   }
 
-  // Get device by ID
-  public getDevice(deviceId: string): DeviceInfo | undefined {
-    return this.deviceInfo.get(deviceId);
-  }
-
-  // Send configuration update to device
-  public updateDeviceConfig(deviceId: string, config: any): boolean {
-    return this.sendToDevice(deviceId, {
-      type: 'config_update',
-      config
-    });
-  }
-
-  // Request device diagnostics
-  public requestDiagnostics(deviceId: string): boolean {
-    return this.sendToDevice(deviceId, {
-      type: 'diagnostics_request'
-    });
+  // Get device count
+  public getDeviceStats(): { total: number; online: number; offline: number } {
+    const devices = this.getConnectedDevices();
+    const online = devices.filter(d => d.status === 'online').length;
+    return {
+      total: devices.length,
+      online,
+      offline: devices.length - online
+    };
   }
 }
 
-// Type definitions for IoT communication
-interface DeviceInfo {
-  deviceId: string;
-  classroomId: number;
-  type: 'rfid_reader' | 'presence_sensor' | 'combined';
-  status: 'online' | 'offline' | 'error';
-  lastSeen: Date;
-  ipAddress?: string;
-  macAddress?: string;
-  firmwareVersion?: string;
-  capabilities: string[];
-  batteryLevel?: number;
-  temperature?: number;
-  humidity?: number;
-  lastPresenceDetection?: Date;
-}
-
-interface DeviceRegistration {
-  deviceId: string;
-  classroomId: number;
-  deviceType: string;
-  ipAddress: string;
-  macAddress: string;
-  firmwareVersion: string;
-  capabilities: string[];
-}
-
-interface RFIDScanData {
-  deviceId: string;
-  rfidCardId: string;
-  timestamp: string;
-  signalStrength?: number;
-}
-
-interface PresenceData {
-  deviceId: string;
-  presenceDetected: boolean;
-  timestamp: string;
-}
-
-interface DeviceStatusData {
-  deviceId: string;
-  status: 'online' | 'offline' | 'error';
-  batteryLevel?: number;
-  temperature?: number;
-  humidity?: number;
-}
-
-interface HeartbeatData {
-  deviceId: string;
-  timestamp: string;
-}
-
-// Create singleton instance
+// Export singleton instance
 export const iotDeviceManager = new IoTDeviceManager();
