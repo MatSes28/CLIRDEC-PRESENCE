@@ -52,6 +52,11 @@ UI Style: Modern glass effects, gradient backgrounds, professional typography, a
 - **Email Integration**: Fixed SendGrid email delivery using verified sender address (matt.feria@clsu2.edu.ph).
 - **Student Edit Fix**: Resolved edit form validation issues - forms now pre-populate with existing data and allow partial field updates without requiring all fields.
 - **Contact Parent Feature**: Successfully implemented real email sending to parent addresses via SendGrid API with professional templates.
+- **Dual-Mode ESP32 System**: Implemented comprehensive RFID integration with two operating modes:
+  - USB Registration Mode: Direct USB connection for typing RFID UIDs into web forms during student registration
+  - WiFi Attendance Mode: Wireless real-time attendance monitoring with motion detection and WebSocket communication
+- **RFID Registration Helper**: Integrated web component that guides users through ESP32 setup, provides downloadable Python typing script, and automatically detects typed RFID UIDs in forms
+- **Hardware Documentation**: Complete setup guide with wiring diagrams, software configuration, and troubleshooting for ESP32 + RC522 RFID + PIR sensor integration
 
 ### Deployment Strategy
 - **Development Environment**: Replit-hosted with hot reload, PostgreSQL module auto-provisioning, Replit secrets for environment variables.

@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { RFIDRegistrationHelper } from "./RFIDRegistrationHelper";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface AddStudentModalProps {
   open: boolean;
@@ -26,6 +28,16 @@ export default function AddStudentModal({ open, onClose }: AddStudentModalProps)
     parentEmail: '',
     parentName: ''
   });
+
+  const [showRFIDHelper, setShowRFIDHelper] = useState(false);
+
+  const handleRFIDScanned = (uid: string) => {
+    setFormData(prev => ({ ...prev, rfidCardId: uid }));
+    toast({
+      title: "RFID Card Scanned",
+      description: `UID ${uid} has been automatically filled in.`
+    });
+  };
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -101,7 +113,7 @@ export default function AddStudentModal({ open, onClose }: AddStudentModalProps)
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Student</DialogTitle>
           <DialogDescription>
@@ -207,8 +219,33 @@ export default function AddStudentModal({ open, onClose }: AddStudentModalProps)
               id="rfidCardId"
               value={formData.rfidCardId}
               onChange={(e) => handleInputChange('rfidCardId', e.target.value)}
-              placeholder="RFID123456"
+              placeholder="Tap RFID card or enter manually"
+              className="font-mono"
             />
+            <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800 font-medium">📡 RFID Registration Helper</p>
+              <p className="text-xs text-blue-600 mt-1">
+                Connect ESP32 via USB → Set to Registration Mode → Run Python script → Click in field above → Tap RFID card
+              </p>
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm" 
+                className="mt-2"
+                onClick={() => setShowRFIDHelper(!showRFIDHelper)}
+              >
+                {showRFIDHelper ? 'Hide' : 'Show'} Setup Guide
+              </Button>
+            </div>
+            
+            {showRFIDHelper && (
+              <div className="mt-2">
+                <RFIDRegistrationHelper 
+                  isOpen={showRFIDHelper}
+                  onRFIDScanned={handleRFIDScanned}
+                />
+              </div>
+            )}
           </div>
 
           <div>
