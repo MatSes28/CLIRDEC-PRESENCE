@@ -344,6 +344,45 @@ export class IoTDeviceManager {
     return Array.from(this.deviceInfo.values());
   }
 
+  // Get specific device info
+  public getDevice(deviceId: string): DeviceInfo | null {
+    return this.deviceInfo.get(deviceId) || null;
+  }
+
+  // Update device configuration
+  public updateDeviceConfig(deviceId: string, config: any): boolean {
+    const ws = this.connectedDevices.get(deviceId);
+    if (ws && ws.readyState === ws.OPEN) {
+      ws.send(JSON.stringify({
+        type: 'config_update',
+        config: config
+      }));
+      return true;
+    }
+    return false;
+  }
+
+  // Request diagnostics from device
+  public requestDiagnostics(deviceId: string): boolean {
+    const ws = this.connectedDevices.get(deviceId);
+    if (ws && ws.readyState === ws.OPEN) {
+      ws.send(JSON.stringify({
+        type: 'request_diagnostics'
+      }));
+      return true;
+    }
+    return false;
+  }
+
+  // Broadcast message to all devices
+  public broadcastToDevices(message: any): void {
+    this.connectedDevices.forEach((ws, deviceId) => {
+      if (ws.readyState === ws.OPEN) {
+        ws.send(JSON.stringify(message));
+      }
+    });
+  }
+
   // Get device count
   public getDeviceStats(): { total: number; online: number; offline: number } {
     const devices = this.getConnectedDevices();
