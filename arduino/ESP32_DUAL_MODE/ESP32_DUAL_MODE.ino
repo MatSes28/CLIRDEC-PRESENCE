@@ -46,7 +46,7 @@ const char* ssid = "YOUR_WIFI_SSID";
 const char* password = "YOUR_WIFI_PASSWORD";
 
 // Server configuration (update with your Replit URL)
-const char* websocket_server = "your-replit-url.replit.dev";
+const char* websocket_server = "80c100b5-06da-459f-a3df-355da67989d9-00-311s6g7ren528.sisko.replit.dev";
 const int websocket_port = 443;
 const char* websocket_path = "/iot";
 

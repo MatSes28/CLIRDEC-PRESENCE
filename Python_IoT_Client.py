@@ -5,7 +5,7 @@ Alternative hardware solution for testing server connectivity
 Works with Raspberry Pi, PC, or any system with GPIO/Serial access
 """
 
-import websocket
+from websocket._app import WebSocketApp
 import json
 import time
 import threading
@@ -13,7 +13,7 @@ import uuid
 import sys
 
 # Configuration
-WEBSOCKET_URL = "wss://074a6fe2-37da-4c7c-8871-ee86e87c61f9-00-3sseewv3uked8.sisko.replit.dev/iot"
+WEBSOCKET_URL = "wss://80c100b5-06da-459f-a3df-355da67989d9-00-311s6g7ren528.sisko.replit.dev/iot"
 DEVICE_ID = f"PYTHON_CLIENT_{uuid.uuid4().hex[:8].upper()}"
 
 class CLIRDECClient:
@@ -133,8 +133,7 @@ class CLIRDECClient:
         print(f"Device ID: {DEVICE_ID}")
         print(f"Server: {WEBSOCKET_URL}")
         
-        websocket.enableTrace(False)
-        self.ws = websocket.WebSocketApp(
+        self.ws = WebSocketApp(
             WEBSOCKET_URL,
             on_open=self.on_open,
             on_message=self.on_message,
@@ -215,12 +214,4 @@ def main():
         print("3. Server is running")
 
 if __name__ == "__main__":
-    try:
-        import websocket
-    except ImportError:
-        print("Installing required packages...")
-        import subprocess
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "websocket-client"])
-        import websocket
-    
     main()

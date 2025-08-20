@@ -46,7 +46,7 @@ const char* ssid = "Kupal kaba boss?";
 const char* password = "MatMir@12030908";
 
 // Server configuration (UPDATE WITH YOUR REPLIT URL)
-const char* websocket_server = "074a6fe2-37da-4c7c-8871-ee86e87c61f9-00-3sseewv3uked8.sisko.replit.dev";
+const char* websocket_server = "80c100b5-06da-459f-a3df-355da67989d9-00-311s6g7ren528.sisko.replit.dev";
 const int websocket_port = 443;
 const char* websocket_path = "/iot";
 
