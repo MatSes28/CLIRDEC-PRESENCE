@@ -20,9 +20,10 @@ export class IoTDeviceManager {
       ws.on('message', async (message) => {
         try {
           const data = JSON.parse(message.toString());
+          console.log('📨 IoT message received:', data.type, 'from device:', data.deviceId);
           await this.handleIoTMessage(ws, data);
         } catch (error) {
-          console.error('❌ Invalid IoT message:', error);
+          console.error('❌ Invalid IoT message:', error, message.toString());
           ws.send(JSON.stringify({ 
             type: 'error', 
             message: 'Invalid message format' 
@@ -53,6 +54,7 @@ export class IoTDeviceManager {
   // Handle messages from ESP32 devices
   private async handleIoTMessage(ws: WebSocket, data: any): Promise<void> {
     try {
+      console.log(`📨 Handling IoT message type: ${data.type}`);
       switch (data.type) {
         case 'device_register':
           await this.handleDeviceRegistration(ws, data);
@@ -88,16 +90,27 @@ export class IoTDeviceManager {
 
   // Register new ESP32 device
   private async handleDeviceRegistration(ws: WebSocket, data: any): Promise<void> {
-    const deviceId = data.deviceId;
-    
-    // Default to first available classroom if not specified
-    let classroomId = data.classroomId;
-    if (!classroomId) {
-      const classrooms = await storage.getClassrooms();
-      if (classrooms.length > 0) {
-        classroomId = classrooms[0].id;
+    try {
+      console.log('📱 Processing device registration:', data);
+      const deviceId = data.deviceId;
+      
+      if (!deviceId) {
+        console.error('❌ No device ID provided in registration');
+        ws.send(JSON.stringify({
+          type: 'registration_error',
+          message: 'Device ID is required'
+        }));
+        return;
       }
-    }
+      
+      // Default to first available classroom if not specified
+      let classroomId = data.classroomId;
+      if (!classroomId) {
+        const classrooms = await storage.getClassrooms();
+        if (classrooms.length > 0) {
+          classroomId = classrooms[0].id;
+        }
+      }
 
     const deviceInfo: DeviceInfo = {
       deviceId,
@@ -146,6 +159,14 @@ export class IoTDeviceManager {
       type: 'device_connected',
       device: deviceInfo
     });
+
+    } catch (error) {
+      console.error('❌ Error during device registration:', error);
+      ws.send(JSON.stringify({
+        type: 'registration_error',
+        message: 'Registration failed: ' + error.message
+      }));
+    }
   }
 
   // Handle RFID card scan from ESP32
