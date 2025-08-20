@@ -87,48 +87,59 @@ export class IoTDeviceManager {
   }
 
   // Register new ESP32 device
-  private async handleDeviceRegistration(ws: WebSocket, data: DeviceRegistration): Promise<void> {
+  private async handleDeviceRegistration(ws: WebSocket, data: any): Promise<void> {
     const deviceId = data.deviceId;
+    
+    // Default to first available classroom if not specified
+    let classroomId = data.classroomId;
+    if (!classroomId) {
+      const classrooms = await storage.getClassrooms();
+      if (classrooms.length > 0) {
+        classroomId = classrooms[0].id;
+      }
+    }
+
     const deviceInfo: DeviceInfo = {
       deviceId,
-      classroomId: data.classroomId,
-      type: data.deviceType || 'rfid_reader',
+      classroomId: classroomId || 1, // Default classroom
+      type: data.deviceType || 'dual_mode',
       lastSeen: new Date(),
       status: 'online',
       ipAddress: data.ipAddress,
       macAddress: data.macAddress,
       firmwareVersion: data.firmwareVersion,
-      capabilities: data.capabilities || ['rfid_scan', 'presence_detection']
+      capabilities: data.capabilities || ['rfid_scan', 'presence_detection', 'mode_switching']
     };
 
     // Store device connection
     this.connectedDevices.set(deviceId, ws);
     this.deviceInfo.set(deviceId, deviceInfo);
 
-    // Verify classroom exists
-    const classroom = await storage.getClassroom(data.classroomId);
-    if (!classroom) {
-      ws.send(JSON.stringify({
-        type: 'registration_error',
-        message: `Classroom ${data.classroomId} not found`
-      }));
-      return;
+    // Get classroom info (optional, don't fail if not found)
+    let classroomName = 'Unassigned';
+    if (classroomId) {
+      const classroom = await storage.getClassroom(classroomId);
+      if (classroom) {
+        classroomName = classroom.name;
+      }
     }
 
     // Send successful registration response
-    ws.send(JSON.stringify({
+    const registrationResponse = {
       type: 'registration_success',
       deviceId,
-      classroomId: data.classroomId,
+      classroomId: classroomId,
+      classroomName: classroomName,
       serverTime: new Date().toISOString(),
       settings: {
         scanTimeout: 5000,
         presenceTimeout: 30000,
-        heartbeatInterval: 60000
+        heartbeatInterval: 30000
       }
-    }));
+    };
 
-    console.log(`✅ IoT device registered: ${deviceId} in ${classroom.name}`);
+    ws.send(JSON.stringify(registrationResponse));
+    console.log(`✅ IoT device registered: ${deviceId} (${data.currentMode || 'wifi'} mode) in ${classroomName}`);
 
     // Notify web clients about new device
     this.broadcastToWebClients({
@@ -138,8 +149,8 @@ export class IoTDeviceManager {
   }
 
   // Handle RFID card scan from ESP32
-  private async handleRFIDScan(data: RFIDScanData): Promise<void> {
-    const { deviceId, rfidCardId, timestamp, signalStrength } = data;
+  private async handleRFIDScan(data: any): Promise<void> {
+    const { deviceId, rfidCardId, timestamp } = data;
     
     console.log(`📱 RFID scan from device ${deviceId}: ${rfidCardId}`);
 
@@ -166,7 +177,7 @@ export class IoTDeviceManager {
         return;
       }
 
-      // Check for active class session
+      // Check for active class session in the device's classroom
       const activeSessions = await storage.getActiveClassSessions();
       const classroomSession = activeSessions.find(session => 
         session.classroomId === deviceInfo.classroomId
@@ -176,77 +187,54 @@ export class IoTDeviceManager {
         console.log(`⚠️ No active session in classroom ${deviceInfo.classroomId}`);
         this.sendToDevice(deviceId, {
           type: 'scan_result',
-          status: 'no_active_session',
+          status: 'no_session',
+          cardId: rfidCardId,
           studentName: `${student.firstName} ${student.lastName}`,
           message: 'No active class session'
         });
         return;
       }
 
-      // Check if student is already recorded for this session
+      // Check if student is already marked for this session
       const existingAttendance = await storage.getAttendanceByStudentAndSession(
         student.id, 
         classroomSession.id
       );
 
+      let attendanceStatus = 'checked_in';
       if (existingAttendance) {
-        // Handle check-out
-        if (!existingAttendance.checkOutTime) {
-          await storage.updateAttendance(existingAttendance.id, {
-            checkOutTime: new Date(),
-            status: 'present'
-          });
-
-          this.sendToDevice(deviceId, {
-            type: 'scan_result',
-            status: 'checked_out',
-            studentName: `${student.firstName} ${student.lastName}`,
-            message: 'Successfully checked out'
-          });
-
-          console.log(`✅ Student ${student.firstName} ${student.lastName} checked out`);
-        } else {
-          this.sendToDevice(deviceId, {
-            type: 'scan_result',
-            status: 'already_complete',
-            studentName: `${student.firstName} ${student.lastName}`,
-            message: 'Attendance already recorded'
-          });
-        }
+        attendanceStatus = 'already_present';
+        console.log(`Student ${student.firstName} ${student.lastName} already marked present`);
       } else {
-        // Handle check-in
-        const currentTime = new Date();
-        const sessionStart = new Date(classroomSession.startTime || currentTime);
-        const isLate = currentTime > new Date(sessionStart.getTime() + 15 * 60000); // 15 min grace
-
+        // Create attendance record
         await storage.createAttendance({
           studentId: student.id,
           sessionId: classroomSession.id,
-          checkInTime: currentTime,
-          status: isLate ? 'late' : 'present'
+          status: 'present',
+          checkInTime: new Date(),
+          timestamp: new Date()
         });
-
-        this.sendToDevice(deviceId, {
-          type: 'scan_result',
-          status: isLate ? 'checked_in_late' : 'checked_in',
-          studentName: `${student.firstName} ${student.lastName}`,
-          message: isLate ? 'Checked in (Late)' : 'Successfully checked in'
+        
+        console.log(`✅ Attendance recorded: ${student.firstName} ${student.lastName}`);
+        
+        // Notify web clients
+        this.broadcastToWebClients({
+          type: 'attendance_update',
+          student: student,
+          session: classroomSession,
+          status: 'present',
+          timestamp: new Date()
         });
-
-        console.log(`✅ Student ${student.firstName} ${student.lastName} checked in ${isLate ? '(Late)' : ''}`);
       }
 
-      // Broadcast to web clients
-      this.broadcastToWebClients({
-        type: 'rfid_scan',
-        student: {
-          id: student.id,
-          name: `${student.firstName} ${student.lastName}`,
-          studentId: student.studentId
-        },
-        classroom: deviceInfo.classroomId,
-        timestamp: currentTime,
-        device: deviceId
+      // Send response to device
+      this.sendToDevice(deviceId, {
+        type: 'scan_result',
+        status: attendanceStatus,
+        cardId: rfidCardId,
+        studentName: `${student.firstName} ${student.lastName}`,
+        studentId: student.studentId,
+        message: attendanceStatus === 'checked_in' ? 'Attendance recorded' : 'Already present'
       });
 
     } catch (error) {
@@ -256,6 +244,14 @@ export class IoTDeviceManager {
         status: 'error',
         message: 'System error, please try again'
       });
+    }
+  }
+
+  // Send message to specific IoT device
+  private sendToDevice(deviceId: string, message: any): void {
+    const ws = this.connectedDevices.get(deviceId);
+    if (ws && ws.readyState === ws.OPEN) {
+      ws.send(JSON.stringify(message));
     }
   }
 
