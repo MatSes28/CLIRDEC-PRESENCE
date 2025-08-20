@@ -41,7 +41,7 @@
 #define MODE_BUTTON_PIN 0  // Boot button
 #define BUZZER_PIN 25
 
-// WiFi credentials (UPDATED WITH YOUR WIFI)
+// WiFi credentials (UPDATE THESE WITH YOUR WIFI)
 const char* ssid = "Kupal kaba boss?";
 const char* password = "MatMir@12030908";
 
@@ -406,6 +406,9 @@ void handleServerMessage(const char* message) {
     Serial.println("✅ Device registered successfully");
     blinkLED(2, 100);
   }
+  else if (type == "welcome") {
+    Serial.println("✅ Welcome message received: " + String((const char*)doc["message"]));
+  }
   else if (type == "scan_result") {
     String status = doc["status"];
     Serial.println("Scan result: " + status);
@@ -479,7 +482,7 @@ void sendHeartbeat() {
   webSocket.sendTXT(message);
 }
 
-// Utility functions
+// LED Control Functions
 void blinkLED(int times, int delayMs) {
   for (int i = 0; i < times; i++) {
     digitalWrite(LED_PIN, HIGH);
@@ -489,6 +492,22 @@ void blinkLED(int times, int delayMs) {
   }
 }
 
+void blinkError() {
+  // Error pattern: fast blinking
+  for (int i = 0; i < 10; i++) {
+    digitalWrite(LED_PIN, HIGH);
+    delay(50);
+    digitalWrite(LED_PIN, LOW);
+    delay(50);
+  }
+}
+
+void indicateReady() {
+  // Ready pattern: 3 slow blinks
+  blinkLED(3, 500);
+}
+
+// Buzzer Control Functions
 void beep(int times, int delayMs) {
   for (int i = 0; i < times; i++) {
     digitalWrite(BUZZER_PIN, HIGH);
@@ -496,18 +515,4 @@ void beep(int times, int delayMs) {
     digitalWrite(BUZZER_PIN, LOW);
     if (i < times - 1) delay(delayMs);
   }
-}
-
-void blinkError() {
-  for (int i = 0; i < 10; i++) {
-    digitalWrite(LED_PIN, HIGH);
-    delay(100);
-    digitalWrite(LED_PIN, LOW);
-    delay(100);
-  }
-}
-
-void indicateReady() {
-  blinkLED(3, 200);
-  beep(2, 150);
 }

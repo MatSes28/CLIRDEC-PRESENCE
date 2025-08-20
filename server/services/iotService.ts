@@ -41,14 +41,13 @@ export class IoTDeviceManager {
 
       ws.on('close', () => {
         // Find and remove disconnected device
-        for (const [deviceId, socket] of this.connectedDevices) {
+        this.connectedDevices.forEach((socket, deviceId) => {
           if (socket === ws) {
             console.log(`📱 IoT device ${deviceId} disconnected`);
             this.connectedDevices.delete(deviceId);
             this.deviceInfo.delete(deviceId);
-            break;
           }
-        }
+        });
       });
 
       ws.on('error', (error) => {
@@ -170,9 +169,10 @@ export class IoTDeviceManager {
 
     } catch (error) {
       console.error('❌ Error during device registration:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       ws.send(JSON.stringify({
         type: 'registration_error',
-        message: 'Registration failed: ' + error.message
+        message: 'Registration failed: ' + errorMessage
       }));
     }
   }
@@ -207,10 +207,8 @@ export class IoTDeviceManager {
       }
 
       // Check for active class session in the device's classroom
-      const activeSessions = await storage.getActiveClassSessions();
-      const classroomSession = activeSessions.find(session => 
-        session.classroomId === deviceInfo.classroomId
-      );
+      const activeSession = await storage.getActiveSession();
+      const classroomSession = activeSession && activeSession.classroomId === deviceInfo.classroomId ? activeSession : null;
 
       if (!classroomSession) {
         console.log(`⚠️ No active session in classroom ${deviceInfo.classroomId}`);
@@ -240,8 +238,7 @@ export class IoTDeviceManager {
           studentId: student.id,
           sessionId: classroomSession.id,
           status: 'present',
-          checkInTime: new Date(),
-          timestamp: new Date()
+          checkInTime: new Date()
         });
         
         console.log(`✅ Attendance recorded: ${student.firstName} ${student.lastName}`);
