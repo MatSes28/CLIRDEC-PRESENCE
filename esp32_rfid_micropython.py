@@ -228,7 +228,7 @@ def main():
     # Initialize RFID reader
     try:
         rfid = MFRC522(spi, cs_pin=5, rst_pin=22)
-        print("✅ RFID Reader initialized successfully")
+        print(" RFID Reader initialized successfully")
         
         # Success indication (3 slow blinks)
         for _ in range(3):
@@ -238,7 +238,7 @@ def main():
             time.sleep_ms(300)
             
     except Exception as e:
-        print("❌ RFID Reader initialization failed:", e)
+        print(" RFID Reader initialization failed:", e)
         print("Check wiring connections:")
         print("VCC -> 3.3V, RST -> GPIO 22, GND -> GND")
         print("MISO -> GPIO 19, MOSI -> GPIO 23")
@@ -252,7 +252,7 @@ def main():
             time.sleep_ms(100)
         return
     
-    print("🚀 Ready to read RFID cards...")
+    print(" Ready to read RFID cards...")
     
     last_uid = ""
     last_read_time = 0
@@ -285,14 +285,14 @@ def main():
                     last_read_time = current_time
                     
                     # Output results
-                    print(f"📱 RFID Card Detected: {uid}")
-                    print("💾 Typing UID into form...")
+                    print(f" RFID Card Detected: {uid}")
+                    print(" Typing UID into form...")
                     
                     # Output UID for Python script to capture
                     print(uid)
                     
-                    print(f"✅ UID typed: {uid}")
-                    print("🔄 Ready for next card...")
+                    print(f" UID typed: {uid}")
+                    print(" Ready for next card...")
                     print()
                     
                     # Success indication (2 quick blinks)
@@ -305,7 +305,7 @@ def main():
             time.sleep_ms(100)
             
         except Exception as e:
-            print(f"❌ Error reading card: {e}")
+            print(f" Error reading card: {e}")
             time.sleep_ms(500)
 
 if __name__ == "__main__":
