@@ -36,8 +36,10 @@ export interface IStorage {
   // User operations
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getAllUsers(): Promise<User[]>;
   createUser(user: Partial<User>): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
+  deleteUser(id: string): Promise<void>;
 
   // Student operations
   getStudents(): Promise<Student[]>;
@@ -70,6 +72,7 @@ export interface IStorage {
   // Class session operations
   getActiveSession(professorId: string): Promise<ClassSession | undefined>;
   getActiveClassSessions(): Promise<ClassSession[]>;
+  getAllClassSessions(): Promise<ClassSession[]>;
   createClassSession(session: InsertClassSession): Promise<ClassSession>;
   updateClassSession(id: number, session: Partial<InsertClassSession>): Promise<ClassSession>;
   getClassSessionsByDate(date: Date): Promise<ClassSession[]>;
@@ -577,6 +580,16 @@ export class DbStorage implements IStorage {
     return user;
   }
 
+  async getAllUsers(): Promise<User[]> {
+    if (!db) throw new Error("Database not available");
+    return await db.select().from(users).where(eq(users.isActive, true)).orderBy(asc(users.lastName));
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    if (!db) throw new Error("Database not available");
+    await db.update(users).set({ isActive: false }).where(eq(users.id, id));
+  }
+
   async upsertUser(userData: UpsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
@@ -729,6 +742,21 @@ export class DbStorage implements IStorage {
       .where(eq(sessions_class.id, id))
       .returning();
     return updatedSession;
+  }
+
+  async getActiveClassSessions(): Promise<ClassSession[]> {
+    return await db
+      .select()
+      .from(sessions_class)
+      .where(eq(sessions_class.status, "active"))
+      .orderBy(desc(sessions_class.startTime));
+  }
+
+  async getAllClassSessions(): Promise<ClassSession[]> {
+    return await db
+      .select()
+      .from(sessions_class)
+      .orderBy(desc(sessions_class.createdAt));
   }
 
   async getClassSessionsByDate(date: Date): Promise<ClassSession[]> {

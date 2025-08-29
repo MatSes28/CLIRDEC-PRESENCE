@@ -117,7 +117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const students = await storage.getStudents();
         const classrooms = await storage.getClassrooms();
         const users = await storage.getAllUsers();
-        const faculty = users.filter(u => u.role === 'faculty');
+        const faculty = users.filter((u: User) => u.role === 'faculty');
         
         let totalPresent = 0, totalAbsent = 0, totalLate = 0;
         
