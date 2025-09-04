@@ -45,9 +45,12 @@ export async function simulateRFIDTap(rfidCardId: string, sessionId: number): Pr
         }
         const lateThreshold = classDuration * 0.6; // 60% of class time
         
-        // If student arrives after 60% of class time, mark as late
-        if (timeElapsed > lateThreshold && timeElapsed > 15) { // Also check if more than 15 min late
-          status = 'late';
+        // If student arrives after 60% of class time, mark as absent
+        // If student arrives between 15 minutes and 60% of class time, mark as late
+        if (timeElapsed > lateThreshold) {
+          status = 'absent'; // After 60% = absent even if they check in
+        } else if (timeElapsed > 15) {
+          status = 'late'; // Between 15 min and 60% = late
         }
       }
       
@@ -55,13 +58,21 @@ export async function simulateRFIDTap(rfidCardId: string, sessionId: number): Pr
         sessionId,
         studentId: student.id,
         checkInTime: now,
-        status: status as 'present' | 'late',
+        status: status as 'present' | 'late' | 'absent',
         proximityValidated: true // Simulate proximity sensor validation
       });
 
+      // Create appropriate message based on status
+      let message = `Welcome ${student.firstName}! You have successfully checked in.`;
+      if (status === 'late') {
+        message = `${student.firstName}, you are marked as LATE. Please try to arrive on time next time.`;
+      } else if (status === 'absent') {
+        message = `${student.firstName}, you are marked as ABSENT due to arriving after 60% of class time. Your check-in is recorded for attendance tracking.`;
+      }
+
       return {
         success: true,
-        message: `Welcome ${student.firstName}! You have successfully checked in.`,
+        message,
         student,
         attendanceRecord,
         action: 'check-in'
