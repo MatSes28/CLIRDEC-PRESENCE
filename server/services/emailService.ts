@@ -1,8 +1,14 @@
 import { storage } from "../storage";
 
-// Email service configuration
+// Email service configuration with debug logging
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || process.env.EMAIL_API_KEY || "";
 const FROM_EMAIL = process.env.FROM_EMAIL || "matt.feria@clsu2.edu.ph";
+
+// Debug logging for environment variables (without exposing secrets)
+console.log('📧 Email service configuration:');
+console.log('- SendGrid API Key configured:', SENDGRID_API_KEY ? 'Yes' : 'No');
+console.log('- FROM_EMAIL configured:', FROM_EMAIL);
+console.log('- SendGrid API Key starts with SG:', SENDGRID_API_KEY.startsWith('SG.'));
 
 interface EmailTemplate {
   subject: string;
@@ -329,6 +335,11 @@ async function sendEmail(params: {
       console.log(`📧 Sending email from ${params.from} to ${params.to}`);
       console.log(`📋 Subject: ${params.subject}`);
       
+      // Validate FROM_EMAIL is not the API key
+      if (params.from.startsWith('SG.')) {
+        throw new Error('FROM_EMAIL is incorrectly set to the SendGrid API key. Please set FROM_EMAIL to a valid email address.');
+      }
+      
       // Create proper SendGrid message format
       const message = {
         to: params.to,
@@ -341,7 +352,7 @@ async function sendEmail(params: {
         html: params.html
       };
       
-      console.log('📤 SendGrid message:', JSON.stringify(message, null, 2));
+      console.log('📤 SendGrid message (from email only):', message.from.email);
       
       await sgMail.default.send(message);
       console.log(`✅ Email sent successfully to ${params.to}`);
