@@ -123,61 +123,8 @@ export class MemStorage implements IStorage {
   }
 
   private initializeSampleData() {
-    // Sample data initialization - users will be created through seedData.ts with proper password hashing
-
-    // Add sample classrooms
-    this.createClassroom({ name: "Lab 204", location: "CLIRDEC Building", capacity: 30, type: "laboratory" });
-    this.createClassroom({ name: "Room 301", location: "Main Building", capacity: 40, type: "lecture" });
-    
-    // Add sample students with parent emails
-    this.createStudent({
-      studentId: "2021-IT-001",
-      firstName: "Juan",
-      lastName: "Cruz",
-      email: "juan.cruz@student.clsu.edu.ph",
-      rfidCardId: "A1B2C3D4",
-      year: 3,
-      section: "A",
-      parentEmail: "parent.cruz@email.com",
-      parentName: "Maria Cruz",
-      isActive: true
-    });
-    
-    this.createStudent({
-      studentId: "2021-IT-002",
-      firstName: "Maria",
-      lastName: "Santos",
-      email: "maria.santos@student.clsu.edu.ph",
-      rfidCardId: "E5F6G7H8",
-      year: 3,
-      section: "A",
-      parentEmail: "parent.santos@email.com",
-      parentName: "Jose Santos",
-      isActive: true
-    });
-
-    this.createStudent({
-      studentId: "2021-IT-003",
-      firstName: "Carlos",
-      lastName: "Reyes",
-      email: "carlos.reyes@student.clsu.edu.ph",
-      rfidCardId: "I9J0K1L2",
-      year: 3,
-      section: "B",
-      parentEmail: "parent.reyes@email.com",
-      parentName: "Ana Reyes",
-      isActive: true
-    });
-
-    // Add sample computers
-    for (let i = 1; i <= 25; i++) {
-      this.createComputer({
-        name: `PC-${i.toString().padStart(2, '0')}`,
-        classroomId: 1, // Lab 204
-        status: "available",
-        assignedStudentId: null
-      });
-    }
+    // Sample data initialization - all data will be created through seedData.ts 
+    // to avoid duplicate/conflicting records
   }
 
   // User operations
