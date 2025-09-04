@@ -1,14 +1,21 @@
 import { storage } from "../storage";
 
 // Email service configuration with debug logging
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || process.env.EMAIL_API_KEY || "";
-const FROM_EMAIL = process.env.FROM_EMAIL || "matt.feria@clsu2.edu.ph";
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY?.trim() || "";
+const FROM_EMAIL = process.env.FROM_EMAIL?.trim() || "matt.feria@clsu2.edu.ph";
 
 // Debug logging for environment variables (without exposing secrets)
 console.log('📧 Email service configuration:');
 console.log('- SendGrid API Key configured:', SENDGRID_API_KEY ? 'Yes' : 'No');
 console.log('- FROM_EMAIL configured:', FROM_EMAIL);
-console.log('- SendGrid API Key format valid:', SENDGRID_API_KEY ? 'Yes' : 'No');
+console.log('- SendGrid API Key format valid:', SENDGRID_API_KEY.startsWith('SG.') ? 'Yes' : 'No');
+console.log('- API Key length:', SENDGRID_API_KEY.length);
+
+// Validate API key format
+if (SENDGRID_API_KEY && !SENDGRID_API_KEY.startsWith('SG.')) {
+  console.error('❌ Invalid SendGrid API key format. API key must start with "SG."');
+  console.error('❌ Current API key format appears incorrect. Please verify your SENDGRID_API_KEY.');
+}
 
 interface EmailTemplate {
   subject: string;
