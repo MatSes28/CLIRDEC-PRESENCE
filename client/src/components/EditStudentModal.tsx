@@ -31,7 +31,7 @@ export default function EditStudentModal({ open, onClose, student }: EditStudent
   });
 
   useEffect(() => {
-    if (open && student) {
+    if (student) {
       console.log('Setting form data for student:', student); // Debug log
       setFormData({
         firstName: student.firstName || '',
@@ -44,21 +44,8 @@ export default function EditStudentModal({ open, onClose, student }: EditStudent
         section: student.section || '',
         rfidCardId: student.rfidCardId || ''
       });
-    } else if (!open) {
-      // Reset form when modal closes
-      setFormData({
-        firstName: '',
-        lastName: '',
-        studentId: '',
-        email: '',
-        parentEmail: '',
-        parentName: '',
-        year: '',
-        section: '',
-        rfidCardId: ''
-      });
     }
-  }, [student, open]);
+  }, [student]);
 
   const updateStudentMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -76,18 +63,6 @@ export default function EditStudentModal({ open, onClose, student }: EditStudent
         description: "Student information has been updated successfully."
       });
       queryClient.invalidateQueries({ queryKey: ['/api/students'] });
-      // Reset form before closing
-      setFormData({
-        firstName: '',
-        lastName: '',
-        studentId: '',
-        email: '',
-        parentEmail: '',
-        parentName: '',
-        year: '',
-        section: '',
-        rfidCardId: ''
-      });
       onClose();
     },
     onError: (error: any) => {
