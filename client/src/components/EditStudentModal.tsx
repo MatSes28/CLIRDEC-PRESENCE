@@ -33,6 +33,11 @@ export default function EditStudentModal({ open, onClose, student }: EditStudent
   useEffect(() => {
     if (student) {
       console.log('Setting form data for student:', student); // Debug log
+      
+      // Extract section letter from formats like "3IT-A" or "A"
+      const sectionLetter = student.section ? 
+        (student.section.includes('-') ? student.section.split('-')[1] : student.section) : '';
+      
       setFormData({
         firstName: student.firstName || '',
         lastName: student.lastName || '',
@@ -41,7 +46,7 @@ export default function EditStudentModal({ open, onClose, student }: EditStudent
         parentEmail: student.parentEmail || '',
         parentName: student.parentName || '',
         year: student.year ? student.year.toString() : '',
-        section: student.section || '',
+        section: sectionLetter,
         rfidCardId: student.rfidCardId || ''
       });
     }
