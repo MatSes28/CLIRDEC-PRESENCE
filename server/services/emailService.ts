@@ -333,8 +333,13 @@ async function sendEmail(params: {
       console.log(`✅ Email sent successfully to ${params.to}`);
     } catch (error: any) {
       console.error('❌ SendGrid error:', error);
-      if (error.response) {
-        console.error('SendGrid response body:', error.response.body);
+      if (error.response && error.response.body) {
+        console.error('SendGrid response body:', JSON.stringify(error.response.body, null, 2));
+        
+        // Extract specific error message from SendGrid
+        const errors = error.response.body.errors || [];
+        const errorMessages = errors.map((e: any) => e.message).join(', ');
+        throw new Error(`SendGrid error: ${errorMessages || error.message}`);
       }
       throw new Error(`Email delivery failed: ${error.message}`);
     }
