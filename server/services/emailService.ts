@@ -17,6 +17,43 @@ if (SENDGRID_API_KEY && !SENDGRID_API_KEY.startsWith('SG.')) {
   console.error('❌ Current API key format appears incorrect. Please verify your SENDGRID_API_KEY.');
 }
 
+// Test SendGrid API key on startup
+async function testSendGridConnection() {
+  if (!SENDGRID_API_KEY) return;
+  
+  try {
+    const sgMail = await import('@sendgrid/mail');
+    sgMail.default.setApiKey(SENDGRID_API_KEY);
+    
+    // Test with sandbox mode to avoid actually sending
+    const testMessage = {
+      to: 'test@example.com',
+      from: FROM_EMAIL,
+      subject: 'SendGrid Test - Sandbox Mode',
+      text: 'This is a test message to validate SendGrid API key.',
+      mail_settings: {
+        sandbox_mode: {
+          enable: true
+        }
+      }
+    };
+    
+    await sgMail.default.send(testMessage);
+    console.log('✅ SendGrid API key test: PASSED');
+  } catch (error: any) {
+    console.error('❌ SendGrid API key test: FAILED');
+    console.error('❌ Error:', error.message);
+    if (error.response?.body?.errors) {
+      error.response.body.errors.forEach((err: any) => {
+        console.error('❌ SendGrid Detail:', err.message);
+      });
+    }
+  }
+}
+
+// Run test on startup (but don't block the app)
+setTimeout(() => testSendGridConnection().catch(console.error), 2000);
+
 interface EmailTemplate {
   subject: string;
   html: string;
@@ -375,6 +412,17 @@ async function sendEmail(params: {
         console.error('📋 Full SendGrid response:', JSON.stringify(error.response.body, null, 2));
         console.error('📋 Response headers:', JSON.stringify(error.response.headers, null, 2));
         console.error('📋 Response status:', error.response.status);
+        
+        // Log the actual error details from SendGrid
+        if (error.response.body.errors && Array.isArray(error.response.body.errors)) {
+          error.response.body.errors.forEach((err: any) => {
+            console.error('📋 SendGrid Error Detail:', {
+              message: err.message,
+              field: err.field,
+              help: err.help
+            });
+          });
+        }
         
         // Extract specific error message from SendGrid
         const errors = error.response.body.errors || [];
