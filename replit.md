@@ -36,7 +36,7 @@ UI Style: Modern glass effects, gradient backgrounds, professional typography, a
 ### Key Components
 - **Core Entities**: Users/Professors, Students, Classrooms, Subjects, Schedules, Class Sessions, Attendance Records, Computers.
 - **RFID Integration**: RFID card-based student identification with proximity sensor validation for dual validation. Includes real-time tap simulation for development.
-- **Email Notification System**: Automated parent notifications for absences/tardiness, daily attendance summaries via SendGrid.
+- **Email Notification System**: Automated parent notifications for absences/tardiness, daily attendance summaries via Brevo.
 - **Automation Features**: Auto-start class sessions, intelligent late arrival detection, automated session ending, computer assignment workflows.
 - **IoT Device Integration**: ESP32 Arduino firmware (RFID RC522 + PIR sensor) for real-time device management via WebSocket. Includes automatic device discovery, registration, and health monitoring.
 - **Role-Based Access Control**: Separate permissions for administrators (system-wide management) and faculty (class-specific actions, attendance tracking, basic reporting).
@@ -49,9 +49,9 @@ UI Style: Modern glass effects, gradient backgrounds, professional typography, a
 - **Student Management Flow**: Edit form pre-populates with current data → User modifies specific fields → Backend validates only changed fields → Database updates partial data.
 
 ### Recent Changes (January 2025)
-- **Email Integration**: Fixed SendGrid email delivery using verified sender address (matt.feria@clsu2.edu.ph).
+- **Email Integration**: Migrated from SendGrid to Brevo for email delivery using verified sender address (matt.feria@clsu2.edu.ph).
 - **Student Edit Fix**: Resolved edit form validation issues - forms now pre-populate with existing data and allow partial field updates without requiring all fields.
-- **Contact Parent Feature**: Successfully implemented real email sending to parent addresses via SendGrid API with professional templates.
+- **Contact Parent Feature**: Successfully implemented real email sending to parent addresses via Brevo API with professional templates.
 - **Dual-Mode ESP32 System**: Implemented comprehensive RFID integration with two operating modes:
   - USB Registration Mode: Direct USB connection for typing RFID UIDs into web forms during student registration
   - WiFi Attendance Mode: Wireless real-time attendance monitoring with motion detection and WebSocket communication
@@ -68,7 +68,7 @@ UI Style: Modern glass effects, gradient backgrounds, professional typography, a
 ### Authentication & Infrastructure
 - **Replit Auth**: OpenID Connect provider for faculty authentication.
 - **Neon Database**: Serverless PostgreSQL hosting.
-- **SendGrid**: Transactional email service.
+- **Brevo**: Transactional email service.
 
 ### Development & Deployment
 - **Replit**: Primary hosting and development environment.

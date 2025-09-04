@@ -634,24 +634,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         </div>
       </div>`;
 
-      // Send email immediately via SendGrid
-      const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+      // Send email immediately via Brevo
+      const BREVO_API_KEY = process.env.BREVO_API_KEY;
       const FROM_EMAIL = process.env.FROM_EMAIL || "matt.feria@clsu2.edu.ph";
 
-      if (SENDGRID_API_KEY) {
+      if (BREVO_API_KEY) {
         try {
-          const sgMail = await import('@sendgrid/mail');
-          sgMail.default.setApiKey(SENDGRID_API_KEY);
+          const { TransactionalEmailsApi, TransactionalEmailsApiApiKeys } = await import('@getbrevo/brevo');
           
-          await sgMail.default.send({
-            to: recipientEmail,
-            from: FROM_EMAIL,
+          const transactionalEmailsApi = new TransactionalEmailsApi();
+          transactionalEmailsApi.setApiKey(TransactionalEmailsApiApiKeys.apiKey, BREVO_API_KEY);
+          
+          const brevoMessage = {
+            to: [{
+              email: recipientEmail,
+              name: recipientType === 'parent' ? 'Parent/Guardian' : 'Student'
+            }],
+            sender: {
+              email: FROM_EMAIL,
+              name: 'CLIRDEC: PRESENCE System'
+            },
             subject: subject,
-            html: emailContent,
-            text: message
-          });
+            textContent: message,
+            htmlContent: emailContent
+          };
           
-          console.log(`✅ Email sent successfully to ${recipientEmail}`);
+          const result = await transactionalEmailsApi.sendTransacEmail(brevoMessage);
+          
+          console.log(`✅ Email sent successfully to ${recipientEmail}`, `Message ID: ${result.body?.messageId || 'N/A'}`);
           
           // Also create notification record for tracking
           await storage.createEmailNotification({
@@ -666,25 +676,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           res.json({ message: "Email sent successfully" });
         } catch (error: any) {
-          console.error('SendGrid error:', error);
+          console.error('Brevo error:', error);
           
-          let errorMessage = "Failed to send email via SendGrid";
-          if (error.code === 403) {
-            errorMessage = "SendGrid authentication failed. Please verify your API key has Mail Send permissions and the 'from' email address is verified in SendGrid.";
-          } else if (error.code === 400) {
-            errorMessage = "SendGrid request error. Please verify the 'from' email address is properly formatted and verified.";
+          let errorMessage = "Failed to send email via Brevo";
+          if (error.response?.status === 401 || error.message.includes('Unauthorized')) {
+            errorMessage = "Brevo authentication failed. Please verify your API key is valid and active.";
+          } else if (error.response?.status === 400) {
+            errorMessage = "Brevo request error. Please verify the 'from' email address is verified in your Brevo account.";
+          } else if (error.response?.status === 429) {
+            errorMessage = "Brevo daily sending limit exceeded. Please wait or upgrade your plan.";
           }
           
           res.status(500).json({ 
             message: errorMessage, 
             error: error.message,
-            suggestion: "In SendGrid dashboard: 1) Verify your sender email, 2) Check API key permissions include 'Mail Send'"
+            suggestion: "In Brevo dashboard: 1) Verify your sender email, 2) Check API key is active"
           });
         }
       } else {
         // No API key available
-        console.log(`❌ No SendGrid API key - email not sent to ${recipientEmail}`);
-        res.status(500).json({ message: "SendGrid API key not configured" });
+        console.log(`❌ No Brevo API key - email not sent to ${recipientEmail}`);
+        res.status(500).json({ message: "Brevo API key not configured" });
       }
     } catch (error) {
       console.error("Error sending email:", error);
