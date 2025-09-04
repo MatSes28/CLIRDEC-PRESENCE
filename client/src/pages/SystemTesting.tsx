@@ -172,7 +172,7 @@ export default function SystemTestingPage() {
                     </div>
                     <div className="flex items-center justify-between p-3 border rounded-lg">
                       <span>Parent notification alerts</span>
-                      <span className="text-yellow-600">⚠ SendGrid Config Needed</span>
+                      <span className="text-green-600">✓ Brevo Configured</span>
                     </div>
                   </div>
                 </div>

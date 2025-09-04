@@ -546,38 +546,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Test SendGrid configuration
-  app.get('/api/notifications/test-sendgrid', requireAdminOrFaculty, async (req: any, res) => {
+  // Test Brevo configuration
+  app.get('/api/notifications/test-brevo', requireAdminOrFaculty, async (req: any, res) => {
     try {
-      const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
-      if (!SENDGRID_API_KEY) {
-        return res.status(400).json({ message: "SendGrid API key not configured" });
+      const BREVO_API_KEY = process.env.BREVO_API_KEY;
+      if (!BREVO_API_KEY) {
+        return res.status(400).json({ message: "Brevo API key not configured" });
       }
 
       const FROM_EMAIL = process.env.FROM_EMAIL || "matt.feria@clsu2.edu.ph";
       
-      const sgMail = await import('@sendgrid/mail');
-      sgMail.default.setApiKey(SENDGRID_API_KEY);
+      const { TransactionalEmailsApi, TransactionalEmailsApiApiKeys } = await import('@getbrevo/brevo');
       
-      // Test with a simple email in sandbox mode
-      await sgMail.default.send({
-        to: 'test@example.com',
-        from: FROM_EMAIL,
-        subject: 'CLIRDEC SendGrid Test',
-        text: 'This is a test email from CLIRDEC Presence system.'
-      } as any);
+      const transactionalEmailsApi = new TransactionalEmailsApi();
+      transactionalEmailsApi.setApiKey(TransactionalEmailsApiApiKeys.apiKey, BREVO_API_KEY);
+      
+      // Test with a simple email
+      const message = {
+        to: [{
+          email: 'test@example.com',
+          name: 'Test User'
+        }],
+        sender: {
+          email: FROM_EMAIL,
+          name: 'CLIRDEC: PRESENCE System'
+        },
+        subject: 'CLIRDEC Brevo Test',
+        textContent: 'This is a test email from CLIRDEC Presence system using Brevo.',
+        htmlContent: '<p>This is a test email from <strong>CLIRDEC Presence system</strong> using Brevo.</p>'
+      };
+      
+      const result = await transactionalEmailsApi.sendTransacEmail(message);
       
       res.json({ 
-        message: "SendGrid test successful",
+        message: "Brevo test successful",
+        messageId: result.body?.messageId || 'N/A',
         from_email: FROM_EMAIL,
         api_key_configured: true
       });
     } catch (error: any) {
-      console.error('SendGrid test error:', error);
+      console.error('Brevo test error:', error);
       res.status(500).json({ 
-        message: "SendGrid test failed", 
+        message: "Brevo test failed", 
         error: error.message,
-        code: error.code
+        code: error.code || error.response?.status
       });
     }
   });
