@@ -87,7 +87,7 @@ export default function ContactStudentModal({ open, onClose, student, type }: Co
 
   const getDefaultMessage = () => {
     const studentName = `${student.firstName} ${student.lastName}`;
-    const attendanceRate = 85; // Default value since not calculated yet
+    const attendanceRate = student.attendanceRate || 85; // Use actual attendance rate or default
     if (isAlert && attendanceRate < 60) {
       return `Dear Parent/Guardian,
 
@@ -102,9 +102,9 @@ CLSU Information Technology Department`;
     } else if (isAlert) {
       return `Dear Parent/Guardian,
 
-This is a notification regarding ${student.name}'s (${student.studentId}) attendance.
+This is a notification regarding ${studentName}'s (${student.studentId}) attendance.
 
-Current Attendance Rate: ${student.attendanceRate}%
+Current Attendance Rate: ${attendanceRate}%
 
 Thank you for supporting your child's education.
 
@@ -114,7 +114,7 @@ CLSU Information Technology Department`;
     
     return `Dear Parent/Guardian,
 
-We hope this message finds you well. We are writing regarding ${student.name} (${student.studentId}).
+We hope this message finds you well. We are writing regarding ${studentName} (${student.studentId}).
 
 Please feel free to contact us if you have any questions or concerns.
 
@@ -125,10 +125,42 @@ CLSU Information Technology Department`;
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Comprehensive validation
     if (!emailData.subject || !emailData.message) {
       toast({
         title: "Validation Error",
         description: "Please fill in both subject and message",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Check if recipient has valid email
+    const hasParentEmail = student.parentEmail && student.parentEmail.includes('@');
+    const hasStudentEmail = student.email && student.email.includes('@');
+    
+    if (emailData.recipientType === 'parent' && !hasParentEmail) {
+      toast({
+        title: "No Parent Email",
+        description: "This student doesn't have a parent email address set",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (emailData.recipientType === 'student' && !hasStudentEmail) {
+      toast({
+        title: "No Student Email",
+        description: "This student doesn't have an email address set",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (emailData.recipientType === 'both' && !hasParentEmail && !hasStudentEmail) {
+      toast({
+        title: "No Email Addresses",
+        description: "This student has no email addresses set for either parent or student",
         variant: "destructive"
       });
       return;
@@ -161,8 +193,8 @@ CLSU Information Technology Department`;
           </DialogTitle>
           <DialogDescription>
             {isAlert 
-              ? `Send an attendance alert for ${student.name}` 
-              : `Send a message regarding ${student.name}`
+              ? `Send an attendance alert for ${student.firstName} ${student.lastName}` 
+              : `Send a message regarding ${student.firstName} ${student.lastName}`
             }
           </DialogDescription>
         </DialogHeader>
@@ -170,17 +202,19 @@ CLSU Information Technology Department`;
         {/* Student Info */}
         <div className="bg-muted/50 rounded-lg p-4 mb-4">
           <div className="flex items-center space-x-3">
-            <img 
-              src={student.profileImage} 
-              alt={student.name}
-              className="w-12 h-12 rounded-full object-cover"
-            />
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+              {student.gender === 'Female' ? (
+                <User className="h-6 w-6 text-primary" />
+              ) : (
+                <User className="h-6 w-6 text-primary" />
+              )}
+            </div>
             <div>
-              <h3 className="font-medium">{student.name}</h3>
+              <h3 className="font-medium">{`${student.firstName} ${student.lastName}`}</h3>
               <p className="text-sm text-muted-foreground">{student.studentId} • {student.year} - {student.section}</p>
               <p className="text-sm text-muted-foreground">
-                Attendance: {student.attendanceRate}% 
-                {student.attendanceRate < 60 && (
+                Attendance: {student.attendanceRate || 'N/A'}% 
+                {(student.attendanceRate || 0) < 60 && (
                   <span className="text-destructive ml-1">(Below threshold)</span>
                 )}
               </p>
@@ -204,13 +238,13 @@ CLSU Information Technology Department`;
                   <SelectItem value="parent">
                     <div className="flex items-center space-x-2">
                       <User className="h-4 w-4" />
-                      <span>Parent ({student.parentEmail})</span>
+                      <span>Parent ({student.parentEmail || 'No email set'})</span>
                     </div>
                   </SelectItem>
                   <SelectItem value="student">
                     <div className="flex items-center space-x-2">
                       <User className="h-4 w-4" />
-                      <span>Student ({student.email || 'No email'})</span>
+                      <span>Student ({student.email || 'No email set'})</span>
                     </div>
                   </SelectItem>
                   <SelectItem value="both">

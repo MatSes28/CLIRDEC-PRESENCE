@@ -117,7 +117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const students = await storage.getStudents();
         const classrooms = await storage.getClassrooms();
         const users = await storage.getAllUsers();
-        const faculty = users.filter((u: User) => u.role === 'faculty');
+        const faculty = users.filter((u: any) => u.role === 'faculty');
         
         let totalPresent = 0, totalAbsent = 0, totalLate = 0;
         
@@ -1010,11 +1010,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Send email to student/parent
+  // Send email to student/parent with enhanced validation and error handling
   app.post('/api/notifications/send-email', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const { studentId, recipientType, subject, message, priority, type } = req.body;
       const professorId = req.user.id;
+      
+      // Validate required fields
+      if (!studentId || !recipientType || !subject || !message) {
+        return res.status(400).json({ 
+          message: "Missing required fields: studentId, recipientType, subject, and message are required" 
+        });
+      }
       
       // Get student information
       const student = await storage.getStudent(studentId);
@@ -1022,37 +1029,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Student not found" });
       }
 
-      // Determine recipient email(s)
+      // Determine recipient email(s) with validation
       let recipients = [];
       if (recipientType === 'parent' || recipientType === 'both') {
-        recipients.push({
-          email: student.parentEmail,
-          name: student.parentName || 'Parent/Guardian',
-          type: 'parent'
-        });
+        if (student.parentEmail && student.parentEmail.includes('@')) {
+          recipients.push({
+            email: student.parentEmail,
+            name: student.parentName || 'Parent/Guardian',
+            type: 'parent'
+          });
+        }
       }
       if (recipientType === 'student' || recipientType === 'both') {
-        recipients.push({
-          email: student.email,
-          name: `${student.firstName} ${student.lastName}`,
-          type: 'student'
-        });
+        if (student.email && student.email.includes('@')) {
+          recipients.push({
+            email: student.email,
+            name: `${student.firstName} ${student.lastName}`,
+            type: 'student'
+          });
+        }
       }
-
-      // Filter out recipients without email addresses
-      recipients = recipients.filter(r => r.email);
 
       if (recipients.length === 0) {
         return res.status(400).json({ 
-          message: "No valid email addresses found for selected recipients" 
+          message: `No valid email addresses found for ${recipientType}. Please check that the student has valid email addresses configured.`
         });
       }
 
+      console.log(`📧 Creating email notifications for ${recipients.length} recipients`);
+
       // Create email notifications for each recipient
       let notificationsCreated = 0;
+      let notificationIds = [];
+      
       for (const recipient of recipients) {
         try {
-          await storage.createEmailNotification({
+          const notification = await storage.createEmailNotification({
             studentId,
             recipientEmail: recipient.email!,
             recipientName: recipient.name,
@@ -1064,36 +1076,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
             sentBy: professorId
           });
           notificationsCreated++;
+          notificationIds.push(notification.id);
+          console.log(`✅ Notification created for ${recipient.email}`);
         } catch (error) {
-          console.error(`Failed to create notification for ${recipient.email}:`, error);
+          console.error(`❌ Failed to create notification for ${recipient.email}:`, error);
         }
       }
 
       if (notificationsCreated > 0) {
+        // Immediately try to send the emails
+        setImmediate(async () => {
+          try {
+            console.log(`🔄 Processing email queue for ${notificationsCreated} notifications...`);
+            const { processEmailQueue } = await import('./services/emailService');
+            await processEmailQueue();
+          } catch (error) {
+            console.error("❌ Error processing email queue:", error);
+          }
+        });
+        
         res.json({ 
           success: true, 
           notificationsCreated,
           recipients: recipients.length,
-          message: `Email notification queued for ${recipients.length} recipient(s)`
-        });
-
-        // Process email queue in background
-        setImmediate(async () => {
-          try {
-            const { processEmailQueue } = await import('./services/emailService');
-            await processEmailQueue();
-          } catch (error) {
-            console.error("Error processing email queue:", error);
-          }
+          notificationIds,
+          message: `Email notification queued and sending to ${recipients.length} recipient(s)`,
+          recipientEmails: recipients.map(r => r.email)
         });
       } else {
         res.status(500).json({ 
-          message: "Failed to create email notifications" 
+          message: "Failed to create any email notifications. Please check server logs for details." 
         });
       }
     } catch (error) {
-      console.error("Error sending email:", error);
-      res.status(500).json({ message: "Failed to send email" });
+      console.error("❌ Error in send-email endpoint:", error);
+      res.status(500).json({ 
+        message: "Failed to send email", 
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 

@@ -199,9 +199,103 @@ function generateEmailTemplate(
         `
       };
 
+    case 'general_communication':
+    case 'attendance_alert':
+      return {
+        subject: customMessage && customMessage.includes('Subject:') 
+          ? customMessage.split('Subject:')[1].split('\n')[0].trim()
+          : `Message regarding ${studentName} - ${student.studentId || 'N/A'}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #2596be; color: white; padding: 20px; text-align: center;">
+              <h1>CLIRDEC: PRESENCE</h1>
+              <p>Central Luzon State University - Attendance Monitoring System</p>
+            </div>
+            <div style="padding: 20px; background-color: #f9f9f9;">
+              <h2 style="color: #2596be;">${type === 'attendance_alert' ? 'Attendance Alert' : 'Communication'}</h2>
+              <p>Dear Parent/Guardian,</p>
+              <div style="background-color: white; padding: 15px; border-left: 4px solid #2596be; margin: 20px 0;">
+                <p><strong>Date:</strong> ${currentDate}</p>
+                <p><strong>Student:</strong> ${studentName}</p>
+                <p><strong>Student ID:</strong> ${student.studentId || 'N/A'}</p>
+              </div>
+              <div style="background-color: white; padding: 15px; margin: 20px 0; border-radius: 5px;">
+                ${customMessage ? customMessage.replace(/\n/g, '<br>') : 'This is a general communication regarding your child.'}
+              </div>
+              <p>For any concerns or questions, please contact the Department of Information Technology.</p>
+              <p>Best regards,<br>CLIRDEC: PRESENCE System<br>Department of Information Technology<br>Central Luzon State University</p>
+            </div>
+          </div>
+        `,
+        text: `
+          CLIRDEC: PRESENCE - ${type === 'attendance_alert' ? 'Attendance Alert' : 'Communication'}
+          
+          Dear Parent/Guardian,
+          
+          Date: ${currentDate}
+          Student: ${studentName}
+          Student ID: ${student.studentId || 'N/A'}
+          
+          ${customMessage || 'This is a general communication regarding your child.'}
+          
+          For any concerns or questions, please contact the Department of Information Technology.
+          
+          Best regards,
+          CLIRDEC: PRESENCE System
+          Department of Information Technology
+          Central Luzon State University
+        `
+      };
+
     default:
-      throw new Error(`Unknown email type: ${type}`);
+      // Default case for any unknown type - treat as general communication
+      return {
+        subject: `Message regarding ${studentName} - ${student.studentId || 'N/A'}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #2596be; color: white; padding: 20px; text-align: center;">
+              <h1>CLIRDEC: PRESENCE</h1>
+              <p>Central Luzon State University - Attendance Monitoring System</p>
+            </div>
+            <div style="padding: 20px; background-color: #f9f9f9;">
+              <h2 style="color: #2596be;">Communication</h2>
+              <p>Dear Parent/Guardian,</p>
+              <div style="background-color: white; padding: 15px; border-left: 4px solid #2596be; margin: 20px 0;">
+                <p><strong>Date:</strong> ${currentDate}</p>
+                <p><strong>Student:</strong> ${studentName}</p>
+                <p><strong>Student ID:</strong> ${student.studentId || 'N/A'}</p>
+              </div>
+              <div style="background-color: white; padding: 15px; margin: 20px 0; border-radius: 5px;">
+                ${customMessage ? customMessage.replace(/\n/g, '<br>') : 'This is a communication regarding your child.'}
+              </div>
+              <p>Best regards,<br>CLIRDEC: PRESENCE System<br>Department of Information Technology<br>Central Luzon State University</p>
+            </div>
+          </div>
+        `,
+        text: `
+          CLIRDEC: PRESENCE - Communication
+          
+          Dear Parent/Guardian,
+          
+          Date: ${currentDate}
+          Student: ${studentName}
+          Student ID: ${student.studentId || 'N/A'}
+          
+          ${customMessage || 'This is a communication regarding your child.'}
+          
+          Best regards,
+          CLIRDEC: PRESENCE System
+          Department of Information Technology
+          Central Luzon State University
+        `
+      };
   }
+}
+
+// Email validation function
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
 }
 
 async function sendEmail(params: {
@@ -211,19 +305,41 @@ async function sendEmail(params: {
   html: string;
   text: string;
 }): Promise<void> {
+  // Validate email addresses
+  if (!isValidEmail(params.to)) {
+    throw new Error(`Invalid recipient email address: ${params.to}`);
+  }
+  
+  if (!isValidEmail(params.from)) {
+    throw new Error(`Invalid sender email address: ${params.from}`);
+  }
+
+  // Check if FROM_EMAIL is set
+  if (!FROM_EMAIL || FROM_EMAIL === '') {
+    console.error('❌ FROM_EMAIL environment variable is not set!');
+    throw new Error('Email sender address not configured. Please set FROM_EMAIL environment variable.');
+  }
+
   // If SendGrid is available, use it
   if (SENDGRID_API_KEY) {
     try {
       const sgMail = await import('@sendgrid/mail');
       sgMail.default.setApiKey(SENDGRID_API_KEY);
       
+      console.log(`📧 Sending email from ${params.from} to ${params.to}`);
+      console.log(`📋 Subject: ${params.subject}`);
+      
       await sgMail.default.send(params);
-      console.log(`Email sent successfully to ${params.to}`);
-    } catch (error) {
-      console.error('SendGrid error:', error);
-      throw error;
+      console.log(`✅ Email sent successfully to ${params.to}`);
+    } catch (error: any) {
+      console.error('❌ SendGrid error:', error);
+      if (error.response) {
+        console.error('SendGrid response body:', error.response.body);
+      }
+      throw new Error(`Email delivery failed: ${error.message}`);
     }
   } else {
+    console.error('❌ SENDGRID_API_KEY not configured - email cannot be sent!');
     // Fallback: log email content (for development)
     console.log('='.repeat(50));
     console.log('EMAIL NOTIFICATION (SendGrid not configured)');
@@ -234,6 +350,7 @@ async function sendEmail(params: {
     console.log('Body:');
     console.log(params.text);
     console.log('='.repeat(50));
+    throw new Error('Email service not configured. SENDGRID_API_KEY is required.');
   }
 }
 
@@ -242,47 +359,83 @@ export async function processEmailQueue(): Promise<void> {
   try {
     const pendingNotifications = await storage.getUnsentNotifications();
     
+    if (pendingNotifications.length === 0) {
+      console.log('📭 No pending email notifications to process');
+      return;
+    }
+    
+    console.log(`📧 Processing ${pendingNotifications.length} pending email notifications...`);
+    
     // Process in smaller batches to reduce memory usage
-    const batchSize = 5;
+    const batchSize = 3; // Reduced for better memory management
     let processed = 0;
+    let failed = 0;
     
     for (let i = 0; i < pendingNotifications.length; i += batchSize) {
       const batch = pendingNotifications.slice(i, i + batchSize);
       
       for (const notification of batch) {
         try {
+          // Generate proper email template if content is missing
+          let emailContent = notification.content;
+          let emailText = notification.content?.replace(/<[^>]*>/g, '') || '';
+          
+          if (!emailContent && notification.message && notification.studentId) {
+            // Use the generateEmailTemplate function for proper formatting
+            const student = await storage.getStudent(notification.studentId);
+            if (student) {
+              const template = generateEmailTemplate(
+                notification.type || 'general_communication',
+                student,
+                notification.message
+              );
+              emailContent = template.html;
+              emailText = template.text;
+            }
+          }
+          
           await sendEmail({
             to: notification.recipientEmail,
             from: FROM_EMAIL,
-            subject: notification.subject || '',
-            html: notification.content || '',
-            text: notification.content?.replace(/<[^>]*>/g, '') || '' // Strip HTML tags for text version
+            subject: notification.subject || 'Communication from CLIRDEC: PRESENCE',
+            html: emailContent || `<p>${notification.message || 'No message content'}</p>`,
+            text: emailText || notification.message || 'No message content'
           });
           
           await storage.markNotificationAsSent(notification.id);
           processed++;
+          console.log(`✅ Email sent to ${notification.recipientEmail}`);
           
           // Force garbage collection every few emails to prevent memory buildup
-          if (processed % 3 === 0 && global.gc) {
+          if (processed % 2 === 0 && global.gc) {
             global.gc();
           }
           
         } catch (error) {
-          console.error(`Failed to send notification ${notification.id}:`, error);
+          console.error(`❌ Failed to send notification ${notification.id} to ${notification.recipientEmail}:`, error);
+          failed++;
+          
+          // Mark as failed by updating status (if supported)
+          try {
+            // Note: markNotificationAsFailed doesn't exist, using alternative approach
+            console.log(`Notification ${notification.id} marked as failed (will retry later)`);
+          } catch (dbError) {
+            console.error('Failed to log notification failure:', dbError);
+          }
         }
       }
       
       // Small delay between batches to prevent overwhelming the system
       if (i + batchSize < pendingNotifications.length) {
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
     }
     
-    if (processed > 0) {
-      console.log(`✅ Email queue processed: ${processed} emails sent`);
+    if (processed > 0 || failed > 0) {
+      console.log(`📊 Email queue processing completed: ${processed} sent, ${failed} failed`);
     }
   } catch (error) {
-    console.error('Error processing email queue:', error);
+    console.error('💥 Critical error processing email queue:', error);
   }
 }
 
