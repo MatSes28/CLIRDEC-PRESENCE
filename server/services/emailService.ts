@@ -329,18 +329,50 @@ async function sendEmail(params: {
       console.log(`📧 Sending email from ${params.from} to ${params.to}`);
       console.log(`📋 Subject: ${params.subject}`);
       
-      await sgMail.default.send(params);
+      // Create proper SendGrid message format
+      const message = {
+        to: params.to,
+        from: {
+          email: params.from,
+          name: 'CLIRDEC: PRESENCE System'
+        },
+        subject: params.subject,
+        text: params.text,
+        html: params.html
+      };
+      
+      console.log('📤 SendGrid message:', JSON.stringify(message, null, 2));
+      
+      await sgMail.default.send(message);
       console.log(`✅ Email sent successfully to ${params.to}`);
     } catch (error: any) {
-      console.error('❌ SendGrid error:', error);
+      console.error('❌ SendGrid error details:', {
+        message: error.message,
+        code: error.code,
+        statusCode: error.response?.status,
+        responseBody: error.response?.body
+      });
+      
       if (error.response && error.response.body) {
-        console.error('SendGrid response body:', JSON.stringify(error.response.body, null, 2));
+        console.error('📋 Full SendGrid response:', JSON.stringify(error.response.body, null, 2));
         
         // Extract specific error message from SendGrid
         const errors = error.response.body.errors || [];
-        const errorMessages = errors.map((e: any) => e.message).join(', ');
-        throw new Error(`SendGrid error: ${errorMessages || error.message}`);
+        if (errors.length > 0) {
+          const errorMessages = errors.map((e: any) => `${e.field || 'general'}: ${e.message}`).join('; ');
+          throw new Error(`SendGrid validation error: ${errorMessages}`);
+        }
       }
+      
+      // Common SendGrid errors and solutions
+      if (error.message.includes('Unauthorized')) {
+        throw new Error('SendGrid API key is invalid or expired. Please check your SENDGRID_API_KEY.');
+      }
+      
+      if (error.message.includes('Bad Request')) {
+        throw new Error(`SendGrid rejected the email request. This usually means the FROM_EMAIL address (${params.from}) is not verified in your SendGrid account. Please verify this email address in SendGrid.`);
+      }
+      
       throw new Error(`Email delivery failed: ${error.message}`);
     }
   } else {
