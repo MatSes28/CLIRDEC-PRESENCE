@@ -18,22 +18,25 @@ export default function RealTimeNotifications() {
     // WebSocket connection for real-time notifications with proper port handling
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const host = window.location.hostname;
-    const port = window.location.port;
     
-    // Build WebSocket URL with explicit port if available
+    // Build WebSocket URL - for Replit, use the current host with proper port
     let wsUrl: string;
-    if (port) {
-      wsUrl = `${protocol}//${host}:${port}/ws`;
-    } else {
-      // Default ports for production
-      const defaultPort = protocol === 'wss:' ? '443' : '80';
-      wsUrl = `${protocol}//${host}:${defaultPort}/ws`;
-    }
     
-    // For development, ensure we use the correct port (5000)
-    if (host === 'localhost' || host.includes('127.0.0.1')) {
+    // For Replit environment (contains replit.dev domain)
+    if (host.includes('replit.dev')) {
+      wsUrl = `${protocol}//${host}/ws`;
+    } 
+    // For local development
+    else if (host === 'localhost' || host.includes('127.0.0.1')) {
       wsUrl = `${protocol}//${host}:5000/ws`;
     }
+    // Default fallback
+    else {
+      const port = window.location.port;
+      wsUrl = port ? `${protocol}//${host}:${port}/ws` : `${protocol}//${host}/ws`;
+    }
+    
+    console.log('Connecting to WebSocket:', wsUrl);
     
     let ws: WebSocket;
     

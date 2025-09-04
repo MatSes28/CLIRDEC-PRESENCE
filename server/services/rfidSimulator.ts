@@ -26,11 +26,36 @@ export async function simulateRFIDTap(rfidCardId: string, sessionId: number): Pr
     
     if (!existingAttendance) {
       // First tap - check in
+      // Get session details to check if student is late
+      const sessions = await storage.getAllClassSessions();
+      const session = sessions.find(s => s.id === sessionId);
+      let status = 'present';
+      
+      if (session && session.startTime) {
+        const sessionStart = new Date(session.startTime);
+        const currentTime = new Date();
+        
+        // Calculate time elapsed since session started (in minutes)
+        const timeElapsed = (currentTime.getTime() - sessionStart.getTime()) / (1000 * 60);
+        
+        // Calculate class duration from start and end time, or default to 3 hours (180 minutes)
+        let classDuration = 180; // Default 3 hours
+        if (session.endTime && session.startTime) {
+          classDuration = (new Date(session.endTime).getTime() - new Date(session.startTime).getTime()) / (1000 * 60);
+        }
+        const lateThreshold = classDuration * 0.6; // 60% of class time
+        
+        // If student arrives after 60% of class time, mark as late
+        if (timeElapsed > lateThreshold && timeElapsed > 15) { // Also check if more than 15 min late
+          status = 'late';
+        }
+      }
+      
       const attendanceRecord = await storage.createAttendance({
         sessionId,
         studentId: student.id,
         checkInTime: now,
-        status: 'present',
+        status: status as 'present' | 'late',
         proximityValidated: true // Simulate proximity sensor validation
       });
 
