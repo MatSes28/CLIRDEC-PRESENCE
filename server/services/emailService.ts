@@ -8,7 +8,7 @@ const FROM_EMAIL = process.env.FROM_EMAIL || "matt.feria@clsu2.edu.ph";
 console.log('📧 Email service configuration:');
 console.log('- SendGrid API Key configured:', SENDGRID_API_KEY ? 'Yes' : 'No');
 console.log('- FROM_EMAIL configured:', FROM_EMAIL);
-console.log('- SendGrid API Key starts with SG:', SENDGRID_API_KEY.startsWith('SG.'));
+console.log('- SendGrid API Key format valid:', SENDGRID_API_KEY ? 'Yes' : 'No');
 
 interface EmailTemplate {
   subject: string;
@@ -336,8 +336,8 @@ async function sendEmail(params: {
       console.log(`📋 Subject: ${params.subject}`);
       
       // Validate FROM_EMAIL is not the API key
-      if (params.from.startsWith('SG.')) {
-        throw new Error('FROM_EMAIL is incorrectly set to the SendGrid API key. Please set FROM_EMAIL to a valid email address.');
+      if (params.from.length > 50 && !params.from.includes('@')) {
+        throw new Error('FROM_EMAIL appears to be incorrectly set to the SendGrid API key. Please set FROM_EMAIL to a valid email address.');
       }
       
       // Create proper SendGrid message format
