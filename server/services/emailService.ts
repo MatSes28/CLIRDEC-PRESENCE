@@ -373,11 +373,14 @@ async function sendEmail(params: {
       
       if (error.response && error.response.body) {
         console.error('📋 Full SendGrid response:', JSON.stringify(error.response.body, null, 2));
+        console.error('📋 Response headers:', JSON.stringify(error.response.headers, null, 2));
+        console.error('📋 Response status:', error.response.status);
         
         // Extract specific error message from SendGrid
         const errors = error.response.body.errors || [];
         if (errors.length > 0) {
           const errorMessages = errors.map((e: any) => `${e.field || 'general'}: ${e.message}`).join('; ');
+          console.error('📋 SendGrid error details:', errorMessages);
           throw new Error(`SendGrid validation error: ${errorMessages}`);
         }
       }
