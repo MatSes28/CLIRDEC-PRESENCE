@@ -387,7 +387,21 @@ async function sendEmail(params: {
       
       // Common SendGrid errors and solutions
       if (error.message.includes('Unauthorized')) {
-        throw new Error('SendGrid API key is invalid or expired. Please check your SENDGRID_API_KEY.');
+        console.error('❌ CRITICAL: SendGrid API key is invalid, expired, or lacks permissions!');
+        console.error('❌ SOLUTION: Generate a new API key in SendGrid dashboard with "Mail Send" permissions');
+        
+        // For now, log the email content so you can see what would be sent
+        console.log('='.repeat(60));
+        console.log('📧 EMAIL CONTENT (SendGrid Unauthorized - Logging Only):');
+        console.log('='.repeat(60));
+        console.log(`📤 To: ${params.to}`);
+        console.log(`📤 From: ${params.from}`);
+        console.log(`📋 Subject: ${params.subject}`);
+        console.log('📝 Content:');
+        console.log(params.text);
+        console.log('='.repeat(60));
+        
+        throw new Error('SendGrid API key is invalid or expired. Email logged to console. Please check your SENDGRID_API_KEY.');
       }
       
       if (error.message.includes('Bad Request')) {
