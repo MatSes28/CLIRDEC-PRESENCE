@@ -25,45 +25,23 @@ export default function Reports() {
     queryKey: ['/api/subjects'],
   });
 
-  // Mock report data
-  const mockReportData = [
-    {
-      id: 1,
-      studentName: 'Maria Santos',
-      studentId: '2021-IT-001',
-      checkIn: '10:02 AM',
-      checkOut: '11:58 AM',
-      duration: '1h 56m',
-      status: 'present'
+  // Fetch real report data
+  const { data: reportData, isLoading } = useQuery({
+    queryKey: ['/api/reports/generate', selectedRange, selectedSubject, selectedSection],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        range: selectedRange,
+        subject: selectedSubject,
+        section: selectedSection
+      });
+      const response = await fetch(`/api/reports/generate?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch report data');
+      return response.json();
     },
-    {
-      id: 2,
-      studentName: 'Juan Dela Cruz',
-      studentId: '2021-IT-002',
-      checkIn: '10:15 AM',
-      checkOut: '12:00 PM',
-      duration: '1h 45m',
-      status: 'late'
-    },
-    {
-      id: 3,
-      studentName: 'Anna Rodriguez',
-      studentId: '2021-IT-003',
-      checkIn: '--',
-      checkOut: '--',
-      duration: '--',
-      status: 'absent'
-    },
-    {
-      id: 4,
-      studentName: 'Carlos Mendez',
-      studentId: '2021-IT-004',
-      checkIn: '10:05 AM',
-      checkOut: '11:55 AM',
-      duration: '1h 50m',
-      status: 'present'
-    }
-  ];
+  });
+
+  const attendanceRecords = reportData?.records || [];
+  const summary = reportData?.summary || { present: 0, late: 0, absent: 0, total: 0 };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -303,7 +281,7 @@ export default function Reports() {
               </div>
               
               <div className="divide-y divide-border">
-                {mockReportData.map((record) => (
+                {attendanceRecords.map((record: any) => (
                   <div key={record.id} className="grid grid-cols-6 gap-4 py-4 px-6 items-center">
                     <div className="font-medium">{record.studentName}</div>
                     <div className="font-mono text-sm">{record.studentId}</div>
@@ -324,7 +302,7 @@ export default function Reports() {
         <Card>
           <CardContent className="p-6">
             <div className="text-center">
-              <p className="text-2xl font-bold">{mockReportData.length}</p>
+              <p className="text-2xl font-bold">{summary.total}</p>
               <p className="text-sm text-muted-foreground">Total Records</p>
             </div>
           </CardContent>
@@ -334,7 +312,7 @@ export default function Reports() {
           <CardContent className="p-6">
             <div className="text-center">
               <p className="text-2xl font-bold text-secondary">
-                {mockReportData.filter(r => r.status === 'present').length}
+                {summary.present}
               </p>
               <p className="text-sm text-muted-foreground">Present</p>
             </div>
@@ -345,7 +323,7 @@ export default function Reports() {
           <CardContent className="p-6">
             <div className="text-center">
               <p className="text-2xl font-bold text-accent">
-                {mockReportData.filter(r => r.status === 'late').length}
+                {summary.late}
               </p>
               <p className="text-sm text-muted-foreground">Late</p>
             </div>
@@ -356,7 +334,7 @@ export default function Reports() {
           <CardContent className="p-6">
             <div className="text-center">
               <p className="text-2xl font-bold text-destructive">
-                {mockReportData.filter(r => r.status === 'absent').length}
+                {summary.absent}
               </p>
               <p className="text-sm text-muted-foreground">Absent</p>
             </div>

@@ -941,17 +941,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { range, subject, section } = req.query;
       const professorId = req.user.id;
       
-      // Mock report generation
+      // Get real attendance data from database
+      const today = new Date();
+      const sessions = await storage.getClassSessionsByDate(today);
+      
+      let allAttendanceRecords: any[] = [];
+      
+      // Get attendance records for each session today
+      for (const session of sessions) {
+        if (!session.id) continue; // Skip sessions without ID
+        const attendance = await storage.getAttendanceBySession(session.id as number);
+        
+        // Map attendance to report format with student details
+        for (const record of attendance) {
+          const student = await storage.getStudent(record.studentId);
+          if (student) {
+            allAttendanceRecords.push({
+              id: record.id,
+              studentName: `${student.firstName} ${student.lastName}`,
+              studentId: student.studentId,
+              checkIn: record.checkInTime ? new Date(record.checkInTime).toLocaleTimeString() : '--',
+              checkOut: record.checkOutTime ? new Date(record.checkOutTime).toLocaleTimeString() : '--',
+              duration: record.checkInTime && record.checkOutTime 
+                ? calculateDuration(record.checkInTime, record.checkOutTime) 
+                : '--',
+              status: record.status,
+              sessionName: 'Class Session',
+              date: new Date(session.date).toLocaleDateString()
+            });
+          }
+        }
+      }
+      
+      // Calculate summary statistics
+      const summary = {
+        present: allAttendanceRecords.filter(r => r.status === 'present').length,
+        late: allAttendanceRecords.filter(r => r.status === 'late').length,
+        absent: allAttendanceRecords.filter(r => r.status === 'absent').length,
+        total: allAttendanceRecords.length
+      };
+      
+      const attendanceRate = summary.total > 0 
+        ? Math.round(((summary.present + summary.late) / summary.total) * 100)
+        : 0;
+      
       const reportData = {
         range,
         subject: subject || 'all',
         section: section || 'all',
-        records: 15, // Mock number of records
+        records: allAttendanceRecords,
         summary: {
-          present: 12,
-          late: 2,
-          absent: 1,
-          attendanceRate: '87%'
+          ...summary,
+          attendanceRate: `${attendanceRate}%`
         }
       };
       
@@ -961,6 +1002,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to generate report" });
     }
   });
+
+  // Helper function to calculate duration
+  function calculateDuration(checkIn: Date, checkOut: Date): string {
+    const diff = new Date(checkOut).getTime() - new Date(checkIn).getTime();
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}h ${minutes}m`;
+  }
 
   // Notifications route
   app.post('/api/notifications/send', requireAdminOrFaculty, async (req: any, res) => {

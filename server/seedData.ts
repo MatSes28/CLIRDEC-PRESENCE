@@ -166,6 +166,17 @@ export async function seedDatabase() {
 
     console.log(`Created ${computers.length} computers`);
 
+    // Create a sample class session for testing late attendance
+    const testSession = await storage.createClassSession({
+      professorId: "admin@clsu.edu.ph",
+      date: new Date(), // Today
+      startTime: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 hours ago (simulates 9 AM if current time is 12 PM)
+      endTime: new Date(Date.now() + 1 * 60 * 60 * 1000), // 1 hour from now
+      status: "active"
+    });
+
+    console.log(`Created test class session: ${testSession.id}`);
+
     // Set some system settings
     await storage.setSystemSetting("attendance_grace_period", "15", "Grace period in minutes for late arrivals");
     await storage.setSystemSetting("email_notifications_enabled", "true", "Enable automated email notifications");
