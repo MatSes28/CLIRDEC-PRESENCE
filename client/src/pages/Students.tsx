@@ -133,7 +133,7 @@ export default function Students() {
             <FolderInput className="mr-2 h-4 w-4" />
             Import Students
           </Button>
-          <Button onClick={() => setAddModalOpen(true)}>
+          <Button onClick={() => setAddModalOpen(true)} data-tour="add-student">
             <UserPlus className="mr-2 h-4 w-4" />
             Add Student
           </Button>
@@ -142,7 +142,7 @@ export default function Students() {
 
       {/* Search and Filters */}
       <Card>
-        <CardContent className="p-6">
+        <CardContent className="p-6" data-tour="search-filters">
           <div className="flex items-center space-x-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -248,6 +248,7 @@ export default function Students() {
                         size="sm" 
                         variant="outline"
                         onClick={() => handleContactStudent(student)}
+                        data-tour="student-actions"
                       >
                         <Mail className="mr-1 h-3 w-3" />
                         Contact

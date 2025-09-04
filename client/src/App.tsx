@@ -24,6 +24,7 @@ import TopBar from "@/components/TopBar";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { WebSocketProvider } from "@/components/WebSocketProvider";
 import RealTimeNotifications from "@/components/RealTimeNotifications";
+import TourProvider from "@/components/TourProvider";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -105,11 +106,12 @@ function App() {
       <ThemeProvider>
         <WebSocketProvider>
           <TooltipProvider>
-            <div className="min-h-screen bg-background text-foreground">
-              <Router />
-              <Toaster />
-
-            </div>
+            <TourProvider>
+              <div className="min-h-screen bg-background text-foreground">
+                <Router />
+                <Toaster />
+              </div>
+            </TourProvider>
           </TooltipProvider>
         </WebSocketProvider>
       </ThemeProvider>

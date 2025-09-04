@@ -125,10 +125,24 @@ export default function Sidebar() {
     return location.startsWith(path);
   };
 
+  // Helper function to get tour attributes
+  const getTourAttribute = (path: string) => {
+    switch (path) {
+      case '/':
+        return 'dashboard-section';
+      case '/students':
+        return 'students-section';
+      case '/attendance':
+        return 'attendance-section';
+      default:
+        return undefined;
+    }
+  };
+
   return (
-    <div className="fixed left-0 top-0 h-full w-80 glass border-r border-border/20 z-40 animate-slide-in-right">
+    <div className="fixed left-0 top-0 h-full w-80 glass border-r border-border/20 z-40 animate-slide-in-right" data-tour="navigation">
       {/* Modern Header with Gradient */}
-      <div className="relative p-8 gradient-primary overflow-hidden">
+      <div className="relative p-8 gradient-primary overflow-hidden" data-tour="welcome">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute -top-4 -right-4 w-32 h-32 bg-white/20 rounded-full blur-xl"></div>
           <div className="absolute -bottom-4 -left-4 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
@@ -164,6 +178,7 @@ export default function Sidebar() {
                   ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25 scale-[1.02]' 
                   : 'hover:bg-muted/50 hover:scale-[1.01] text-foreground/80 hover:text-foreground'
               }`}
+              data-tour={getTourAttribute(item.path)}
             >
               <div className={`p-2 rounded-xl mr-4 transition-all duration-300 ${
                 active 
@@ -194,7 +209,7 @@ export default function Sidebar() {
       </nav>
       
       {/* Modern User Profile Section */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-border/20 glass">
+      <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-border/20 glass" data-tour="user-menu">
         <div className="card-modern p-4 mb-4">
           <div className="flex items-center space-x-4">
             <div className="relative">
