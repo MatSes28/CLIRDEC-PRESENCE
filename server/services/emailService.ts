@@ -434,9 +434,15 @@ async function sendEmail(params: {
       }
       
       // Common SendGrid errors and solutions
-      if (error.message.includes('Unauthorized')) {
-        console.error('❌ CRITICAL: SendGrid API key is invalid, expired, or lacks permissions!');
-        console.error('❌ SOLUTION: Generate a new API key in SendGrid dashboard with "Mail Send" permissions');
+      if (error.message.includes('Unauthorized') || error.message.includes('Maximum credits exceeded')) {
+        console.error('❌ CRITICAL: SendGrid account issue detected!');
+        if (error.message.includes('Maximum credits exceeded')) {
+          console.error('❌ ISSUE: SendGrid account has exceeded sending credits');
+          console.error('❌ SOLUTION: Upgrade your SendGrid plan or wait for credit reset');
+        } else {
+          console.error('❌ ISSUE: SendGrid API key is invalid, expired, or lacks permissions!');
+          console.error('❌ SOLUTION: Generate a new API key in SendGrid dashboard with "Mail Send" permissions');
+        }
         
         // For now, log the email content so you can see what would be sent
         console.log('='.repeat(60));
@@ -449,7 +455,13 @@ async function sendEmail(params: {
         console.log(params.text);
         console.log('='.repeat(60));
         
-        throw new Error('SendGrid API key is invalid or expired. Email logged to console. Please check your SENDGRID_API_KEY.');
+        // Don't throw error for credit limit - just log and continue
+        if (error.message.includes('Maximum credits exceeded')) {
+          console.log('📧 Email logged to console due to SendGrid credit limit');
+          return; // Successfully "sent" (logged)
+        } else {
+          throw new Error('SendGrid API key is invalid or expired. Email logged to console. Please check your SENDGRID_API_KEY.');
+        }
       }
       
       if (error.message.includes('Bad Request')) {

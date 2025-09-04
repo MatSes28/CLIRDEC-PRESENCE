@@ -35,9 +35,25 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
   const { toast } = useToast();
 
   const connectWebSocket = () => {
-    // Determine WebSocket URL
+    // Determine WebSocket URL with proper port handling
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const host = window.location.hostname;
+    const port = window.location.port;
+    
+    // Build WebSocket URL with explicit port if available
+    let wsUrl: string;
+    if (port) {
+      wsUrl = `${protocol}//${host}:${port}/ws`;
+    } else {
+      // Default ports for production
+      const defaultPort = protocol === 'wss:' ? '443' : '80';
+      wsUrl = `${protocol}//${host}:${defaultPort}/ws`;
+    }
+    
+    // For development, ensure we use the correct port (5000)
+    if (host === 'localhost' || host.includes('127.0.0.1')) {
+      wsUrl = `${protocol}//${host}:5000/ws`;
+    }
 
     console.log('Connecting to WebSocket:', wsUrl);
 
