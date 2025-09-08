@@ -7,24 +7,59 @@ If you're seeing `⚠️ HC-SR04 sensor timeout - check connections`, follow thi
 ## 🔍 Quick Diagnosis Steps
 
 ### Step 1: Use the Test Firmware
-Upload `ESP32_S3_HC-SR04_TEST.ino` to quickly test your sensor connections:
+Choose the test firmware based on your wiring option:
+
+**For Option 1 (GPIO 21/20):** Upload `ESP32_S3_HC-SR04_TEST.ino`
+**For Option 2 (GPIO 5/6):** Upload `ESP32_S3_HC-SR04_TEST_OPTION2.ino`
+**For Option 3 (GPIO 15/16):** Upload `ESP32_S3_HC-SR04_TEST_OPTION3.ino`
+**For Option 4 (GPIO 7/8):** Upload `ESP32_S3_HC-SR04_TEST_OPTION4.ino`
 
 ```arduino
-// This test program will:
+// These test programs will:
 // ✅ Show successful distance readings
 // ❌ Display specific error messages for connection issues
 // 💡 Provide visual LED feedback
+// 📍 Show which GPIO pins are being used
 ```
+
+**💡 Tip:** If Option 1 doesn't work, try Option 2 first as GPIO 5/6 are commonly reliable pins on ESP32-S3.
 
 ### Step 2: Verify Wiring
 
-**ESP32-S3 + HC-SR04 Connections:**
+**Option 1 - Default Wiring:**
 ```
 HC-SR04 Pin → ESP32-S3 Pin → Notes
 VCC         → 5V           → CRITICAL: Must be 5V (not 3.3V)
 GND         → GND          → Solid ground connection required  
 Trig        → GPIO 21      → Trigger pulse output
 Echo        → GPIO 20      → Echo pulse input
+```
+
+**Option 2 - Alternative Wiring (Try if Option 1 doesn't work):**
+```
+HC-SR04 Pin → ESP32-S3 Pin → Notes
+VCC         → 5V           → CRITICAL: Must be 5V (not 3.3V)
+GND         → GND          → Solid ground connection required  
+Trig        → GPIO 5       → Alternative trigger pin
+Echo        → GPIO 6       → Alternative echo pin
+```
+
+**Option 3 - Another Alternative:**
+```
+HC-SR04 Pin → ESP32-S3 Pin → Notes
+VCC         → 5V           → CRITICAL: Must be 5V (not 3.3V)
+GND         → GND          → Solid ground connection required  
+Trig        → GPIO 15      → Alternative trigger pin
+Echo        → GPIO 16      → Alternative echo pin
+```
+
+**Option 4 - Conservative Wiring:**
+```
+HC-SR04 Pin → ESP32-S3 Pin → Notes
+VCC         → 5V           → CRITICAL: Must be 5V (not 3.3V)
+GND         → GND          → Solid ground connection required  
+Trig        → GPIO 7       → Alternative trigger pin
+Echo        → GPIO 8       → Alternative echo pin
 ```
 
 ## ⚡ Power Supply Issues (Most Common)
@@ -52,11 +87,30 @@ void setup() {
 
 ### Wrong GPIO Pins
 - **Symptom**: Constant timeouts
-- **Fix**: Double-check pin assignments match firmware:
+- **Fix**: Try different pin combinations if current ones don't work:
   ```cpp
+  // Option 1 (Default)
   #define TRIG_PIN 21
   #define ECHO_PIN 20
+  
+  // Option 2 (Recommended alternative)
+  #define TRIG_PIN 5
+  #define ECHO_PIN 6
+  
+  // Option 3
+  #define TRIG_PIN 15
+  #define ECHO_PIN 16
+  
+  // Option 4
+  #define TRIG_PIN 7
+  #define ECHO_PIN 8
   ```
+
+**Why some pins work better:**
+- GPIO 5/6: Good general-purpose pins, less likely to have conflicts
+- GPIO 7/8: Conservative choice, typically very stable
+- GPIO 15/16: Alternative if others are in use
+- Avoid pins used by built-in features (Boot, Flash, etc.)
 
 ### Ground Issues
 - **Symptom**: Erratic readings or constant timeouts
