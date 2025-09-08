@@ -1392,34 +1392,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize IoT Device Manager
   iotDeviceManager.init(httpServer);
   
-  // WebSocket server for real-time notifications
-  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  // WebSocket server for real-time notifications with enhanced configuration
+  const wss = new WebSocketServer({ 
+    server: httpServer, 
+    path: '/ws',
+    verifyClient: (info: { origin: string; req: any; secure: boolean }) => {
+      console.log('🔍 WebSocket connection attempt from:', info.origin, 'to:', info.req.url);
+      console.log('   🔐 Secure:', info.secure);
+      console.log('   📋 Headers:', JSON.stringify(info.req.headers, null, 2));
+      
+      // Allow all origins for now to debug connection issues
+      const allowed = true;
+      console.log('   ✅ Connection allowed:', allowed);
+      return allowed;
+    }
+  });
   
-  wss.on('connection', (ws: WebSocket) => {
-    console.log('New WebSocket connection established');
+  wss.on('connection', (ws: WebSocket, req) => {
+    const clientIP = req.socket.remoteAddress;
+    const userAgent = req.headers['user-agent'];
+    console.log('✅ New WebSocket connection established');
+    console.log('   📍 Client IP:', clientIP);
+    console.log('   🌐 User-Agent:', userAgent?.slice(0, 50) + '...');
+    console.log('   📊 Total connections:', wss.clients.size);
     
     ws.on('message', (message) => {
       try {
         const data = JSON.parse(message.toString());
-        console.log('WebSocket message received:', data);
+        console.log('📨 WebSocket message received:', data);
       } catch (error) {
-        console.error('Invalid WebSocket message:', error);
+        console.error('❌ Invalid WebSocket message:', error);
       }
     });
     
-    ws.on('close', () => {
-      console.log('WebSocket connection closed');
+    ws.on('close', (code, reason) => {
+      console.log('🔌 WebSocket connection closed');
+      console.log('   📊 Close code:', code);
+      console.log('   📝 Reason:', reason.toString());
+      console.log('   📊 Remaining connections:', wss.clients.size - 1);
+    });
+    
+    ws.on('error', (error) => {
+      console.error('❌ WebSocket connection error:', error);
     });
     
     // Send welcome message
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({
-        type: 'system',
-        title: 'Connected',
-        message: 'Real-time notifications active',
-        timestamp: new Date()
-      }));
+    try {
+      if (ws.readyState === WebSocket.OPEN) {
+        const welcomeMessage = {
+          type: 'system',
+          title: 'Connected',
+          message: 'Real-time notifications active',
+          timestamp: new Date()
+        };
+        ws.send(JSON.stringify(welcomeMessage));
+        console.log('📤 Welcome message sent to client');
+      }
+    } catch (error) {
+      console.error('❌ Failed to send welcome message:', error);
     }
+  });
+  
+  wss.on('error', (error) => {
+    console.error('❌ WebSocket server error:', error);
+  });
+  
+  wss.on('headers', (headers, req) => {
+    console.log('📋 WebSocket response headers being sent:', headers);
   });
 
   // Broadcast notification to all connected clients

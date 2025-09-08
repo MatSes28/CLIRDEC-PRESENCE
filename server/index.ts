@@ -85,6 +85,10 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    log(`🌐 HTTP server running on http://0.0.0.0:${port}`);
+    log(`🔌 WebSocket servers running on:`);
+    log(`   📱 IoT devices: ws://0.0.0.0:${port}/iot`);
+    log(`   💻 Web clients: ws://0.0.0.0:${port}/ws`);
     
     // Initialize emergency memory optimization  
     setTimeout(async () => {
