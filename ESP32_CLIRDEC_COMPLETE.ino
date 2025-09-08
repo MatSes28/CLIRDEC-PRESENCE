@@ -5,7 +5,7 @@
  * 1. USB_REGISTRATION_MODE: Connects via USB, types RFID UIDs directly into web forms
  * 2. WIFI_ATTENDANCE_MODE: Connects via WiFi, sends real-time attendance data to server
  * 
- * Hardware: ESP32-S3 with RC522 RFID + HC-SR501 PIR
+ * Hardware: ESP32-S3 with RC522 RFID + HC-SR04 Ultrasonic Sensor
  * 
  * Pin Connections for ESP32-S3:
  * RC522 RFID Module:
@@ -17,10 +17,11 @@
  *   SCK -> GPIO 12
  *   SDA -> GPIO 10
  * 
- * HC-SR501 PIR Sensor:
+ * HC-SR04 Ultrasonic Sensor:
  *   VCC -> 5V
  *   GND -> GND
- *   OUT -> GPIO 21
+ *   Trig -> GPIO 21
+ *   Echo -> GPIO 20
  * 
  * Mode Switch:
  *   Push Button -> GPIO 0 (Boot button can be used)
@@ -36,7 +37,8 @@
 // Pin definitions for ESP32-S3
 #define SS_PIN 10         // SDA/SS pin
 #define RST_PIN 4         // Reset pin
-#define PIR_PIN 21        // PIR motion sensor
+#define TRIG_PIN 21       // HC-SR04 Trigger pin
+#define ECHO_PIN 20       // HC-SR04 Echo pin
 #define LED_PIN 2         // Built-in LED
 #define MODE_BUTTON_PIN 0 // Boot button
 #define BUZZER_PIN 47     // Buzzer pin for ESP32-S3
@@ -74,10 +76,13 @@ String lastUID = "";
 unsigned long lastRFIDTime = 0;
 const unsigned long RFID_COOLDOWN = 2000; // 2 seconds to prevent duplicate reads
 
-// Motion detection
-bool motionDetected = false;
-unsigned long lastMotionTime = 0;
-const unsigned long MOTION_TIMEOUT = 5000; // 5 seconds
+// Distance detection
+float currentDistance = 0;
+float lastDistance = 0;
+bool presenceDetected = false;
+unsigned long lastDistanceTime = 0;
+const unsigned long DISTANCE_INTERVAL = 1000; // Check every 1 second
+const float PRESENCE_THRESHOLD = 50.0; // Distance in cm to detect presence
 
 // Mode switching
 unsigned long lastModeCheck = 0;
@@ -133,7 +138,8 @@ void setupHardware() {
   rfid.PCD_Init();
   
   // Initialize pins
-  pinMode(PIR_PIN, INPUT);
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
   pinMode(LED_PIN, OUTPUT);
   pinMode(MODE_BUTTON_PIN, INPUT_PULLUP);
   pinMode(BUZZER_PIN, OUTPUT);
@@ -300,7 +306,8 @@ void handleWiFiRFID(String cardId) {
     doc["deviceId"] = deviceId;
     doc["rfidCardId"] = cardId;
     doc["timestamp"] = millis();
-    doc["presenceDetected"] = motionDetected;
+    doc["presenceDetected"] = presenceDetected;
+    doc["distance"] = currentDistance;
     
     String message;
     serializeJson(doc, message);
@@ -438,27 +445,65 @@ void checkWiFiConnection() {
   }
 }
 
+float measureDistance() {
+  // Send ultrasonic pulse
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+  
+  // Measure echo pulse duration
+  unsigned long duration = pulseIn(ECHO_PIN, HIGH, 30000); // 30ms timeout
+  
+  if (duration == 0) {
+    return -1; // No echo received (out of range)
+  }
+  
+  // Calculate distance in cm
+  float distance = (duration * 0.034) / 2;
+  return distance;
+}
+
 void checkPresenceSensor() {
-  bool currentMotion = digitalRead(PIR_PIN);
   unsigned long currentTime = millis();
   
-  if (currentMotion != motionDetected) {
-    motionDetected = currentMotion;
-    lastMotionTime = currentTime;
+  // Check distance at regular intervals
+  if (currentTime - lastDistanceTime < DISTANCE_INTERVAL) {
+    return;
+  }
+  lastDistanceTime = currentTime;
+  
+  float newDistance = measureDistance();
+  
+  if (newDistance > 0 && newDistance < 400) { // Valid range: 2cm to 400cm
+    lastDistance = currentDistance;
+    currentDistance = newDistance;
     
-    Serial.println("👁️ Motion " + String(motionDetected ? "detected" : "cleared"));
+    // Check if presence state changed
+    bool newPresence = (currentDistance <= PRESENCE_THRESHOLD);
     
-    if (isOnline) {
-      DynamicJsonDocument doc(256);
-      doc["type"] = "presence_detected";
-      doc["deviceId"] = deviceId;
-      doc["presenceDetected"] = motionDetected;
-      doc["timestamp"] = currentTime;
+    if (newPresence != presenceDetected) {
+      presenceDetected = newPresence;
       
-      String message;
-      serializeJson(doc, message);
-      webSocket.sendTXT(message);
+      Serial.println("👁️ Presence " + String(presenceDetected ? "detected" : "cleared") + 
+                     " (Distance: " + String(currentDistance, 1) + "cm)");
+      
+      if (isOnline) {
+        DynamicJsonDocument doc(512);
+        doc["type"] = "presence_detected";
+        doc["deviceId"] = deviceId;
+        doc["presenceDetected"] = presenceDetected;
+        doc["distance"] = currentDistance;
+        doc["timestamp"] = currentTime;
+        
+        String message;
+        serializeJson(doc, message);
+        webSocket.sendTXT(message);
+      }
     }
+  } else if (newDistance == -1) {
+    Serial.println("⚠️ HC-SR04 sensor timeout - check connections");
   }
 }
 
