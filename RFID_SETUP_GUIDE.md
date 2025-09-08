@@ -19,10 +19,10 @@ The CLIRDEC PRESENCE system uses a dual-mode ESP32 device that can operate in tw
 - **Reading Distance**: 0-60mm
 - **Interface**: SPI
 
-### Motion Sensor (Optional)
-- **Model**: HC-SR501 PIR Motion Sensor
-- **Detection Range**: 3-7 meters
-- **Detection Angle**: 120°
+### Distance Sensor (Optional)
+- **Model**: HC-SR04 Ultrasonic Distance Sensor
+- **Detection Range**: 2cm to 400cm
+- **Beam Angle**: ~15° cone
 
 ### Additional Components
 - **Breadboard or PCB**: For connections
@@ -45,13 +45,20 @@ SCK          →    GPIO 18      →    SPI Clock
 SDA/SS       →    GPIO 5       →    SPI Slave Select
 ```
 
-### HC-SR501 PIR Sensor to ESP32 (Optional)
+### HC-SR04 Ultrasonic Sensor to ESP32-S3 (Optional)
 ```
-PIR Pin      →    ESP32 Pin    →    Function
-VCC          →    5V           →    Power
+HC-SR04 Pin  →    ESP32-S3 Pin →    Function
+VCC          →    5V           →    Power (CRITICAL: Must be 5V, not 3.3V)
 GND          →    GND          →    Ground
-OUT          →    GPIO 4       →    Motion Detection Signal
+Trig         →    GPIO 21      →    Trigger Pulse Output
+Echo         →    GPIO 20      →    Echo Pulse Input
 ```
+
+**⚠️ Troubleshooting HC-SR04 Timeout Errors**:
+1. **Power**: VCC must connect to 5V (not 3.3V)
+2. **Connections**: Use solid wires, avoid loose breadboard connections
+3. **Test**: Use `ESP32_S3_HC-SR04_TEST.ino` to diagnose connection issues
+4. **Range**: Sensor works best between 10cm-300cm
 
 ### Status LED (Optional)
 ```
