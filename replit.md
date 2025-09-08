@@ -38,7 +38,7 @@ UI Style: Modern glass effects, gradient backgrounds, professional typography, a
 - **RFID Integration**: RFID card-based student identification with proximity sensor validation for dual validation. Includes real-time tap simulation for development.
 - **Email Notification System**: Automated parent notifications for absences/tardiness, daily attendance summaries via Brevo.
 - **Automation Features**: Auto-start class sessions, intelligent late arrival detection, automated session ending, computer assignment workflows.
-- **IoT Device Integration**: ESP32 Arduino firmware (RFID RC522 + PIR sensor) for real-time device management via WebSocket. Includes automatic device discovery, registration, and health monitoring.
+- **IoT Device Integration**: ESP32 S3 Arduino firmware (RFID RC522 + PIR sensor) for real-time device management via WebSocket. Includes automatic device discovery, registration, and health monitoring.
 - **Role-Based Access Control**: Separate permissions for administrators (system-wide management) and faculty (class-specific actions, attendance tracking, basic reporting).
 
 ### Data Flow
@@ -56,7 +56,8 @@ UI Style: Modern glass effects, gradient backgrounds, professional typography, a
   - USB Registration Mode: Direct USB connection for typing RFID UIDs into web forms during student registration
   - WiFi Attendance Mode: Wireless real-time attendance monitoring with motion detection and WebSocket communication
 - **RFID Registration Helper**: Integrated web component that guides users through ESP32 setup, provides downloadable Python typing script, and automatically detects typed RFID UIDs in forms
-- **Hardware Documentation**: Complete setup guide with wiring diagrams, software configuration, and troubleshooting for ESP32 + RC522 RFID + PIR sensor integration
+- **Hardware Documentation**: Complete setup guide with wiring diagrams, software configuration, and troubleshooting for ESP32 S3 + RC522 RFID + PIR sensor integration
+- **ESP32 S3 Migration**: Updated system configuration and documentation from ESP32-WROOM-32 to ESP32 S3 development board for improved performance and features
 
 ### Deployment Strategy
 - **Development Environment**: Replit-hosted with hot reload, PostgreSQL module auto-provisioning, Replit secrets for environment variables.

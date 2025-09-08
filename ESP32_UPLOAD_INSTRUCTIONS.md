@@ -4,7 +4,7 @@
 
 ### Step 1: Prepare Arduino IDE Settings
 ```
-Board: "ESP32 Dev Module"
+Board: "ESP32S3 Dev Module"
 Upload Speed: 115200 (NEVER use higher speeds)
 CPU Frequency: 240MHz
 Flash Frequency: 80MHz  

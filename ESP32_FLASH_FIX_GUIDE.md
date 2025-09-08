@@ -56,7 +56,7 @@ esptool.py --port COM3 --baud 460800 write_flash --flash_size=detect 0x1000 boot
    - Delete ESP32 preferences (varies by OS)
    - Reinstall ESP32 board package
    - Set these specific settings:
-     - Board: "ESP32 Dev Module"
+     - Board: "ESP32S3 Dev Module"
      - Upload Speed: 115200 (slower is more reliable)
      - CPU Frequency: 240MHz
      - Flash Frequency: 80MHz

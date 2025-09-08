@@ -10,7 +10,7 @@ The CLIRDEC PRESENCE system uses a dual-mode ESP32 device that can operate in tw
 ## Hardware Requirements
 
 ### ESP32 Development Board
-- **Recommended**: ESP32-WROOM-32 38-pin development board
+- **Recommended**: ESP32-S3 Development Board
 - **Features**: Built-in WiFi, Bluetooth, USB programming interface
 
 ### RFID Module (RC522)

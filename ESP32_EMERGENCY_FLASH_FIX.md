@@ -16,7 +16,7 @@ This means the ESP32's partition table is completely corrupted.
 4. **Open Arduino IDE**
 5. **Set these EXACT settings:**
    ```
-   Board: "ESP32 Dev Module"
+   Board: "ESP32S3 Dev Module"
    Upload Speed: 115200
    CPU Frequency: 240MHz
    Flash Frequency: 80MHz

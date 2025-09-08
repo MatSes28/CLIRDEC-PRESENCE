@@ -1644,7 +1644,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const setupGuide = {
         hardwareRequirements: [
-          "ESP32-WROOM-32 38-pin with USB Type-C",
+          "ESP32-S3 Development Board",
           "RC522 RFID Module (13.56 MHz)",
           "HC-SR501 PIR Motion Sensor", 
           "MIFARE RFID Cards/Tags",

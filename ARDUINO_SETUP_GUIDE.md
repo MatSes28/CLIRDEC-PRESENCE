@@ -34,7 +34,7 @@ void loop() {
 
 ## Step 3: Arduino IDE Settings
 
-- **Board**: "ESP32 Dev Module"
+- **Board**: "ESP32S3 Dev Module"
 - **Upload Speed**: 921600
 - **CPU Frequency**: 240MHz
 - **Flash Frequency**: 80MHz
