@@ -954,6 +954,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Map attendance to report format with student details
         for (const record of attendance) {
+          if (!record.studentId) continue; // Skip records without studentId
           const student = await storage.getStudent(record.studentId);
           if (student) {
             allAttendanceRecords.push({

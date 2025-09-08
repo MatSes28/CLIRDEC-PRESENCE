@@ -40,19 +40,26 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
     const host = window.location.hostname;
     const port = window.location.port;
     
-    // Build WebSocket URL with explicit port if available
+    // Build WebSocket URL based on environment
     let wsUrl: string;
-    if (port) {
+    
+    // Handle Replit environment
+    if (host.includes('replit.dev') || host.includes('replit.app')) {
+      // Replit uses the same host and port, but with WebSocket protocol
+      wsUrl = `${protocol}//${host}/ws`;
+    }
+    // Handle development environment
+    else if (host === 'localhost' || host.includes('127.0.0.1')) {
+      wsUrl = `${protocol}//${host}:5000/ws`;
+    }
+    // Handle production with explicit port
+    else if (port && port !== '80' && port !== '443') {
       wsUrl = `${protocol}//${host}:${port}/ws`;
-    } else {
-      // Default ports for production
+    }
+    // Handle production with default ports
+    else {
       const defaultPort = protocol === 'wss:' ? '443' : '80';
       wsUrl = `${protocol}//${host}:${defaultPort}/ws`;
-    }
-    
-    // For development, ensure we use the correct port (5000)
-    if (host === 'localhost' || host.includes('127.0.0.1')) {
-      wsUrl = `${protocol}//${host}:5000/ws`;
     }
 
     console.log('Connecting to WebSocket:', wsUrl);
@@ -82,18 +89,18 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
       }
     };
 
-    ws.onclose = () => {
-      console.log('WebSocket disconnected');
+    ws.onclose = (event) => {
+      console.log('WebSocket disconnected', { code: event.code, reason: event.reason });
       setIsConnected(false);
       setSocket(null);
       
-      // Attempt to reconnect after 5 seconds if not on auth page and not too many attempts
-      if (window.location.pathname !== '/' && reconnectAttempts < 5) {
+      // Attempt to reconnect after 3 seconds if not on auth page and not too many attempts
+      if (window.location.pathname !== '/' && reconnectAttempts < 10) {
         setTimeout(() => {
-          console.log('Attempting to reconnect WebSocket...');
+          console.log(`Attempting to reconnect WebSocket... (attempt ${reconnectAttempts + 1}/10)`);
           setReconnectAttempts(prev => prev + 1);
           connectWebSocket();
-        }, 5000);
+        }, 3000 + (reconnectAttempts * 1000)); // Exponential backoff
       }
     };
 

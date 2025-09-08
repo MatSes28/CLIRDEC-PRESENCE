@@ -47,7 +47,7 @@
 const char* ssid = "YOUR_WIFI_SSID";
 const char* password = "YOUR_WIFI_PASSWORD";
 
-// Server configuration (UPDATE WITH YOUR REPLIT URL)
+// Server configuration (UPDATED TO CURRENT REPLIT URL)
 const char* websocket_server = "ecb19220-a007-487b-9ee7-d84bf401b8be-00-vw37dlwicktt.pike.replit.dev";
 const int websocket_port = 443;
 const char* websocket_path = "/iot";
@@ -218,14 +218,18 @@ void connectToWiFi() {
 }
 
 void connectWebSocket() {
-  Serial.println("🔌 Connecting to WebSocket server...");
+  Serial.print("🔌 Connecting to WebSocket server: ");
+  Serial.print(websocket_server);
+  Serial.print(":");
+  Serial.print(websocket_port);
+  Serial.println(websocket_path);
   
   webSocket.begin(websocket_server, websocket_port, websocket_path);
   webSocket.onEvent(webSocketEvent);
-  webSocket.setReconnectInterval(5000);
+  webSocket.setReconnectInterval(10000); // 10 seconds reconnect interval
+  webSocket.enableHeartbeat(15000, 3000, 2); // Enable heartbeat: 15s ping, 3s pong timeout, 2 retries
   
-  // Send device registration
-  registerDevice();
+  Serial.println("🔌 WebSocket connection initiated...");
 }
 
 void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
@@ -233,12 +237,18 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
     case WStype_DISCONNECTED:
       Serial.println("🔌 WebSocket Disconnected");
       isOnline = false;
+      // Visual indicator for disconnection
+      digitalWrite(LED_PIN, LOW);
       break;
       
     case WStype_CONNECTED:
       Serial.printf("🔌 WebSocket Connected to: %s\n", payload);
       isOnline = true;
       registerDevice();
+      // Visual indicator for connection
+      digitalWrite(LED_PIN, HIGH);
+      delay(100);
+      digitalWrite(LED_PIN, LOW);
       break;
       
     case WStype_TEXT:
@@ -249,15 +259,30 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
     case WStype_ERROR:
       Serial.println("❌ WebSocket Error");
       isOnline = false;
+      // Error pattern - rapid blinking
+      for (int i = 0; i < 3; i++) {
+        digitalWrite(LED_PIN, HIGH);
+        delay(100);
+        digitalWrite(LED_PIN, LOW);
+        delay(100);
+      }
+      break;
+      
+    case WStype_PONG:
+      Serial.println("💓 WebSocket Pong received");
       break;
       
     default:
+      Serial.printf("🔍 WebSocket event type: %d\n", type);
       break;
   }
 }
 
 void registerDevice() {
-  if (!isOnline) return;
+  if (!isOnline) {
+    Serial.println("⚠️  Cannot register device - not connected");
+    return;
+  }
   
   DynamicJsonDocument doc(512);
   doc["type"] = "device_register";
@@ -265,12 +290,18 @@ void registerDevice() {
   doc["deviceType"] = "ESP32S3_RFID_PRESENCE";
   doc["capabilities"] = "rfid,presence";
   doc["location"] = "Computer Lab";
+  doc["firmware_version"] = "2.0.0";
+  doc["pin_config"]["trig"] = TRIG_PIN;
+  doc["pin_config"]["echo"] = ECHO_PIN;
   
   String message;
   serializeJson(doc, message);
-  webSocket.sendTXT(message);
   
-  Serial.println("📝 Device registered with server");
+  if (webSocket.sendTXT(message)) {
+    Serial.println("📝 Device registered with server successfully");
+  } else {
+    Serial.println("❌ Failed to send device registration");
+  }
 }
 
 void handleServerMessage(const char* message) {
@@ -436,21 +467,33 @@ void handleWiFiMode() {
   // Handle WebSocket communication
   webSocket.loop();
   
-  // Check WiFi connection
+  // Check WiFi connection status
   if (WiFi.status() != WL_CONNECTED) {
     if (wifiConnected) {
-      Serial.println("❌ WiFi connection lost");
+      Serial.println("❌ WiFi connection lost - attempting to reconnect");
       wifiConnected = false;
       isOnline = false;
+      
+      // Visual indicator for WiFi disconnection
+      for (int i = 0; i < 2; i++) {
+        digitalWrite(LED_PIN, HIGH);
+        delay(200);
+        digitalWrite(LED_PIN, LOW);
+        delay(200);
+      }
     }
-    // Try to reconnect
+    
+    // Try to reconnect WiFi
     connectToWiFi();
+    
+    // If WiFi reconnected but WebSocket not connected, reconnect WebSocket
     if (wifiConnected && !isOnline) {
+      delay(1000); // Give WiFi time to stabilize
       connectWebSocket();
     }
   }
   
-  // Send heartbeat
+  // Send heartbeat periodically
   if (isOnline && (millis() - lastHeartbeat) > HEARTBEAT_INTERVAL) {
     sendHeartbeat();
     lastHeartbeat = millis();
