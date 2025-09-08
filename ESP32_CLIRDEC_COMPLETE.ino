@@ -1,26 +1,26 @@
 /*
- * CLIRDEC: PRESENCE - Dual Mode ESP32 IoT Device
+ * CLIRDEC: PRESENCE - Dual Mode ESP32-S3 IoT Device
  * 
  * MODES:
  * 1. USB_REGISTRATION_MODE: Connects via USB, types RFID UIDs directly into web forms
  * 2. WIFI_ATTENDANCE_MODE: Connects via WiFi, sends real-time attendance data to server
  * 
- * Hardware: ESP32-WROOM-32 with RC522 RFID + HC-SR501 PIR
+ * Hardware: ESP32-S3 with RC522 RFID + HC-SR501 PIR
  * 
- * Pin Connections:
+ * Pin Connections for ESP32-S3:
  * RC522 RFID Module:
  *   VCC -> 3.3V
- *   RST -> GPIO 22
+ *   RST -> GPIO 4
  *   GND -> GND
- *   MISO -> GPIO 19
- *   MOSI -> GPIO 23
- *   SCK -> GPIO 18
- *   SDA -> GPIO 5
+ *   MISO -> GPIO 13
+ *   MOSI -> GPIO 11
+ *   SCK -> GPIO 12
+ *   SDA -> GPIO 10
  * 
  * HC-SR501 PIR Sensor:
  *   VCC -> 5V
  *   GND -> GND
- *   OUT -> GPIO 4
+ *   OUT -> GPIO 21
  * 
  * Mode Switch:
  *   Push Button -> GPIO 0 (Boot button can be used)
@@ -33,13 +33,13 @@
 #include <MFRC522.h>
 #include <Preferences.h>
 
-// Pin definitions
-#define SS_PIN 5
-#define RST_PIN 22
-#define PIR_PIN 4
-#define LED_PIN 2
-#define MODE_BUTTON_PIN 0  // Boot button
-#define BUZZER_PIN 25
+// Pin definitions for ESP32-S3
+#define SS_PIN 10         // SDA/SS pin
+#define RST_PIN 4         // Reset pin
+#define PIR_PIN 21        // PIR motion sensor
+#define LED_PIN 2         // Built-in LED
+#define MODE_BUTTON_PIN 0 // Boot button
+#define BUZZER_PIN 47     // Buzzer pin for ESP32-S3
 
 // WiFi credentials (UPDATE THESE WITH YOUR WIFI)
 const char* ssid = "Kupal kaba boss?";
@@ -63,7 +63,7 @@ enum OperatingMode {
 OperatingMode currentMode = WIFI_ATTENDANCE_MODE;
 
 // Device state
-String deviceId = "ESP32_" + String(ESP.getEfuseMac(), HEX);
+String deviceId = "ESP32S3_" + String(ESP.getEfuseMac(), HEX);
 bool isOnline = false;
 bool wifiConnected = false;
 unsigned long lastHeartbeat = 0;
@@ -128,8 +128,8 @@ void loop() {
 }
 
 void setupHardware() {
-  // Initialize SPI for RFID
-  SPI.begin();
+  // Initialize SPI for RFID with ESP32-S3 pins
+  SPI.begin(12, 13, 11, 10); // SCK, MISO, MOSI, SS
   rfid.PCD_Init();
   
   // Initialize pins
