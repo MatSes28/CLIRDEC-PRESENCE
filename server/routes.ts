@@ -18,6 +18,7 @@ import { checkAutoStartSessions } from "./services/scheduleService";
 import { performanceMonitor } from "./services/performanceMonitor";
 import { generateAttendanceTrendData, generateStudentPerformanceData } from "./services/reportingService";
 import { iotDeviceManager } from "./services/iotService";
+import { attendanceValidationService } from "./services/attendanceValidationService";
 
 // Import hash function for user password management
 import { hashPassword } from "./auth";
@@ -1383,6 +1384,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating monitoring settings:", error);
       res.status(500).json({ message: "Failed to update monitoring settings" });
+    }
+  });
+
+  // Advanced Attendance Validation API - Final Logic Implementation
+  app.post('/api/attendance/validate-rfid', requireAdminOrFaculty, async (req, res) => {
+    try {
+      const { rfidCardId, sessionId, deviceId } = req.body;
+      
+      if (!rfidCardId || !sessionId) {
+        return res.status(400).json({ message: "RFID card ID and session ID are required" });
+      }
+
+      const result = await attendanceValidationService.validateRFIDTap({
+        rfidCardId,
+        sessionId: parseInt(sessionId),
+        deviceId,
+        timestamp: new Date()
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error validating RFID tap:", error);
+      res.status(500).json({ message: "Failed to validate RFID tap" });
+    }
+  });
+
+  app.post('/api/attendance/validate-sensor', requireAdminOrFaculty, async (req, res) => {
+    try {
+      const { sessionId, studentId, detectionType, deviceId } = req.body;
+      
+      if (!sessionId || !studentId || !detectionType) {
+        return res.status(400).json({ message: "Session ID, student ID, and detection type are required" });
+      }
+
+      const result = await attendanceValidationService.validateSensorDetection(
+        parseInt(sessionId),
+        parseInt(studentId),
+        detectionType,
+        new Date()
+      );
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error validating sensor detection:", error);
+      res.status(500).json({ message: "Failed to validate sensor detection" });
+    }
+  });
+
+  app.get('/api/attendance/session-mode/:sessionId', requireAdminOrFaculty, async (req, res) => {
+    try {
+      const sessionId = parseInt(req.params.sessionId);
+      const sessionMode = attendanceValidationService.getSessionMode(sessionId);
+      
+      if (!sessionMode) {
+        return res.status(404).json({ message: "Session not found or not active" });
+      }
+
+      res.json(sessionMode);
+    } catch (error) {
+      console.error("Error getting session mode:", error);
+      res.status(500).json({ message: "Failed to get session mode" });
+    }
+  });
+
+  app.get('/api/attendance/pending-validations', requireAdminOrFaculty, (req, res) => {
+    try {
+      const pendingValidations = attendanceValidationService.getPendingValidations();
+      res.json({ 
+        pendingValidations,
+        count: pendingValidations.length 
+      });
+    } catch (error) {
+      console.error("Error getting pending validations:", error);
+      res.status(500).json({ message: "Failed to get pending validations" });
+    }
+  });
+
+  app.get('/api/attendance/discrepancies', requireAdminOrFaculty, async (req, res) => {
+    try {
+      // Get attendance records with discrepancy flags
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const sessions = await storage.getClassSessionsByDate(today);
+      
+      const discrepancies = [];
+      for (const session of sessions) {
+        const attendanceRecords = await storage.getAttendanceBySession(session.id);
+        const flaggedRecords = attendanceRecords.filter((record: any) => 
+          record.discrepancyFlag && record.discrepancyFlag !== 'normal'
+        );
+        
+        for (const record of flaggedRecords) {
+          const student = await storage.getStudent(record.studentId);
+          discrepancies.push({
+            ...record,
+            student,
+            session
+          });
+        }
+      }
+
+      res.json({ 
+        discrepancies,
+        count: discrepancies.length,
+        date: today
+      });
+    } catch (error) {
+      console.error("Error getting discrepancies:", error);
+      res.status(500).json({ message: "Failed to get attendance discrepancies" });
     }
   });
 

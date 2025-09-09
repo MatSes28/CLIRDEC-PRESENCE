@@ -236,7 +236,7 @@ class AttendanceValidationService {
     }
 
     // Update attendance record with check-out time
-    const updatedRecord = await storage.updateAttendanceRecord(existingRecord.id, {
+    const updatedRecord = await storage.updateAttendance(existingRecord.id, {
       checkOutTime: timestamp,
       exitValidated: true,
       updatedAt: timestamp
@@ -261,7 +261,7 @@ class AttendanceValidationService {
 
       if (!pendingEntry) {
         // Sensor detection without RFID tap - flag as discrepancy
-        const student = await storage.getStudentById(studentId);
+        const student = await storage.getStudent(studentId);
         return {
           success: false,
           status: 'ghost_tap',
@@ -319,7 +319,7 @@ class AttendanceValidationService {
     this.validationTimeouts.delete(validationKey);
 
     // Create attendance record with timeout flag
-    const attendanceRecord = await storage.createAttendanceRecord({
+    const attendanceRecord = await storage.createAttendance({
       sessionId: pendingData.sessionId,
       studentId: pendingData.student.id,
       checkInTime: pendingData.rfidTapTime,
@@ -342,7 +342,7 @@ class AttendanceValidationService {
 
     if (existingRecord) {
       // Update existing record
-      return await storage.updateAttendanceRecord(existingRecord.id, {
+      return await storage.updateAttendance(existingRecord.id, {
         checkInTime: pendingData.rfidTapTime,
         status: pendingData.status,
         proximityValidated: true,
@@ -356,7 +356,7 @@ class AttendanceValidationService {
       });
     } else {
       // Create new record
-      return await storage.createAttendanceRecord({
+      return await storage.createAttendance({
         sessionId: pendingData.sessionId,
         studentId: pendingData.student.id,
         checkInTime: pendingData.rfidTapTime,
