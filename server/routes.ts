@@ -1389,8 +1389,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create HTTP server
   const httpServer = createServer(app);
   
-  // Initialize IoT Device Manager
-  iotDeviceManager.init(httpServer);
+  // Initialize IoT Device Manager AFTER creating WebSocket servers
+  // This ensures proper order of WebSocket path registration
   
   // WebSocket server for real-time notifications with enhanced configuration
   const wss = new WebSocketServer({ 
@@ -1407,6 +1407,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return allowed;
     }
   });
+  
+  // Initialize IoT Device Manager AFTER main WebSocket server
+  iotDeviceManager.init(httpServer);
   
   wss.on('connection', (ws: WebSocket, req) => {
     const clientIP = req.socket.remoteAddress;
@@ -1443,7 +1446,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           type: 'system',
           title: 'Connected',
           message: 'Real-time notifications active',
-          timestamp: new Date()
+          timestamp: new Date().toISOString() // Convert to string to avoid JSON serialization issues
         };
         ws.send(JSON.stringify(welcomeMessage));
         console.log('📤 Welcome message sent to client');

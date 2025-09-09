@@ -82,10 +82,13 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
 
     ws.onmessage = (event) => {
       try {
+        console.log('📨 Raw WebSocket message received:', event.data);
         const message: WebSocketMessage = JSON.parse(event.data);
+        console.log('📨 Parsed WebSocket message:', message);
         handleWebSocketMessage(message);
       } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
+        console.error('❌ Error parsing WebSocket message:', error);
+        console.error('❌ Raw message data:', event.data);
       }
     };
 
