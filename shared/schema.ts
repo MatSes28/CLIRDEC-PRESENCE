@@ -104,6 +104,9 @@ export const sessions_class = pgTable("class_sessions", {
   startTime: timestamp("start_time"),
   endTime: timestamp("end_time"),
   status: varchar("status").default("scheduled"), // scheduled, active, completed, cancelled
+  attendanceMode: varchar("attendance_mode").default("tap_in"), // tap_in, tap_out
+  lateThresholdMinutes: integer("late_threshold_minutes").default(15),
+  absentThresholdPercent: integer("absent_threshold_percent").default(60),
   professorId: varchar("professor_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -117,6 +120,12 @@ export const attendance = pgTable("attendance", {
   checkOutTime: timestamp("check_out_time"),
   status: varchar("status").default("absent"), // present, late, absent
   proximityValidated: boolean("proximity_validated").default(false),
+  entryValidated: boolean("entry_validated").default(false),
+  exitValidated: boolean("exit_validated").default(false),
+  rfidTapTime: timestamp("rfid_tap_time"),
+  sensorDetectionTime: timestamp("sensor_detection_time"),
+  validationTimeout: boolean("validation_timeout").default(false),
+  discrepancyFlag: varchar("discrepancy_flag"), // ghost_tap, missed_tap, sensor_only, normal
   computerId: integer("computer_id"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
