@@ -1,0 +1,91 @@
+📌 Final Logic of CLIRDEC: PRESENCE
+
+1. System Setup
+	•	Each classroom has 1 ESP32-S3 connected to:
+	•	RFID reader (RC522) → for student ID tap.
+	•	HC-SR04 ultrasonic sensor(s) → for body presence validation (entry/exit).
+	•	The ESP32-S3 communicates either via:
+	•	USB HID mode (acts like a keyboard typing RFID IDs into the web system), OR
+	•	Wi-Fi mode (sends data via API to the Django/MySQL backend server).
+	•	The Web Dashboard (Admin/Faculty system) holds:
+	•	Class schedules
+	•	Student database
+	•	Attendance rules
+	•	Notification system.
+
+⸻
+
+2. Attendance Session Activation
+	•	The dashboard controls the time (based on class schedules uploaded by Admin/Faculty).
+	•	At the start of class:
+	•	Tap-In mode is ON.
+	•	Tap-Out mode is OFF.
+	•	After the class ends:
+	•	Tap-In mode is disabled.
+	•	Tap-Out mode is enabled (for proper exit logging).
+
+⸻
+
+3. Student Entry (One-Tap, One-Entry Rule)
+	1.	Student taps Smart RFID ID.
+	2.	ESP32-S3:
+	•	Reads UID.
+	•	Temporarily locks exit sensor (to avoid ghost taps).
+	•	Waits for entry detection from the ultrasonic sensor.
+	3.	If sensor detects body entering within timeout (e.g., 5–7 seconds):
+	•	System logs Valid Entry.
+	•	Marks student Present (if within 15 mins of start).
+	•	Marks Late (if within 15 mins–60% of class time).
+	•	Marks Absent if after 60%.
+	•	Re-enables exit sensor for future use.
+	4.	If no detection within timeout:
+	•	System flags Ghost Tap.
+	•	Student can re-tap to retry.
+
+⸻
+
+4. Student Exit (Breaks/Restroom or End of Class)
+	1.	Student approaches exit door.
+	2.	Exit sensor activates → student movement detected.
+	3.	System checks:
+	•	If student tapped out → log Valid Exit.
+	•	If sensor detects exit but no tap → log Discrepancy (possible ghost exit).
+	4.	If student returns and taps again → counted properly (entry restored).
+
+⸻
+
+5. Discrepancy Handling
+	•	System compares RFID logs vs Sensor logs:
+	•	If RFID tap exists but no body detected → Ghost Attendance flagged.
+	•	If sensor detects movement but no RFID tap → Missed Tap flagged.
+	•	Discrepancies are logged in the database and shown on dashboard for admin review.
+
+⸻
+
+6. End of Session
+	•	At official end time:
+	•	Tap-in disabled, tap-out enabled.
+	•	Students must tap-out to complete attendance cycle.
+	•	Final attendance status stored in MySQL:
+	•	Present, Late, Absent, or Flagged.
+	•	System generates daily reports (faculty view).
+	•	Email alerts auto-sent to parents if student is Absent or has suspicious/flagged logs.
+
+⸻
+
+7. Roles & Access
+	•	Admin → Manage users, schedules, classrooms, view all reports, investigate discrepancies.
+	•	Faculty → View own class logs, generate reports, monitor student engagement.
+	•	Students → Use Smart ID, can request attendance correction if flagged.
+	•	Parents → Receive email alerts on absences.
+
+⸻
+
+✅ Key Advantages of Final Logic
+	•	Prevents ghost attendance (requires both tap + sensor validation).
+	•	Prevents cutting classes (tap-out required; discrepancies logged).
+	•	Fully time-based (controlled by dashboard schedules).
+	•	Flexible (works via USB HID or Wi-Fi API backend).
+	•	Scalable across classrooms (one ESP32-S3 per room).
+
+⸻
