@@ -62,14 +62,21 @@ export default function AttendanceCharts() {
   const processedTrendData = useMemo(() => {
     if (!trendData || !Array.isArray(trendData)) return [];
     
-    return trendData.map((item: any) => ({
-      date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      present: item.present || 0,
-      absent: item.absent || 0,
-      late: item.late || 0,
-      total: (item.present || 0) + (item.absent || 0) + (item.late || 0),
-      rate: item.attendanceRate || 0
-    }));
+    return trendData.map((item: any) => {
+      const present = Number(item.present) || 0;
+      const absent = Number(item.absent) || 0;
+      const late = Number(item.late) || 0;
+      const rate = Number(item.attendanceRate) || 0;
+      
+      return {
+        date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        present,
+        absent,
+        late,
+        total: present + absent + late,
+        rate: isFinite(rate) ? rate : 0
+      };
+    });
   }, [trendData]);
 
   const statusDistribution = useMemo(() => {
@@ -92,6 +99,11 @@ export default function AttendanceCharts() {
     if (!studentData || !Array.isArray(studentData)) return [];
     
     return studentData
+      .map((student: any) => ({
+        ...student,
+        attendanceRate: isFinite(Number(student.attendanceRate)) ? Number(student.attendanceRate) : 0
+      }))
+      .filter((student: StudentPerformance) => student.name && student.name.trim() !== '')
       .sort((a: StudentPerformance, b: StudentPerformance) => b.attendanceRate - a.attendanceRate)
       .slice(0, 10);
   }, [studentData]);

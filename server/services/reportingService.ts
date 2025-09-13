@@ -49,7 +49,7 @@ export async function generateStudentPerformanceData() {
     
     for (const student of students) {
       // Get all attendance records for this student
-      const allSessions = await storage.getAllSessions();
+      const allSessions = await storage.getAllClassSessions();
       let totalClasses = 0;
       let presentCount = 0;
       let absentCount = 0;
