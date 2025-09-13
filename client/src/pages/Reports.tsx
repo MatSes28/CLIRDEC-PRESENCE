@@ -26,7 +26,7 @@ export default function Reports() {
   });
 
   // Fetch real report data
-  const { data: reportData, isLoading } = useQuery({
+  const { data: reportData, isLoading, error } = useQuery({
     queryKey: ['/api/reports/generate', selectedRange, selectedSubject, selectedSection],
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -38,6 +38,8 @@ export default function Reports() {
       if (!response.ok) throw new Error('Failed to fetch report data');
       return response.json();
     },
+    retry: 1,
+    refetchInterval: false
   });
 
   const attendanceRecords = reportData?.records || [];
@@ -113,6 +115,52 @@ export default function Reports() {
       });
     }
   };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold">Attendance Reports</h1>
+            <p className="text-muted-foreground">Generate and download comprehensive attendance reports</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="w-8 h-8 mx-auto mb-4 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-muted-foreground">Loading attendance reports...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold">Attendance Reports</h1>
+            <p className="text-muted-foreground">Generate and download comprehensive attendance reports</p>
+          </div>
+        </div>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center py-8">
+              <div className="w-16 h-16 mx-auto mb-4 bg-destructive/10 rounded-full flex items-center justify-center">
+                <BarChart3 className="h-8 w-8 text-destructive" />
+              </div>
+              <h3 className="font-semibold mb-2">Failed to Load Reports</h3>
+              <p className="text-muted-foreground mb-4">Unable to fetch attendance data. Please try again.</p>
+              <Button onClick={() => window.location.reload()}>Refresh Page</Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -281,16 +329,26 @@ export default function Reports() {
               </div>
               
               <div className="divide-y divide-border">
-                {attendanceRecords.map((record: any) => (
-                  <div key={record.id} className="grid grid-cols-6 gap-4 py-4 px-6 items-center">
-                    <div className="font-medium">{record.studentName}</div>
-                    <div className="font-mono text-sm">{record.studentId}</div>
-                    <div className="font-mono text-sm">{record.checkIn}</div>
-                    <div className="font-mono text-sm">{record.checkOut}</div>
-                    <div className="font-mono text-sm">{record.duration}</div>
-                    <div>{getStatusBadge(record.status)}</div>
+                {attendanceRecords.length === 0 ? (
+                  <div className="py-12 px-6 text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-muted/20 rounded-full flex items-center justify-center">
+                      <Calendar className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <h3 className="font-semibold mb-2">No Attendance Records</h3>
+                    <p className="text-muted-foreground">No attendance data found for the selected criteria. Try adjusting your filters or check back later.</p>
                   </div>
-                ))}
+                ) : (
+                  attendanceRecords.map((record: any) => (
+                    <div key={record.id} className="grid grid-cols-6 gap-4 py-4 px-6 items-center">
+                      <div className="font-medium">{record.studentName}</div>
+                      <div className="font-mono text-sm">{record.studentId}</div>
+                      <div className="font-mono text-sm">{record.checkIn}</div>
+                      <div className="font-mono text-sm">{record.checkOut}</div>
+                      <div className="font-mono text-sm">{record.duration}</div>
+                      <div>{getStatusBadge(record.status)}</div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
