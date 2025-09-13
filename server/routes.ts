@@ -352,8 +352,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/schedules', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const professorId = req.user.id;
-      const scheduleData = insertScheduleSchema.parse({ ...req.body, professorId });
-      const schedule = await storage.createSchedule(scheduleData);
+      let scheduleData = { ...req.body, professorId };
+
+      // Handle subjectName to subjectId conversion
+      if (scheduleData.subjectName && !scheduleData.subjectId) {
+        // Create or find subject with the provided name
+        const existingSubject = await storage.getSubjectByName(scheduleData.subjectName);
+        let subjectId;
+        
+        if (existingSubject) {
+          subjectId = existingSubject.id;
+        } else {
+          // Create new subject
+          const newSubject = await storage.createSubject({
+            name: scheduleData.subjectName,
+            code: scheduleData.subjectName.toUpperCase().replace(/\s+/g, '_'),
+            professorId: professorId,
+            description: `Subject created from schedule: ${scheduleData.subjectName}`
+          });
+          subjectId = newSubject.id;
+        }
+        
+        // Replace subjectName with subjectId
+        scheduleData.subjectId = subjectId;
+        delete scheduleData.subjectName;
+      }
+
+      const validatedData = insertScheduleSchema.parse(scheduleData);
+      const schedule = await storage.createSchedule(validatedData);
       res.status(201).json(schedule);
     } catch (error) {
       console.error("Error creating schedule:", error);

@@ -58,6 +58,7 @@ export interface IStorage {
   // Subject operations
   getSubjects(): Promise<Subject[]>;
   getSubjectsByProfessor(professorId: string): Promise<Subject[]>;
+  getSubjectByName(name: string): Promise<Subject | null>;
   createSubject(subject: InsertSubject): Promise<Subject>;
   updateSubject(id: number, subject: Partial<InsertSubject>): Promise<Subject>;
   deleteSubject(id: number): Promise<void>;
@@ -274,6 +275,11 @@ export class MemStorage implements IStorage {
 
   async getSubjectsByProfessor(professorId: string): Promise<Subject[]> {
     return Array.from(this.subjects.values()).filter(s => s.professorId === professorId);
+  }
+
+  async getSubjectByName(name: string): Promise<Subject | null> {
+    const subject = Array.from(this.subjects.values()).find(s => s.name === name);
+    return subject || null;
   }
 
   async createSubject(subject: InsertSubject): Promise<Subject> {
@@ -616,6 +622,11 @@ export class DbStorage implements IStorage {
 
   async getSubjectsByProfessor(professorId: string): Promise<Subject[]> {
     return await db.select().from(subjects).where(eq(subjects.professorId, professorId)).orderBy(asc(subjects.name));
+  }
+
+  async getSubjectByName(name: string): Promise<Subject | null> {
+    const result = await db.select().from(subjects).where(eq(subjects.name, name)).limit(1);
+    return result.length > 0 ? result[0] : null;
   }
 
   async createSubject(subject: InsertSubject): Promise<Subject> {
