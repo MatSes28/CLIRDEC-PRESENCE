@@ -98,12 +98,14 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
       setSocket(null);
       
       // Attempt to reconnect after 3 seconds if not on auth page and not too many attempts
-      if (window.location.pathname !== '/' && reconnectAttempts < 10) {
+      if (window.location.pathname !== '/' && reconnectAttempts < 3) {
         setTimeout(() => {
-          console.log(`Attempting to reconnect WebSocket... (attempt ${reconnectAttempts + 1}/10)`);
+          console.log(`Attempting to reconnect WebSocket... (attempt ${reconnectAttempts + 1}/3)`);
           setReconnectAttempts(prev => prev + 1);
           connectWebSocket();
-        }, 3000 + (reconnectAttempts * 1000)); // Exponential backoff
+        }, 10000 + (reconnectAttempts * 5000)); // Much longer backoff: 10s, 15s, 20s
+      } else if (reconnectAttempts >= 3) {
+        console.log('🔌 WebSocket reconnection limit reached. Please refresh the page to retry.');
       }
     };
 

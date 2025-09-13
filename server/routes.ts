@@ -1554,21 +1554,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('❌ WebSocket connection error:', error);
     });
     
-    // Send welcome message
-    try {
+    // Set up ping/pong keepalive to maintain connection stability
+    const pingInterval = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) {
-        const welcomeMessage = {
-          type: 'system',
-          title: 'Connected',
-          message: 'Real-time notifications active',
-          timestamp: new Date().toISOString() // Convert to string to avoid JSON serialization issues
-        };
-        ws.send(JSON.stringify(welcomeMessage));
-        console.log('📤 Welcome message sent to client');
+        ws.ping();
+      } else {
+        clearInterval(pingInterval);
       }
-    } catch (error) {
-      console.error('❌ Failed to send welcome message:', error);
-    }
+    }, 30000); // Ping every 30 seconds
+
+    // Handle pong responses
+    ws.on('pong', () => {
+      console.log('📶 Received pong from client');
+    });
+
+    // Send welcome message with delay to ensure connection stability
+    setTimeout(() => {
+      try {
+        if (ws.readyState === WebSocket.OPEN) {
+          const welcomeMessage = {
+            type: 'system',
+            title: 'Connected',
+            message: 'Real-time notifications active',
+            timestamp: new Date().toISOString()
+          };
+          ws.send(JSON.stringify(welcomeMessage));
+          console.log('📤 Welcome message sent to client');
+        }
+      } catch (error) {
+        console.error('❌ Failed to send welcome message:', error);
+      }
+    }, 1000); // 1 second delay to ensure connection is fully established
+    
+    // Clean up ping interval when connection closes
+    ws.on('close', () => {
+      clearInterval(pingInterval);
+    });
   });
   
   wss.on('error', (error) => {
