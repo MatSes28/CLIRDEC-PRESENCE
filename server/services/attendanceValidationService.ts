@@ -238,8 +238,7 @@ class AttendanceValidationService {
     // Update attendance record with check-out time
     const updatedRecord = await storage.updateAttendance(existingRecord.id, {
       checkOutTime: timestamp,
-      exitValidated: true,
-      updatedAt: timestamp
+      exitValidated: true
     });
 
     return {
@@ -328,9 +327,7 @@ class AttendanceValidationService {
       entryValidated: false,
       rfidTapTime: pendingData.rfidTapTime,
       validationTimeout: true,
-      discrepancyFlag: 'ghost_tap',
-      createdAt: new Date(),
-      updatedAt: new Date()
+      discrepancyFlag: 'ghost_tap'
     });
 
     // Broadcast ghost tap notification
@@ -351,8 +348,7 @@ class AttendanceValidationService {
         rfidTapTime: pendingData.rfidTapTime,
         sensorDetectionTime: sensorTimestamp,
         validationTimeout: false,
-        discrepancyFlag: 'normal',
-        updatedAt: new Date()
+        discrepancyFlag: 'normal'
       });
     } else {
       // Create new record
@@ -367,9 +363,7 @@ class AttendanceValidationService {
         rfidTapTime: pendingData.rfidTapTime,
         sensorDetectionTime: sensorTimestamp,
         validationTimeout: false,
-        discrepancyFlag: 'normal',
-        createdAt: new Date(),
-        updatedAt: new Date()
+        discrepancyFlag: 'normal'
       });
     }
   }

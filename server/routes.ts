@@ -1509,7 +1509,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     verifyClient: (info: { origin: string; req: any; secure: boolean }) => {
       console.log('🔍 WebSocket connection attempt from:', info.origin, 'to:', info.req.url);
       console.log('   🔐 Secure:', info.secure);
-      console.log('   📋 Headers:', JSON.stringify(info.req.headers, null, 2));
+      
+      // Log headers but redact sensitive data
+      const safeHeaders = { ...info.req.headers };
+      if (safeHeaders.cookie) safeHeaders.cookie = '[REDACTED]';
+      if (safeHeaders.authorization) safeHeaders.authorization = '[REDACTED]';
+      console.log('   📋 Headers:', JSON.stringify(safeHeaders, null, 2));
       
       // Allow all origins for now to debug connection issues
       const allowed = true;
@@ -1542,7 +1547,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🔌 WebSocket connection closed');
       console.log('   📊 Close code:', code);
       console.log('   📝 Reason:', reason.toString());
-      console.log('   📊 Remaining connections:', wss.clients.size - 1);
+      console.log('   📊 Remaining connections:', wss.clients.size);
     });
     
     ws.on('error', (error) => {

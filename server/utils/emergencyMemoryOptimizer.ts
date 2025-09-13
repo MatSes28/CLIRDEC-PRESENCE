@@ -1,7 +1,7 @@
 // Emergency memory optimization for high memory usage scenarios
 export class EmergencyMemoryOptimizer {
-  private static readonly MAX_MEMORY_MB = 200;
-  private static readonly CRITICAL_MEMORY_MB = 300;
+  private static readonly MAX_MEMORY_MB = 400;  // Increased from 200MB to 400MB
+  private static readonly CRITICAL_MEMORY_MB = 500;  // Increased from 300MB to 500MB
   private static isOptimizing = false;
 
   static async forceEmergencyCleanup() {
@@ -35,7 +35,7 @@ export class EmergencyMemoryOptimizer {
   }
 
   static startEmergencyMonitoring() {
-    console.log('🔋 Starting emergency memory monitoring (250MB threshold)');
+    console.log('🔋 Starting emergency memory monitoring (400MB threshold)');
     
     setInterval(async () => {
       const memUsage = process.memoryUsage();
