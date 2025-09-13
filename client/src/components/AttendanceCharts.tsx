@@ -47,13 +47,23 @@ const COLORS = {
 
 export default function AttendanceCharts() {
   // Get attendance trend data
-  const { data: trendData } = useQuery({
+  const { 
+    data: trendData, 
+    isLoading: trendLoading, 
+    error: trendError,
+    refetch: refetchTrend
+  } = useQuery({
     queryKey: ['/api/reports/attendance-trend'],
     refetchInterval: 5 * 60 * 1000 // Refresh every 5 minutes
   });
 
   // Get student performance data
-  const { data: studentData } = useQuery({
+  const { 
+    data: studentData, 
+    isLoading: studentLoading, 
+    error: studentError,
+    refetch: refetchStudent
+  } = useQuery({
     queryKey: ['/api/reports/student-performance'],
     refetchInterval: 5 * 60 * 1000
   });
@@ -113,10 +123,67 @@ export default function AttendanceCharts() {
       .slice(0, 10);
   }, [studentData]);
 
+  // Loading skeleton component
+  const ChartSkeleton = ({ height = "h-80" }: { height?: string }) => (
+    <div className={`${height} bg-muted/20 rounded-lg animate-pulse flex items-center justify-center`}>
+      <div className="text-center">
+        <div className="w-8 h-8 mx-auto mb-4 bg-muted/40 rounded-full animate-pulse"></div>
+        <div className="text-sm text-muted-foreground">Loading chart data...</div>
+      </div>
+    </div>
+  );
+
+  // Error component
+  const ChartError = ({ 
+    title, 
+    error, 
+    onRetry, 
+    testId 
+  }: { 
+    title: string; 
+    error: any; 
+    onRetry: () => void; 
+    testId: string;
+  }) => (
+    <div className="h-80 flex items-center justify-center">
+      <div className="text-center" data-testid={testId}>
+        <div className="w-16 h-16 mx-auto mb-4 bg-destructive/10 rounded-full flex items-center justify-center">
+          <BarChart3 className="h-8 w-8 text-destructive" />
+        </div>
+        <h3 className="font-semibold mb-2 text-destructive">Failed to Load {title}</h3>
+        <p className="text-muted-foreground mb-4 text-sm">
+          {error?.message || "Unable to fetch data. Please try again."}
+        </p>
+        <button
+          onClick={onRetry}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm"
+          data-testid={`button-retry-${testId}`}
+        >
+          Try Again
+        </button>
+      </div>
+    </div>
+  );
+
+  // Empty state component
+  const EmptyChart = ({ title, testId }: { title: string; testId: string }) => (
+    <div className="h-80 flex items-center justify-center">
+      <div className="text-center" data-testid={testId}>
+        <div className="w-16 h-16 mx-auto mb-4 bg-muted/20 rounded-full flex items-center justify-center">
+          <BarChart3 className="h-8 w-8 text-muted-foreground" />
+        </div>
+        <h3 className="font-semibold mb-2">No {title} Data</h3>
+        <p className="text-muted-foreground text-sm">
+          No data available for this period. Check back later.
+        </p>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" data-testid="analytics-charts-container">
       {/* Attendance Trend */}
-      <Card className="lg:col-span-2">
+      <Card className="lg:col-span-2" data-testid="card-attendance-trend">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
@@ -124,9 +191,21 @@ export default function AttendanceCharts() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={processedTrendData}>
+          {trendLoading ? (
+            <ChartSkeleton />
+          ) : trendError ? (
+            <ChartError 
+              title="Attendance Trends" 
+              error={trendError} 
+              onRetry={refetchTrend}
+              testId="error-attendance-trend" 
+            />
+          ) : processedTrendData.length === 0 ? (
+            <EmptyChart title="Attendance Trend" testId="empty-attendance-trend" />
+          ) : (
+            <div className="h-80" data-testid="chart-attendance-trend">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={processedTrendData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis 
                   dataKey="date" 
@@ -176,6 +255,7 @@ export default function AttendanceCharts() {
               </AreaChart>
             </ResponsiveContainer>
           </div>
+          )}
         </CardContent>
       </Card>
 
