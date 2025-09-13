@@ -1568,23 +1568,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('📶 Received pong from client');
     });
 
-    // Send welcome message with delay to ensure connection stability
-    setTimeout(() => {
-      try {
-        if (ws.readyState === WebSocket.OPEN) {
-          const welcomeMessage = {
-            type: 'system',
-            title: 'Connected',
-            message: 'Real-time notifications active',
-            timestamp: new Date().toISOString()
-          };
-          ws.send(JSON.stringify(welcomeMessage));
-          console.log('📤 Welcome message sent to client');
-        }
-      } catch (error) {
-        console.error('❌ Failed to send welcome message:', error);
-      }
-    }, 1000); // 1 second delay to ensure connection is fully established
+    // Temporarily disable welcome message to debug connection stability issue
+    // TODO: Re-enable once connection stability is fixed
+    console.log('📤 WebSocket connected successfully (welcome message disabled for debugging)');
     
     // Clean up ping interval when connection closes
     ws.on('close', () => {
