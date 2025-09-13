@@ -68,67 +68,98 @@ export default function AttendanceCharts() {
     refetchInterval: 5 * 60 * 1000
   });
 
-  // Process data for charts with proper NaN handling
+  // Process data for charts with comprehensive NaN protection
   const processedTrendData = useMemo(() => {
-    if (!trendData || !Array.isArray(trendData)) return [];
+    if (!trendData || !Array.isArray(trendData)) {
+      console.log('AttendanceCharts: No trend data available');
+      return [];
+    }
     
-    return trendData.map((item: any) => {
-      const present = Number(item.present) || 0;
-      const absent = Number(item.absent) || 0;
-      const late = Number(item.late) || 0;
-      const rawRate = Number(item.attendanceRate);
-      const rate = (isFinite(rawRate) && !isNaN(rawRate)) ? rawRate : 0;
+    console.log('AttendanceCharts: Processing trend data:', trendData.length, 'items');
+    
+    const processed = trendData.map((item: any) => {
+      const present = safeNumber(item.present, 0);
+      const absent = safeNumber(item.absent, 0);
+      const late = safeNumber(item.late, 0);
+      const rate = safeNumber(item.attendanceRate, 0);
+      
+      // Ensure rate is within reasonable bounds
+      const clampedRate = Math.min(Math.max(rate, 0), 100);
       
       return {
         date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        present: isFinite(present) ? present : 0,
-        absent: isFinite(absent) ? absent : 0,
-        late: isFinite(late) ? late : 0,
-        total: (isFinite(present) ? present : 0) + (isFinite(absent) ? absent : 0) + (isFinite(late) ? late : 0),
-        rate: rate
+        present: present,
+        absent: absent,
+        late: late,
+        total: present + absent + late,
+        rate: clampedRate
       };
     });
+    
+    console.log('AttendanceCharts: Processed trend data:', processed);
+    return processed;
   }, [trendData]);
 
   const statusDistribution = useMemo(() => {
-    if (!processedTrendData.length) return [];
+    if (!processedTrendData.length) {
+      console.log('AttendanceCharts: No trend data for status distribution');
+      return [];
+    }
     
     const totals = processedTrendData.reduce((acc: any, curr: any) => ({
-      present: acc.present + curr.present,
-      absent: acc.absent + curr.absent,
-      late: acc.late + curr.late
+      present: safeNumber(acc.present, 0) + safeNumber(curr.present, 0),
+      absent: safeNumber(acc.absent, 0) + safeNumber(curr.absent, 0),
+      late: safeNumber(acc.late, 0) + safeNumber(curr.late, 0)
     }), { present: 0, absent: 0, late: 0 });
 
-    return [
-      { name: 'Present', value: totals.present, color: COLORS.present },
-      { name: 'Absent', value: totals.absent, color: COLORS.absent },
-      { name: 'Late', value: totals.late, color: COLORS.late }
+    const distribution = [
+      { name: 'Present', value: safeNumber(totals.present, 0), color: COLORS.present },
+      { name: 'Absent', value: safeNumber(totals.absent, 0), color: COLORS.absent },
+      { name: 'Late', value: safeNumber(totals.late, 0), color: COLORS.late }
     ];
+
+    console.log('AttendanceCharts: Status distribution:', distribution);
+    return distribution;
   }, [processedTrendData]);
 
+  // Helper function to safely convert to number and handle NaN
+  const safeNumber = (value: any, defaultValue: number = 0): number => {
+    const num = Number(value);
+    return (isFinite(num) && !isNaN(num)) ? num : defaultValue;
+  };
+
   const topPerformers = useMemo(() => {
-    if (!studentData || !Array.isArray(studentData)) return [];
+    if (!studentData || !Array.isArray(studentData)) {
+      console.log('AttendanceCharts: No student data available');
+      return [];
+    }
     
-    return studentData
+    console.log('AttendanceCharts: Processing student data:', studentData.length, 'students');
+    
+    const processed = studentData
       .map((student: any) => {
-        const rawRate = Number(student.attendanceRate);
-        const rawTotalClasses = Number(student.totalClasses);
-        const rawPresent = Number(student.present);
-        const rawAbsent = Number(student.absent);
-        const rawLate = Number(student.late);
-        
-        return {
-          ...student,
-          attendanceRate: (isFinite(rawRate) && !isNaN(rawRate) && rawRate >= 0) ? rawRate : 0,
-          totalClasses: (isFinite(rawTotalClasses) && !isNaN(rawTotalClasses)) ? rawTotalClasses : 0,
-          present: (isFinite(rawPresent) && !isNaN(rawPresent)) ? rawPresent : 0,
-          absent: (isFinite(rawAbsent) && !isNaN(rawAbsent)) ? rawAbsent : 0,
-          late: (isFinite(rawLate) && !isNaN(rawLate)) ? rawLate : 0
+        const safeStudent = {
+          name: (student.name || '').toString().trim(),
+          attendanceRate: safeNumber(student.attendanceRate, 0),
+          totalClasses: safeNumber(student.totalClasses, 0),
+          present: safeNumber(student.present, 0),
+          absent: safeNumber(student.absent, 0),
+          late: safeNumber(student.late, 0)
         };
+        
+        // Additional validation - ensure attendance rate is reasonable
+        if (safeStudent.attendanceRate < 0 || safeStudent.attendanceRate > 100) {
+          safeStudent.attendanceRate = 0;
+        }
+        
+        return safeStudent;
       })
-      .filter((student: StudentPerformance) => student.name && student.name.trim() !== '')
-      .sort((a: StudentPerformance, b: StudentPerformance) => b.attendanceRate - a.attendanceRate)
+      .filter((student: any) => student.name && student.name.length > 0)
+      .sort((a: any, b: any) => b.attendanceRate - a.attendanceRate)
       .slice(0, 10);
+    
+    console.log('AttendanceCharts: Processed top performers:', processed);
+    return processed;
   }, [studentData]);
 
   // Loading skeleton component
