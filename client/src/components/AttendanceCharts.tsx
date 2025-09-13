@@ -18,7 +18,7 @@ import {
   ResponsiveContainer,
   Legend
 } from "recharts";
-import { TrendingUp, Users, Calendar, BarChart3 } from "lucide-react";
+import { TrendingUp, Users, Calendar, BarChart3, AlertTriangle, Shield, RotateCcw } from "lucide-react";
 
 interface AttendanceData {
   date: string;
@@ -54,7 +54,9 @@ export default function AttendanceCharts() {
     refetch: refetchTrend
   } = useQuery({
     queryKey: ['/api/reports/attendance-trend'],
-    refetchInterval: 5 * 60 * 1000 // Refresh every 5 minutes
+    refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes
+    retry: 3,
+    staleTime: 2 * 60 * 1000 // 2 minutes
   });
 
   // Get student performance data
@@ -65,8 +67,58 @@ export default function AttendanceCharts() {
     refetch: refetchStudent
   } = useQuery({
     queryKey: ['/api/reports/student-performance'],
-    refetchInterval: 5 * 60 * 1000
+    refetchInterval: 5 * 60 * 1000,
+    retry: 3,
+    staleTime: 2 * 60 * 1000 // 2 minutes
   });
+
+  // Debug logging
+  console.log('AttendanceCharts render:', {
+    trendData,
+    trendLoading,
+    trendError: trendError?.message,
+    studentData, 
+    studentLoading,
+    studentError: studentError?.message
+  });
+
+  // Check for authentication errors
+  const isAuthError = (error: any) => {
+    return error?.message?.includes('Unauthorized') || 
+           error?.response?.status === 401 ||
+           (typeof error === 'object' && error.status === 401);
+  };
+
+  const hasAuthError = isAuthError(trendError) || isAuthError(studentError);
+
+  // If there are authentication errors, show auth error component
+  if (hasAuthError) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              Authentication Required
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center py-8">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-red-50 flex items-center justify-center">
+              <Shield className="h-8 w-8 text-red-500" />
+            </div>
+            <h3 className="font-medium mb-2">Unable to Access Analytics</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Your session may have expired or you don't have the required permissions to view analytics data.
+            </p>
+            <Button onClick={() => window.location.reload()} variant="outline">
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Refresh Page
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Process data for charts with comprehensive NaN protection
   const processedTrendData = useMemo(() => {
