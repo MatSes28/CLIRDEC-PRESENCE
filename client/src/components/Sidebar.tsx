@@ -140,7 +140,7 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="fixed left-0 top-0 h-full w-80 glass border-r border-border/20 z-40 animate-slide-in-right flex flex-col" data-tour="navigation">
+    <div className="fixed left-0 top-0 h-screen w-80 glass border-r border-border/20 z-40 animate-slide-in-right flex flex-col min-h-0 overflow-hidden" data-tour="navigation">
       {/* Modern Header with Gradient */}
       <div className="relative p-8 gradient-primary overflow-hidden" data-tour="welcome">
         <div className="absolute inset-0 opacity-10">
