@@ -35,54 +35,40 @@ export default function Schedule() {
     queryKey: ['/api/classrooms'],
   });
 
-  // Mock schedule data for visualization
-  const mockScheduleBlocks = [
-    {
-      id: 1,
-      subject: 'Database Systems',
-      time: '8:00 AM - 10:00 AM',
-      room: 'Lab 204',
-      day: 'Monday',
-      autoStart: true,
-      color: 'primary'
-    },
-    {
-      id: 2,
-      subject: 'Programming Logic',
-      time: '10:00 AM - 12:00 PM',
-      room: 'Room 301',
-      day: 'Monday',
-      autoStart: true,
-      color: 'secondary'
-    },
-    {
-      id: 3,
-      subject: 'Data Structures',
-      time: '1:00 PM - 3:00 PM',
-      room: 'Lab 205',
-      day: 'Monday',
-      autoStart: false,
-      color: 'accent'
-    },
-    {
-      id: 4,
-      subject: 'Web Development',
-      time: '9:00 AM - 11:00 AM',
-      room: 'Lab 206',
-      day: 'Tuesday',
-      autoStart: true,
-      color: 'primary'
-    },
-    {
-      id: 5,
-      subject: 'Mobile Programming',
-      time: '2:00 PM - 4:00 PM',
-      room: 'Lab 207',
-      day: 'Wednesday',
-      autoStart: true,
-      color: 'secondary'
-    }
-  ];
+  // Process real schedule data for visualization
+  const scheduleBlocks = schedules?.map((schedule: any) => {
+    const subject = subjects?.find((s: any) => s.id === schedule.subjectId);
+    const classroom = classrooms?.find((c: any) => c.id === schedule.classroomId);
+    
+    // Convert day number to day name (0 = Sunday, 1 = Monday, etc.)
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayName = dayNames[schedule.dayOfWeek];
+    
+    // Format time from 24-hour to 12-hour format
+    const formatTime = (timeStr: string) => {
+      const [hours, minutes] = timeStr.split(':');
+      const hour = parseInt(hours);
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+      return `${displayHour}:${minutes} ${ampm}`;
+    };
+    
+    const timeRange = `${formatTime(schedule.startTime)} - ${formatTime(schedule.endTime)}`;
+    
+    // Assign colors based on schedule id for variety
+    const colors = ['primary', 'secondary', 'accent'];
+    const color = colors[schedule.id % colors.length];
+    
+    return {
+      id: schedule.id,
+      subject: subject?.name || 'Unknown Subject',
+      time: timeRange,
+      room: classroom?.name || 'Unknown Room',
+      day: dayName,
+      autoStart: schedule.autoStart,
+      color: color
+    };
+  }) || [];
 
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -164,7 +150,7 @@ export default function Schedule() {
             {/* Schedule Blocks */}
             {days.map((day) => (
               <div key={day} className="space-y-2">
-                {mockScheduleBlocks
+                {scheduleBlocks
                   .filter(block => block.day === day)
                   .map((block) => (
                     <div
@@ -204,7 +190,7 @@ export default function Schedule() {
               <Calendar className="h-8 w-8 text-primary" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Classes</p>
-                <p className="text-2xl font-bold">{mockScheduleBlocks.length}</p>
+                <p className="text-2xl font-bold">{scheduleBlocks.length}</p>
               </div>
             </div>
           </CardContent>
@@ -216,7 +202,7 @@ export default function Schedule() {
               <Clock className="h-8 w-8 text-secondary" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Auto-Start</p>
-                <p className="text-2xl font-bold">{mockScheduleBlocks.filter(b => b.autoStart).length}</p>
+                <p className="text-2xl font-bold">{scheduleBlocks.filter(b => b.autoStart).length}</p>
               </div>
             </div>
           </CardContent>
@@ -229,7 +215,7 @@ export default function Schedule() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Unique Rooms</p>
                 <p className="text-2xl font-bold">
-                  {new Set(mockScheduleBlocks.map(b => b.room)).size}
+                  {new Set(scheduleBlocks.map(b => b.room)).size}
                 </p>
               </div>
             </div>
@@ -243,7 +229,7 @@ export default function Schedule() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Subjects</p>
                 <p className="text-2xl font-bold">
-                  {new Set(mockScheduleBlocks.map(b => b.subject)).size}
+                  {new Set(scheduleBlocks.map(b => b.subject)).size}
                 </p>
               </div>
             </div>
