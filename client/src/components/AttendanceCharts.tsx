@@ -68,7 +68,7 @@ export default function AttendanceCharts() {
     refetchInterval: 5 * 60 * 1000
   });
 
-  // Process data for charts
+  // Process data for charts with proper NaN handling
   const processedTrendData = useMemo(() => {
     if (!trendData || !Array.isArray(trendData)) return [];
     
@@ -76,15 +76,16 @@ export default function AttendanceCharts() {
       const present = Number(item.present) || 0;
       const absent = Number(item.absent) || 0;
       const late = Number(item.late) || 0;
-      const rate = Number(item.attendanceRate) || 0;
+      const rawRate = Number(item.attendanceRate);
+      const rate = (isFinite(rawRate) && !isNaN(rawRate)) ? rawRate : 0;
       
       return {
         date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        present,
-        absent,
-        late,
-        total: present + absent + late,
-        rate: isFinite(rate) ? rate : 0
+        present: isFinite(present) ? present : 0,
+        absent: isFinite(absent) ? absent : 0,
+        late: isFinite(late) ? late : 0,
+        total: (isFinite(present) ? present : 0) + (isFinite(absent) ? absent : 0) + (isFinite(late) ? late : 0),
+        rate: rate
       };
     });
   }, [trendData]);
@@ -110,12 +111,19 @@ export default function AttendanceCharts() {
     
     return studentData
       .map((student: any) => {
-        const rate = Number(student.attendanceRate);
+        const rawRate = Number(student.attendanceRate);
+        const rawTotalClasses = Number(student.totalClasses);
+        const rawPresent = Number(student.present);
+        const rawAbsent = Number(student.absent);
+        const rawLate = Number(student.late);
+        
         return {
           ...student,
-          attendanceRate: isFinite(rate) && !isNaN(rate) && rate >= 0 ? rate : 0,
-          totalClasses: Number(student.totalClasses) || 0,
-          presentClasses: Number(student.presentClasses) || 0
+          attendanceRate: (isFinite(rawRate) && !isNaN(rawRate) && rawRate >= 0) ? rawRate : 0,
+          totalClasses: (isFinite(rawTotalClasses) && !isNaN(rawTotalClasses)) ? rawTotalClasses : 0,
+          present: (isFinite(rawPresent) && !isNaN(rawPresent)) ? rawPresent : 0,
+          absent: (isFinite(rawAbsent) && !isNaN(rawAbsent)) ? rawAbsent : 0,
+          late: (isFinite(rawLate) && !isNaN(rawLate)) ? rawLate : 0
         };
       })
       .filter((student: StudentPerformance) => student.name && student.name.trim() !== '')
