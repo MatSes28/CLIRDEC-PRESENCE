@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -82,14 +82,41 @@ export default function AttendanceCharts() {
     studentError: studentError?.message
   });
 
-  // Check for authentication errors
-  const isAuthError = (error: any) => {
-    return error?.message?.includes('Unauthorized') || 
-           error?.response?.status === 401 ||
-           (typeof error === 'object' && error.status === 401);
+  // Check for authentication errors with comprehensive error handling
+  const isAuthError = (error: any): boolean => {
+    try {
+      if (!error || error === null || error === undefined) return false;
+      
+      // Check message content
+      if (error.message && typeof error.message === 'string' && error.message.includes('Unauthorized')) {
+        return true;
+      }
+      
+      // Check response status
+      if (error.response && typeof error.response === 'object' && error.response.status === 401) {
+        return true;
+      }
+      
+      // Check direct status
+      if (typeof error === 'object' && error.status === 401) {
+        return true;
+      }
+      
+      return false;
+    } catch (e) {
+      console.error('Error checking auth status:', e);
+      return false;
+    }
   };
 
-  const hasAuthError = isAuthError(trendError) || isAuthError(studentError);
+  const hasAuthError = React.useMemo(() => {
+    try {
+      return isAuthError(trendError) || isAuthError(studentError);
+    } catch (e) {
+      console.error('Error checking authentication errors:', e);
+      return false;
+    }
+  }, [trendError, studentError]);
 
   // If there are authentication errors, show auth error component
   if (hasAuthError) {
