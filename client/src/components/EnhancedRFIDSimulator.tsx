@@ -40,9 +40,9 @@ export default function EnhancedRFIDSimulator() {
   // Simulate RFID tap
   const rfidTapMutation = useMutation({
     mutationFn: async (rfidCard: string) => {
-      const response = await apiRequest('POST', '/api/rfid/tap', { 
-        rfidCard,
-        proximityValidated: proximityEnabled 
+      const response = await apiRequest('POST', '/api/rfid/simulate', { 
+        rfidCardId: rfidCard,
+        sessionId: 16 // Use active session ID
       }) as unknown as RFIDTapResult;
       return response;
     },
