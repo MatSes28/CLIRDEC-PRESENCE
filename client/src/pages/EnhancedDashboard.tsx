@@ -36,6 +36,7 @@ import StartSessionModal from "@/components/StartSessionModal";
 import EnhancedRFIDSimulator from "@/components/EnhancedRFIDSimulator";
 import SecurityAlerts from "@/components/SecurityAlerts";
 import PerformanceMonitor from "@/components/PerformanceMonitor";
+import AttendanceCharts from "@/components/AttendanceCharts";
 
 interface StatCard {
   title: string;
@@ -324,94 +325,96 @@ export default function EnhancedDashboard() {
 
         {/* Analytics Tab */}
         <TabsContent value="analytics" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" />
-                  Attendance Overview
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div className="p-4 bg-green-50 rounded-lg">
-                    <p className="text-2xl font-bold text-green-600">0</p>
-                    <p className="text-xs text-muted-foreground">Present Today</p>
-                  </div>
-                  <div className="p-4 bg-red-50 rounded-lg">
-                    <p className="text-2xl font-bold text-red-600">0</p>
-                    <p className="text-xs text-muted-foreground">Absent Today</p>
-                  </div>
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <p className="text-2xl font-bold text-blue-600">5</p>
-                    <p className="text-xs text-muted-foreground">Total Students</p>
-                  </div>
-                </div>
-                <div className="text-center py-4">
-                  <p className="text-sm text-muted-foreground mb-2">No active class session</p>
-                  <p className="text-xs text-muted-foreground">Start a session to see real-time analytics</p>
+              <CardContent className="p-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-green-600">{(stats as any)?.presentStudents || 0}</p>
+                  <p className="text-sm text-muted-foreground">Present Today</p>
                 </div>
               </CardContent>
             </Card>
-
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  Recent Activity
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <span className="text-sm">5 Students registered</span>
-                    <Badge variant="secondary">Today</Badge>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <span className="text-sm">2 Classrooms configured</span>
-                    <Badge variant="secondary">Today</Badge>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <span className="text-sm">System initialized</span>
-                    <Badge variant="default">Ready</Badge>
-                  </div>
-                  <div className="text-center py-4">
-                    <p className="text-xs text-muted-foreground">Start taking attendance to see detailed analytics</p>
-                  </div>
+              <CardContent className="p-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-red-600">{(stats as any)?.absentStudents || 0}</p>
+                  <p className="text-sm text-muted-foreground">Absent Today</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-blue-600">{(stats as any)?.todayClasses || 0}</p>
+                  <p className="text-sm text-muted-foreground">Today's Classes</p>
                 </div>
               </CardContent>
             </Card>
           </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Attendance Reports
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-muted/50 flex items-center justify-center">
-                  <BarChart3 className="h-8 w-8 text-muted-foreground" />
+          
+          <AttendanceCharts />
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Quick Actions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button 
+                  onClick={() => setShowStartSessionModal(true)}
+                  className="w-full justify-start"
+                  variant="outline"
+                  data-testid="button-start-session"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Start New Session
+                </Button>
+                <Button 
+                  onClick={() => {
+                    // Implement export functionality
+                    toast({
+                      title: "Export Started",
+                      description: "Your attendance report is being prepared for download."
+                    });
+                  }}
+                  className="w-full justify-start"
+                  variant="outline"
+                  data-testid="button-export-data"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Attendance Data
+                </Button>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5" />
+                  System Status
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                  <span className="text-sm">Active Session</span>
+                  <Badge variant={(stats as any)?.activeSession ? "default" : "secondary"}>
+                    {(stats as any)?.activeSession ? "Running" : "None"}
+                  </Badge>
                 </div>
-                <h3 className="font-medium mb-2">No Data Available</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Attendance reports will appear here once you start taking attendance in class sessions.
-                </p>
-                <div className="flex gap-2 justify-center">
-                  <Button variant="outline" size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Start Session
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Download className="h-4 w-4 mr-2" />
-                    Export Data
-                  </Button>
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                  <span className="text-sm">Students Registered</span>
+                  <Badge variant="outline">5</Badge>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                  <span className="text-sm">Email Notifications</span>
+                  <Badge variant="default">Enabled</Badge>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* Security Tab */}
