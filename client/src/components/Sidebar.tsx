@@ -164,7 +164,7 @@ export default function Sidebar() {
       </div>
       
       {/* Modern Navigation */}
-      <nav className="px-6 py-6 space-y-3">
+      <nav className="flex-1 px-6 py-6 space-y-3 overflow-y-auto scrollbar-thin scrollbar-thumb-border/20 scrollbar-track-transparent">
         {filteredNavigationItems.map((item, index) => {
           const Icon = item.icon;
           const active = isActive(item.path);
