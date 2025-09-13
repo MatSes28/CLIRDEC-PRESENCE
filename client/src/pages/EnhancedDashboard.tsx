@@ -34,7 +34,6 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import StartSessionModal from "@/components/StartSessionModal";
 import EnhancedRFIDSimulator from "@/components/EnhancedRFIDSimulator";
-import AttendanceCharts from "@/components/AttendanceCharts";
 import SecurityAlerts from "@/components/SecurityAlerts";
 import PerformanceMonitor from "@/components/PerformanceMonitor";
 
@@ -216,9 +215,8 @@ export default function EnhancedDashboard() {
 
       {/* Main Dashboard Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 mb-6">
+        <TabsList className="grid w-full grid-cols-4 mb-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
           <TabsTrigger value="rfid">RFID Tools</TabsTrigger>
@@ -321,11 +319,6 @@ export default function EnhancedDashboard() {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
-
-        {/* Analytics Tab */}
-        <TabsContent value="analytics" className="space-y-6">
-          <AttendanceCharts />
         </TabsContent>
 
         {/* Security Tab */}
