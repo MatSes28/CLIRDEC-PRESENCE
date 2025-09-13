@@ -20,17 +20,13 @@ export default function AddScheduleModal({ open, onClose }: AddScheduleModalProp
   const queryClient = useQueryClient();
   
   const [formData, setFormData] = useState({
-    subjectId: '',
+    subjectName: '',
     classroomId: '',
     dayOfWeek: '',
     startTime: '',
     endTime: '',
     autoStart: true,
     description: ''
-  });
-
-  const { data: subjects } = useQuery({
-    queryKey: ['/api/subjects'],
   });
 
   const { data: classrooms } = useQuery({
@@ -67,7 +63,7 @@ export default function AddScheduleModal({ open, onClose }: AddScheduleModalProp
 
   const resetForm = () => {
     setFormData({
-      subjectId: '',
+      subjectName: '',
       classroomId: '',
       dayOfWeek: '',
       startTime: '',
@@ -80,7 +76,7 @@ export default function AddScheduleModal({ open, onClose }: AddScheduleModalProp
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.subjectId || !formData.classroomId || !formData.dayOfWeek || 
+    if (!formData.subjectName || !formData.classroomId || !formData.dayOfWeek || 
         !formData.startTime || !formData.endTime) {
       toast({
         title: "Validation Error",
@@ -91,7 +87,7 @@ export default function AddScheduleModal({ open, onClose }: AddScheduleModalProp
     }
 
     createScheduleMutation.mutate({
-      subjectId: parseInt(formData.subjectId),
+      subjectName: formData.subjectName,
       classroomId: parseInt(formData.classroomId),
       dayOfWeek: parseInt(formData.dayOfWeek),
       startTime: formData.startTime,
@@ -128,24 +124,16 @@ export default function AddScheduleModal({ open, onClose }: AddScheduleModalProp
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="subject">Subject</Label>
-              <Select 
-                value={formData.subjectId} 
-                onValueChange={(value) => setFormData({...formData, subjectId: value})}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select subject" />
-                </SelectTrigger>
-                <SelectContent>
-                  {subjects?.map((subject: any) => (
-                    <SelectItem key={subject.id} value={subject.id.toString()}>
-                      <div className="flex items-center gap-2">
-                        <BookOpen className="h-4 w-4" />
-                        {subject.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="relative">
+                <BookOpen className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="subject"
+                  placeholder="Enter subject name (e.g., Database Systems, Programming)"
+                  value={formData.subjectName}
+                  onChange={(e) => setFormData({...formData, subjectName: e.target.value})}
+                  className="pl-10"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
