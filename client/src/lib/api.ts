@@ -1,9 +1,10 @@
 /**
- * API configuration for Python FastAPI backend
- * Technology Stack: Python 3.11 + FastAPI + SQLAlchemy + PostgreSQL 16
+ * API configuration for Node.js Express backend
+ * Technology Stack: Node.js + Express + Drizzle ORM + PostgreSQL
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// Use relative URLs for same-origin requests in production
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 export const apiClient = {
   async request(endpoint: string, options: RequestInit = {}) {
