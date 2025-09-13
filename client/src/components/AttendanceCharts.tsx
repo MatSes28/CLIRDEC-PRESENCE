@@ -99,10 +99,15 @@ export default function AttendanceCharts() {
     if (!studentData || !Array.isArray(studentData)) return [];
     
     return studentData
-      .map((student: any) => ({
-        ...student,
-        attendanceRate: isFinite(Number(student.attendanceRate)) ? Number(student.attendanceRate) : 0
-      }))
+      .map((student: any) => {
+        const rate = Number(student.attendanceRate);
+        return {
+          ...student,
+          attendanceRate: isFinite(rate) && !isNaN(rate) && rate >= 0 ? rate : 0,
+          totalClasses: Number(student.totalClasses) || 0,
+          presentClasses: Number(student.presentClasses) || 0
+        };
+      })
       .filter((student: StudentPerformance) => student.name && student.name.trim() !== '')
       .sort((a: StudentPerformance, b: StudentPerformance) => b.attendanceRate - a.attendanceRate)
       .slice(0, 10);
@@ -293,7 +298,10 @@ export default function AttendanceCharts() {
                     borderRadius: '8px',
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                   }}
-                  formatter={(value: number) => [`${value.toFixed(1)}%`, 'Attendance Rate']}
+                  formatter={(value: number) => {
+                    const safeValue = isFinite(value) && !isNaN(value) ? value : 0;
+                    return [`${safeValue.toFixed(1)}%`, 'Attendance Rate'];
+                  }}
                 />
                 <Bar 
                   dataKey="attendanceRate" 

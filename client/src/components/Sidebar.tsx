@@ -140,7 +140,7 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="fixed left-0 top-0 h-full w-80 glass border-r border-border/20 z-40 animate-slide-in-right" data-tour="navigation">
+    <div className="fixed left-0 top-0 h-full w-80 glass border-r border-border/20 z-40 animate-slide-in-right flex flex-col" data-tour="navigation">
       {/* Modern Header with Gradient */}
       <div className="relative p-8 gradient-primary overflow-hidden" data-tour="welcome">
         <div className="absolute inset-0 opacity-10">
@@ -164,7 +164,7 @@ export default function Sidebar() {
       </div>
       
       {/* Modern Navigation */}
-      <nav className="flex-1 px-6 py-6 space-y-3 overflow-y-auto scrollbar-thin scrollbar-thumb-border/20 scrollbar-track-transparent">
+      <nav className="flex-1 px-6 py-6 space-y-3 overflow-y-auto scrollbar-thin scrollbar-thumb-border/20 scrollbar-track-transparent min-h-0">
         {filteredNavigationItems.map((item, index) => {
           const Icon = item.icon;
           const active = isActive(item.path);
@@ -209,7 +209,7 @@ export default function Sidebar() {
       </nav>
       
       {/* Modern User Profile Section */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-border/20 glass" data-tour="user-menu">
+      <div className="flex-shrink-0 p-6 border-t border-border/20 glass" data-tour="user-menu">
         <div className="card-modern p-4 mb-4">
           <div className="flex items-center space-x-4">
             <div className="relative">
