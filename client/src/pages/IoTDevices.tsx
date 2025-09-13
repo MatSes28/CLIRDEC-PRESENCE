@@ -60,8 +60,10 @@ export default function IoTDevicesPage() {
     refetchInterval: 5000 // Refresh every 5 seconds
   });
 
-  const devices: IoTDevice[] = deviceData?.devices || [];
-  const stats: DeviceStats = deviceData || { total: 0, online: 0, offline: 0 };
+  const devices: IoTDevice[] = Array.isArray(deviceData) ? deviceData : deviceData?.devices || [];
+  const stats: DeviceStats = deviceData && typeof deviceData === 'object' && 'total' in deviceData
+    ? deviceData as DeviceStats
+    : { total: devices.length, online: devices.filter(d => d.status === 'online').length, offline: devices.filter(d => d.status === 'offline').length };
 
   // Device configuration mutation
   const configMutation = useMutation({
@@ -415,7 +417,7 @@ export default function IoTDevicesPage() {
 
         <TabsContent value="setup" className="space-y-6">
           {/* Hardware Setup Guide */}
-          {setupGuide && (
+          {setupGuide && typeof setupGuide === 'object' && (
             <div className="space-y-6">
               <Card>
                 <CardHeader>
@@ -426,7 +428,7 @@ export default function IoTDevicesPage() {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2">
-                    {setupGuide.hardwareRequirements.map((item: string, index: number) => (
+                    {setupGuide?.hardwareRequirements && Array.isArray(setupGuide.hardwareRequirements) && setupGuide.hardwareRequirements.map((item: string, index: number) => (
                       <li key={index} className="flex items-start space-x-2">
                         <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
                         <span className="text-sm">{item}</span>
@@ -445,7 +447,7 @@ export default function IoTDevicesPage() {
                     <div>
                       <h4 className="font-medium mb-2">RC522 RFID Module</h4>
                       <div className="bg-gray-50 p-4 rounded-lg font-mono text-sm space-y-1">
-                        {Object.entries(setupGuide.wiring['RFID RC522']).map(([pin, connection]) => (
+                        {setupGuide?.wiring?.['RFID RC522'] && Object.entries(setupGuide.wiring['RFID RC522']).map(([pin, connection]) => (
                           <div key={pin} className="flex justify-between">
                             <span className="text-blue-600">{pin}:</span>
                             <span>{connection}</span>
@@ -456,7 +458,7 @@ export default function IoTDevicesPage() {
                     <div>
                       <h4 className="font-medium mb-2">PIR Motion Sensor</h4>
                       <div className="bg-gray-50 p-4 rounded-lg font-mono text-sm space-y-1">
-                        {Object.entries(setupGuide.wiring['PIR HC-SR501']).map(([pin, connection]) => (
+                        {setupGuide?.wiring?.['PIR HC-SR501'] && Object.entries(setupGuide.wiring['PIR HC-SR501']).map(([pin, connection]) => (
                           <div key={pin} className="flex justify-between">
                             <span className="text-green-600">{pin}:</span>
                             <span>{connection}</span>
@@ -474,7 +476,7 @@ export default function IoTDevicesPage() {
                 </CardHeader>
                 <CardContent>
                   <ol className="space-y-3">
-                    {setupGuide.steps.map((step: string, index: number) => (
+                    {setupGuide?.steps && Array.isArray(setupGuide.steps) && setupGuide.steps.map((step: string, index: number) => (
                       <li key={index} className="flex items-start space-x-3">
                         <span className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full text-xs flex items-center justify-center font-medium">
                           {index + 1}
@@ -490,7 +492,7 @@ export default function IoTDevicesPage() {
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
                   Make sure to update the WiFi credentials and server URL in the Arduino code before uploading to your ESP32 device.
-                  Your server URL is: <code className="bg-gray-100 px-2 py-1 rounded">{setupGuide.configuration.serverHost}</code>
+                  Your server URL is: <code className="bg-gray-100 px-2 py-1 rounded">{setupGuide?.configuration?.serverHost || 'Not configured'}</code>
                 </AlertDescription>
               </Alert>
             </div>
