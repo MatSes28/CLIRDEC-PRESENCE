@@ -78,6 +78,12 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
       setIsConnected(true);
       setSocket(ws);
       setReconnectAttempts(0);
+      
+      // Send hello message to maintain connection
+      ws.send(JSON.stringify({ 
+        type: 'hello',
+        timestamp: new Date().toISOString()
+      }));
     };
 
     ws.onmessage = (event) => {

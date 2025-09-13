@@ -15,7 +15,7 @@ export async function seedDatabase() {
     console.log("Seeding database with sample data...");
 
     // Create sample users with hashed passwords
-    await storage.createUser({
+    const adminUser = await storage.createUser({
       email: "admin@clsu.edu.ph",
       password: await hashPassword("admin123"),
       firstName: "System",
@@ -168,7 +168,7 @@ export async function seedDatabase() {
 
     // Create a sample class session for testing late attendance
     const testSession = await storage.createClassSession({
-      professorId: "admin@clsu.edu.ph",
+      professorId: adminUser.id,
       date: new Date(), // Today
       startTime: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 hours ago (simulates 9 AM if current time is 12 PM)
       endTime: new Date(Date.now() + 1 * 60 * 60 * 1000), // 1 hour from now
