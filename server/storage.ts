@@ -9,6 +9,7 @@ import {
   computers,
   emailNotifications,
   systemSettings,
+  enrollments,
   type User,
   type UpsertUser,
   type Student,
@@ -28,6 +29,8 @@ import {
   type EmailNotification,
   type InsertEmailNotification,
   type SystemSetting,
+  type Enrollment,
+  type InsertEnrollment,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, desc, asc } from "drizzle-orm";
@@ -102,6 +105,15 @@ export interface IStorage {
   // System settings operations
   getSystemSetting(key: string): Promise<SystemSetting | undefined>;
   setSystemSetting(key: string, value: string, description?: string): Promise<SystemSetting>;
+
+  // Enrollment operations
+  getEnrollments(): Promise<Enrollment[]>;
+  getEnrollmentsByStudent(studentId: number): Promise<Enrollment[]>;
+  getEnrollmentsBySubject(subjectId: number): Promise<Enrollment[]>;
+  createEnrollment(enrollment: InsertEnrollment): Promise<Enrollment>;
+  updateEnrollment(id: number, enrollment: Partial<InsertEnrollment>): Promise<Enrollment>;
+  deleteEnrollment(id: number): Promise<void>;
+  getStudentsInSubject(subjectId: number): Promise<Student[]>;
 }
 
 // In-memory storage implementation for when database is unavailable
@@ -116,6 +128,7 @@ export class MemStorage implements IStorage {
   private computers: Map<number, Computer> = new Map();
   private emailNotifications: Map<number, EmailNotification> = new Map();
   private systemSettings: Map<string, SystemSetting> = new Map();
+  private enrollments: Map<number, Enrollment> = new Map();
   private nextId = 1;
 
   constructor() {
@@ -510,6 +523,56 @@ export class MemStorage implements IStorage {
     this.systemSettings.set(key, setting);
     return setting;
   }
+
+  // Enrollment operations
+  async getEnrollments(): Promise<Enrollment[]> {
+    return Array.from(this.enrollments.values()).filter(e => e.isActive);
+  }
+
+  async getEnrollmentsByStudent(studentId: number): Promise<Enrollment[]> {
+    return Array.from(this.enrollments.values()).filter(e => e.studentId === studentId && e.isActive);
+  }
+
+  async getEnrollmentsBySubject(subjectId: number): Promise<Enrollment[]> {
+    return Array.from(this.enrollments.values()).filter(e => e.subjectId === subjectId && e.isActive);
+  }
+
+  async createEnrollment(enrollment: InsertEnrollment): Promise<Enrollment> {
+    const newEnrollment: Enrollment = {
+      ...enrollment,
+      id: this.nextId++,
+      enrolledAt: enrollment.enrolledAt || new Date(),
+      droppedAt: enrollment.droppedAt || null,
+      isActive: enrollment.isActive ?? true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.enrollments.set(newEnrollment.id, newEnrollment);
+    return newEnrollment;
+  }
+
+  async updateEnrollment(id: number, enrollment: Partial<InsertEnrollment>): Promise<Enrollment> {
+    const existing = this.enrollments.get(id);
+    if (!existing) throw new Error("Enrollment not found");
+    const updated = { ...existing, ...enrollment, updatedAt: new Date() };
+    this.enrollments.set(id, updated);
+    return updated;
+  }
+
+  async deleteEnrollment(id: number): Promise<void> {
+    const enrollment = this.enrollments.get(id);
+    if (enrollment) {
+      enrollment.isActive = false;
+      enrollment.droppedAt = new Date();
+      this.enrollments.set(id, enrollment);
+    }
+  }
+
+  async getStudentsInSubject(subjectId: number): Promise<Student[]> {
+    const enrollments = await this.getEnrollmentsBySubject(subjectId);
+    const studentIds = enrollments.map(e => e.studentId);
+    return Array.from(this.students.values()).filter(s => studentIds.includes(s.id) && s.isActive);
+  }
 }
 
 // PostgreSQL database storage implementation
@@ -839,6 +902,63 @@ export class DbStorage implements IStorage {
       })
       .returning();
     return setting;
+  }
+
+  // Enrollment operations
+  async getEnrollments(): Promise<Enrollment[]> {
+    if (!db) throw new Error("Database not available");
+    return await db.select().from(enrollments).where(eq(enrollments.isActive, true)).orderBy(asc(enrollments.createdAt));
+  }
+
+  async getEnrollmentsByStudent(studentId: number): Promise<Enrollment[]> {
+    if (!db) throw new Error("Database not available");
+    return await db.select().from(enrollments).where(and(eq(enrollments.studentId, studentId), eq(enrollments.isActive, true)));
+  }
+
+  async getEnrollmentsBySubject(subjectId: number): Promise<Enrollment[]> {
+    if (!db) throw new Error("Database not available");
+    return await db.select().from(enrollments).where(and(eq(enrollments.subjectId, subjectId), eq(enrollments.isActive, true)));
+  }
+
+  async createEnrollment(enrollment: InsertEnrollment): Promise<Enrollment> {
+    if (!db) throw new Error("Database not available");
+    const [newEnrollment] = await db.insert(enrollments).values(enrollment).returning();
+    return newEnrollment;
+  }
+
+  async updateEnrollment(id: number, enrollment: Partial<InsertEnrollment>): Promise<Enrollment> {
+    if (!db) throw new Error("Database not available");
+    const [updatedEnrollment] = await db
+      .update(enrollments)
+      .set({ ...enrollment, updatedAt: new Date() })
+      .where(eq(enrollments.id, id))
+      .returning();
+    return updatedEnrollment;
+  }
+
+  async deleteEnrollment(id: number): Promise<void> {
+    if (!db) throw new Error("Database not available");
+    await db.update(enrollments).set({ isActive: false, droppedAt: new Date() }).where(eq(enrollments.id, id));
+  }
+
+  async getStudentsInSubject(subjectId: number): Promise<Student[]> {
+    if (!db) throw new Error("Database not available");
+    const result = await db
+      .select({ student: students })
+      .from(enrollments)
+      .innerJoin(students, eq(enrollments.studentId, students.id))
+      .where(and(eq(enrollments.subjectId, subjectId), eq(enrollments.isActive, true), eq(students.isActive, true)))
+      .orderBy(asc(students.lastName));
+    return result.map(row => row.student);
+  }
+
+  async getAttendanceByStudentAndSession(studentId: number, sessionId: number): Promise<Attendance | undefined> {
+    if (!db) throw new Error("Database not available");
+    const [attendanceRecord] = await db
+      .select()
+      .from(attendance)
+      .where(and(eq(attendance.studentId, studentId), eq(attendance.sessionId, sessionId)));
+    return attendanceRecord;
   }
 }
 

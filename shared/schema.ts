@@ -131,6 +131,21 @@ export const attendance = pgTable("attendance", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Student enrollments table - tracks which students are enrolled in which subjects
+export const enrollments = pgTable("enrollments", {
+  id: serial("id").primaryKey(),
+  studentId: integer("student_id").references(() => students.id).notNull(),
+  subjectId: integer("subject_id").references(() => subjects.id).notNull(),
+  academicYear: varchar("academic_year").notNull(), // e.g., "2024-2025"
+  semester: varchar("semester").notNull(), // e.g., "1st", "2nd", "Summer"
+  status: varchar("status").default("active"), // active, dropped, completed
+  enrolledAt: timestamp("enrolled_at").defaultNow(),
+  droppedAt: timestamp("dropped_at"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Laboratory computers table
 export const computers = pgTable("computers", {
   id: serial("id").primaryKey(),
@@ -180,6 +195,7 @@ export const studentsRelations = relations(students, ({ many }) => ({
   attendance: many(attendance),
   assignedComputers: many(computers),
   emailNotifications: many(emailNotifications),
+  enrollments: many(enrollments),
 }));
 
 export const subjectsRelations = relations(subjects, ({ one, many }) => ({
@@ -188,6 +204,7 @@ export const subjectsRelations = relations(subjects, ({ one, many }) => ({
     references: [users.id],
   }),
   schedules: many(schedules),
+  enrollments: many(enrollments),
 }));
 
 export const schedulesRelations = relations(schedules, ({ one, many }) => ({
@@ -257,6 +274,17 @@ export const emailNotificationsRelations = relations(emailNotifications, ({ one 
   }),
 }));
 
+export const enrollmentsRelations = relations(enrollments, ({ one }) => ({
+  student: one(students, {
+    fields: [enrollments.studentId],
+    references: [students.id],
+  }),
+  subject: one(subjects, {
+    fields: [enrollments.subjectId],
+    references: [subjects.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
@@ -305,6 +333,12 @@ export const insertEmailNotificationSchema = createInsertSchema(emailNotificatio
   createdAt: true,
 });
 
+export const insertEnrollmentSchema = createInsertSchema(enrollments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type UpsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -324,4 +358,6 @@ export type InsertComputer = z.infer<typeof insertComputerSchema>;
 export type Computer = typeof computers.$inferSelect;
 export type InsertEmailNotification = z.infer<typeof insertEmailNotificationSchema>;
 export type EmailNotification = typeof emailNotifications.$inferSelect;
+export type InsertEnrollment = z.infer<typeof insertEnrollmentSchema>;
+export type Enrollment = typeof enrollments.$inferSelect;
 export type SystemSetting = typeof systemSettings.$inferSelect;
