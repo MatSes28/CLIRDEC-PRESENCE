@@ -10,7 +10,8 @@ import {
   insertScheduleSchema,
   insertClassSessionSchema,
   insertAttendanceSchema,
-  insertComputerSchema
+  insertComputerSchema,
+  insertEnrollmentSchema
 } from "@shared/schema";
 import { sendEmailNotification } from "./services/emailService";
 import { simulateRFIDTap } from "./services/rfidSimulator";
@@ -334,6 +335,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting subject:", error);
       res.status(400).json({ message: "Failed to delete subject" });
+    }
+  });
+
+  // Enrollment management routes
+  app.get('/api/enrollments', requireAdminOrFaculty, async (req: any, res) => {
+    try {
+      const enrollments = await storage.getEnrollments();
+      res.json(enrollments);
+    } catch (error) {
+      console.error("Error fetching enrollments:", error);
+      res.status(500).json({ message: "Failed to fetch enrollments" });
+    }
+  });
+
+  app.get('/api/subjects/:id/students', requireAdminOrFaculty, async (req, res) => {
+    try {
+      const subjectId = parseInt(req.params.id);
+      const students = await storage.getStudentsInSubject(subjectId);
+      res.json(students);
+    } catch (error) {
+      console.error("Error fetching students in subject:", error);
+      res.status(500).json({ message: "Failed to fetch students in subject" });
+    }
+  });
+
+  app.get('/api/students/:id/enrollments', requireAdminOrFaculty, async (req, res) => {
+    try {
+      const studentId = parseInt(req.params.id);
+      const enrollments = await storage.getEnrollmentsByStudent(studentId);
+      res.json(enrollments);
+    } catch (error) {
+      console.error("Error fetching student enrollments:", error);
+      res.status(500).json({ message: "Failed to fetch student enrollments" });
+    }
+  });
+
+  app.post('/api/enrollments', requireAdminOrFaculty, async (req: any, res) => {
+    try {
+      const enrollmentData = insertEnrollmentSchema.parse(req.body);
+      const enrollment = await storage.createEnrollment(enrollmentData);
+      res.status(201).json(enrollment);
+    } catch (error) {
+      console.error("Error creating enrollment:", error);
+      res.status(400).json({ message: "Failed to create enrollment" });
+    }
+  });
+
+  app.put('/api/enrollments/:id', requireAdminOrFaculty, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const enrollmentData = insertEnrollmentSchema.partial().parse(req.body);
+      const enrollment = await storage.updateEnrollment(id, enrollmentData);
+      res.json(enrollment);
+    } catch (error) {
+      console.error("Error updating enrollment:", error);
+      res.status(400).json({ message: "Failed to update enrollment" });
+    }
+  });
+
+  app.delete('/api/enrollments/:id', requireAdminOrFaculty, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteEnrollment(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting enrollment:", error);
+      res.status(400).json({ message: "Failed to delete enrollment" });
     }
   });
 
