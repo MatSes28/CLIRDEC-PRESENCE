@@ -26,7 +26,8 @@ import {
   Activity,
   ArrowRight,
   Smartphone,
-  TestTube
+  TestTube,
+  BookOpen
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -57,6 +58,12 @@ export default function Sidebar() {
       icon: GraduationCap, 
       label: "Students",
       description: "Student management"
+    },
+    { 
+      path: "/roster", 
+      icon: BookOpen, 
+      label: "Class Roster",
+      description: "View enrolled students"
     },
     { 
       path: "/computers", 

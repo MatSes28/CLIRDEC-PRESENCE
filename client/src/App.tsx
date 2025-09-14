@@ -10,6 +10,7 @@ import EnhancedDashboard from "@/pages/EnhancedDashboard";
 import LiveAttendance from "@/pages/LiveAttendance";
 import Schedule from "@/pages/Schedule";
 import Students from "@/pages/Students";
+import ClassRoster from "@/pages/ClassRoster";
 import Computers from "@/pages/Computers";
 import Reports from "@/pages/Reports";
 import Settings from "@/pages/Settings";
@@ -63,6 +64,7 @@ function Router() {
                   <Route path="/attendance" component={LiveAttendance} />
                   <Route path="/schedule" component={Schedule} />
                   <Route path="/students" component={Students} />
+                  <Route path="/roster" component={ClassRoster} />
                   <Route path="/computers" component={Computers} />
                   <Route path="/reports" component={Reports} />
                   <Route path="/users" component={UserManagement} />
@@ -87,6 +89,7 @@ function Router() {
                 <Route path="/attendance" component={LiveAttendance} />
                 <Route path="/schedule" component={Schedule} />
                 <Route path="/students" component={Students} />
+                <Route path="/roster" component={ClassRoster} />
                 <Route path="/computers" component={Computers} />
                 <Route path="/reports" component={Reports} />
                 <Route path="/users" component={UserManagement} />
