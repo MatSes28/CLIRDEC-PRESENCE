@@ -17,28 +17,29 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import AddScheduleModal from "@/components/AddScheduleModal";
 import FileUpload from "@/components/FileUpload";
+import type { Schedule, Subject, Classroom } from "@shared/schema";
 
 export default function Schedule() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showAddModal, setShowAddModal] = useState(false);
 
-  const { data: schedules, isLoading } = useQuery({
+  const { data: schedules, isLoading } = useQuery<Schedule[]>({
     queryKey: ['/api/schedules'],
   });
 
-  const { data: subjects } = useQuery({
+  const { data: subjects } = useQuery<Subject[]>({
     queryKey: ['/api/subjects'],
   });
 
-  const { data: classrooms } = useQuery({
+  const { data: classrooms } = useQuery<Classroom[]>({
     queryKey: ['/api/classrooms'],
   });
 
   // Process real schedule data for visualization
-  const scheduleBlocks = schedules?.map((schedule: any) => {
-    const subject = subjects?.find((s: any) => s.id === schedule.subjectId);
-    const classroom = classrooms?.find((c: any) => c.id === schedule.classroomId);
+  const scheduleBlocks = (schedules || []).map((schedule) => {
+    const subject = subjects?.find((s) => s.id === schedule.subjectId);
+    const classroom = classrooms?.find((c) => c.id === schedule.classroomId);
     
     // Convert day number to day name (0 = Sunday, 1 = Monday, etc.)
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -68,7 +69,7 @@ export default function Schedule() {
       autoStart: schedule.autoStart,
       color: color
     };
-  }) || [];
+  });
 
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
