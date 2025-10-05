@@ -89,23 +89,9 @@ export async function seedDatabase() {
     // No demo students - system starts empty for realistic deployment
     console.log("Student enrollment ready - no demo data created");
 
-    // Create sample computers for the lab
-    const computers = [
-      { name: "PC-001", ipAddress: "192.168.1.101", status: "available", classroomId: classroom1.id },
-      { name: "PC-002", ipAddress: "192.168.1.102", status: "available", classroomId: classroom1.id },
-      { name: "PC-003", ipAddress: "192.168.1.103", status: "available", classroomId: classroom1.id },
-      { name: "PC-004", ipAddress: "192.168.1.104", status: "available", classroomId: classroom1.id },
-      { name: "PC-005", ipAddress: "192.168.1.105", status: "available", classroomId: classroom1.id },
-      { name: "PC-006", ipAddress: "192.168.1.106", status: "available", classroomId: classroom2.id },
-      { name: "PC-007", ipAddress: "192.168.1.107", status: "available", classroomId: classroom2.id },
-      { name: "PC-008", ipAddress: "192.168.1.108", status: "available", classroomId: classroom2.id }
-    ];
-
-    for (const computerData of computers) {
-      await storage.createComputer(computerData);
-    }
-
-    console.log(`Created ${computers.length} computers`);
+    // Computers will be added through the admin interface
+    // No demo computers - system starts empty for realistic deployment
+    console.log("Computer management ready - no demo data created");
 
     // No demo class sessions - sessions will be created from schedules
     console.log("Class sessions ready - will be auto-generated from uploaded schedules");
