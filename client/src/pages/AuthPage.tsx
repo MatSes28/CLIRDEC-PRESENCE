@@ -3,12 +3,21 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, User, Lock, Zap, Activity, Users, Target, ArrowRight, CheckCircle, Shield, Monitor } from "lucide-react";
+import { AlertCircle, User, Lock, Zap, Activity, Users, Target, ArrowRight, CheckCircle, Shield, Monitor, Mail } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useLocation } from "wouter";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface LoginData {
   email: string;
@@ -19,7 +28,10 @@ export default function AuthPage() {
   const [, setLocation] = useLocation();
   const { user, isLoading } = useAuth();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [error, setError] = useState<string>("");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
   
   const [loginForm, setLoginForm] = useState<LoginData>({
     email: "",
@@ -46,10 +58,45 @@ export default function AuthPage() {
     },
   });
 
+  const forgotPasswordMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const res = await apiRequest("POST", "/api/forgot-password", { email });
+      return await res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Password Reset Email Sent",
+        description: "If an account exists with this email, you will receive password reset instructions.",
+      });
+      setShowForgotPassword(false);
+      setResetEmail("");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send reset email. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     loginMutation.mutate(loginForm);
+  };
+
+  const handleForgotPassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetEmail) {
+      toast({
+        title: "Email Required",
+        description: "Please enter your email address",
+        variant: "destructive",
+      });
+      return;
+    }
+    forgotPasswordMutation.mutate(resetEmail);
   };
 
   const features = [
@@ -234,17 +281,80 @@ export default function AuthPage() {
             </form>
 
             <div className="mt-6 text-center">
-              <Button variant="ghost" className="text-sm text-muted-foreground hover:text-foreground">
-                Forgot your password?
-              </Button>
+              <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                    data-testid="button-forgot-password"
+                  >
+                    Forgot your password?
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Reset Password</DialogTitle>
+                    <DialogDescription>
+                      Enter your email address and we'll send you instructions to reset your password.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleForgotPassword} className="space-y-4 mt-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="reset-email">Email Address</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="reset-email"
+                          type="email"
+                          placeholder="Enter your email"
+                          value={resetEmail}
+                          onChange={(e) => setResetEmail(e.target.value)}
+                          className="pl-10"
+                          data-testid="input-reset-email"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => {
+                          setShowForgotPassword(false);
+                          setResetEmail("");
+                        }}
+                        data-testid="button-cancel-reset"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        className="flex-1"
+                        disabled={forgotPasswordMutation.isPending}
+                        data-testid="button-send-reset"
+                      >
+                        {forgotPasswordMutation.isPending ? "Sending..." : "Send Reset Link"}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
 
             <div className="mt-8 pt-6 border-t border-border/50">
               <div className="text-center text-sm text-muted-foreground">
                 Need help? Contact IT Support
               </div>
-              <div className="text-center text-xs text-muted-foreground mt-2 mono">
-                support@clsu.edu.ph
+              <div className="text-center mt-2">
+                <a 
+                  href="mailto:support@clsu.edu.ph"
+                  className="text-sm text-primary hover:text-primary/80 hover:underline transition-colors inline-flex items-center gap-1"
+                  data-testid="link-contact-support"
+                >
+                  <Mail className="h-3 w-3" />
+                  support@clsu.edu.ph
+                </a>
               </div>
             </div>
           </div>
