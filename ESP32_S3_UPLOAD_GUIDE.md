@@ -74,8 +74,8 @@ SDA/SS       →    GPIO 21      →    Chip Select
 HC-SR04 Pin  →    ESP32 Pin    →    Notes
 VCC          →    5V           →    Must be 5V
 GND          →    GND          →    Ground
-Trig         →    GPIO 32      →    Trigger pulse
-Echo         →    GPIO 33      →    Echo response
+Trig         →    GPIO 12      →    Trigger pulse
+Echo         →    GPIO 13      →    Echo response
 ```
 
 ### HC-SR04 Sensor #2 (EXIT) → ESP32-S3:
@@ -102,8 +102,8 @@ ESP32-S3
 │  GPIO 19 ───────┼──→ RC522 MISO
 │  GPIO 23 ───────┼──→ RC522 MOSI
 │                 │
-│  GPIO 32 ───────┼──→ HC-SR04 #1 Trig (Entry)
-│  GPIO 33 ───────┼──→ HC-SR04 #1 Echo (Entry)
+│  GPIO 12 ───────┼──→ HC-SR04 #1 Trig (Entry)
+│  GPIO 13 ───────┼──→ HC-SR04 #1 Echo (Entry)
 │                 │
 │  GPIO 25 ───────┼──→ HC-SR04 #2 Trig (Exit)
 │  GPIO 26 ───────┼──→ HC-SR04 #2 Echo (Exit)

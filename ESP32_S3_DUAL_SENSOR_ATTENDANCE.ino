@@ -28,8 +28,8 @@
  * HC-SR04 Sensor #1 (ENTRY) → ESP32-S3:
  * VCC  → 5V
  * GND  → GND
- * Trig → GPIO 32
- * Echo → GPIO 33
+ * Trig → GPIO 12
+ * Echo → GPIO 13
  * 
  * HC-SR04 Sensor #2 (EXIT) → ESP32-S3:
  * VCC  → 5V
@@ -57,8 +57,8 @@ const char* serverHost = "YOUR_REPLIT_URL.replit.dev";  // Your Replit app URL (
 #define SS_PIN          21
 
 // HC-SR04 Entry Sensor (Sensor 1)
-#define ENTRY_TRIG_PIN  32
-#define ENTRY_ECHO_PIN  33
+#define ENTRY_TRIG_PIN  12
+#define ENTRY_ECHO_PIN  13
 
 // HC-SR04 Exit Sensor (Sensor 2)  
 #define EXIT_TRIG_PIN   25
