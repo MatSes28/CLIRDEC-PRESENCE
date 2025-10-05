@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,13 +20,10 @@ import { useToast } from "@/hooks/use-toast";
 import { insertComputerSchema, type Computer, type Student, type Classroom } from "@shared/schema";
 import { z } from "zod";
 
-const addComputerFormSchema = insertComputerSchema.extend({
-  name: z.string().min(1, "Computer name is required"),
-  ipAddress: z.string().optional(),
-  classroomId: z.number().min(1, "Please select a classroom"),
-});
-
-type AddComputerForm = z.infer<typeof addComputerFormSchema>;
+type AddComputerForm = z.infer<typeof insertComputerSchema> & {
+  name: string;
+  classroomId: number;
+};
 
 export default function Computers() {
   const [selectedClassroom, setSelectedClassroom] = useState<string>("");
@@ -35,6 +32,28 @@ export default function Computers() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const { data: classrooms } = useQuery<Classroom[]>({
+    queryKey: ['/api/classrooms'],
+  });
+  
+  const addComputerFormSchema = useMemo(() => {
+    return z.object({
+      name: z.string().min(1, "Computer name is required"),
+      ipAddress: z.string().optional(),
+      classroomId: z.number().min(1, "Please select a classroom"),
+      status: z.string().optional(),
+    }).refine((data) => {
+      const classroom = classrooms?.find(c => c.id === data.classroomId);
+      if (classroom?.type === 'lecture' && !data.ipAddress) {
+        return false;
+      }
+      return true;
+    }, {
+      message: "IP address is required for lecture room computers",
+      path: ["ipAddress"],
+    });
+  }, [classrooms]);
 
   const form = useForm<AddComputerForm>({
     resolver: zodResolver(addComputerFormSchema),
@@ -46,18 +65,20 @@ export default function Computers() {
     },
   });
 
-  const { data: classrooms } = useQuery<Classroom[]>({
-    queryKey: ['/api/classrooms'],
-  });
-
   const { data: students } = useQuery<Student[]>({
     queryKey: ['/api/students'],
   });
 
   const { data: computers, isLoading, refetch } = useQuery<Computer[]>({
-    queryKey: selectedClassroom 
-      ? [`/api/computers?classroomId=${selectedClassroom}`]
-      : ['/api/computers'],
+    queryKey: ['/api/computers', selectedClassroom],
+    queryFn: async () => {
+      const url = selectedClassroom 
+        ? `/api/computers?classroomId=${selectedClassroom}`
+        : '/api/computers';
+      const res = await fetch(url, { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch computers');
+      return res.json();
+    },
     enabled: !!selectedClassroom,
   });
 
@@ -426,7 +447,12 @@ export default function Computers() {
                     <FormItem>
                       <FormLabel>IP Address</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., 192.168.1.101" {...field} data-testid="input-ip-address" />
+                        <Input 
+                          placeholder="e.g., 192.168.1.101" 
+                          {...field} 
+                          value={field.value || ""}
+                          data-testid="input-ip-address" 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
