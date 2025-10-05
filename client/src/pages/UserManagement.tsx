@@ -31,6 +31,7 @@ export default function UserManagement() {
   const [newUser, setNewUser] = useState({
     email: '',
     password: '',
+    confirmPassword: '',
     firstName: '',
     lastName: '',
     role: 'faculty' as 'admin' | 'faculty',
@@ -57,6 +58,7 @@ export default function UserManagement() {
       setNewUser({
         email: '',
         password: '',
+        confirmPassword: '',
         firstName: '',
         lastName: '',
         role: 'faculty',
@@ -107,7 +109,27 @@ export default function UserManagement() {
       return;
     }
 
-    createUserMutation.mutate(newUser);
+    if (newUser.password !== newUser.confirmPassword) {
+      toast({
+        title: "Validation Error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newUser.password.length < 6) {
+      toast({
+        title: "Validation Error",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Remove confirmPassword before sending to server
+    const { confirmPassword, ...userData } = newUser;
+    createUserMutation.mutate(userData);
   };
 
   const handleDeleteUser = (userId: string) => {
@@ -183,8 +205,24 @@ export default function UserManagement() {
                   type="password"
                   value={newUser.password}
                   onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                  placeholder="Enter secure password"
+                  placeholder="Enter secure password (min. 6 characters)"
+                  data-testid="input-password"
                 />
+              </div>
+
+              <div>
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={newUser.confirmPassword}
+                  onChange={(e) => setNewUser({ ...newUser, confirmPassword: e.target.value })}
+                  placeholder="Re-enter password"
+                  data-testid="input-confirm-password"
+                />
+                {newUser.password && newUser.confirmPassword && newUser.password !== newUser.confirmPassword && (
+                  <p className="text-sm text-destructive mt-1">Passwords do not match</p>
+                )}
               </div>
               
               <div>

@@ -610,7 +610,12 @@ export class DbStorage implements IStorage {
 
   async createUser(userData: Partial<User>): Promise<User> {
     if (!db) throw new Error("Database not available");
-    const [user] = await db.insert(users).values(userData as any).returning();
+    // Generate UUID for user if not provided
+    const userWithId = {
+      ...userData,
+      id: userData.id || crypto.randomUUID(),
+    };
+    const [user] = await db.insert(users).values(userWithId as any).returning();
     return user;
   }
 
