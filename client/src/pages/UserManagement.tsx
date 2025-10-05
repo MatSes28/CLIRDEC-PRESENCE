@@ -51,7 +51,7 @@ export default function UserManagement() {
 
   // Create user mutation
   const createUserMutation = useMutation({
-    mutationFn: (userData: typeof newUser) => apiClient.post('/api/users', userData),
+    mutationFn: (userData: Omit<typeof newUser, 'confirmPassword'>) => apiClient.post('/api/users', userData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
       setIsCreateDialogOpen(false);

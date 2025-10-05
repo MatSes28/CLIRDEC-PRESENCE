@@ -297,10 +297,32 @@ Central Luzon State University
   });
 
   // Student management routes - Admin only for user management
-  app.get('/api/students', requireAdminOrFaculty, async (req, res) => {
+  app.get('/api/students', requireAdminOrFaculty, async (req: any, res) => {
     try {
-      const students = await storage.getStudents();
-      res.json(students);
+      const currentUser = req.user;
+      
+      if (currentUser.role === 'admin') {
+        // Admin sees all students
+        const students = await storage.getStudents();
+        res.json(students);
+      } else {
+        // Faculty only sees students enrolled in their subjects
+        const professorId = currentUser.id;
+        const subjects = await storage.getSubjectsByProfessor(professorId);
+        const subjectIds = subjects.map(s => s.id);
+        
+        // Get all students enrolled in these subjects
+        const studentSet = new Set<number>();
+        for (const subjectId of subjectIds) {
+          const enrollments = await storage.getEnrollmentsBySubject(subjectId);
+          enrollments.forEach(e => studentSet.add(e.studentId));
+        }
+        
+        // Fetch full student details
+        const allStudents = await storage.getStudents();
+        const filteredStudents = allStudents.filter(s => studentSet.has(s.id));
+        res.json(filteredStudents);
+      }
     } catch (error) {
       console.error("Error fetching students:", error);
       res.status(500).json({ message: "Failed to fetch students" });
