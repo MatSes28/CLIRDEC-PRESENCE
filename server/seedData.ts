@@ -85,75 +85,9 @@ export async function seedDatabase() {
     // Note: Subjects will be created when a professor logs in and creates them
     // through the UI, as they need to be associated with a specific professorId
 
-    // Create sample students with gender for clean avatar display
-    const students = [
-      {
-        studentId: "2021-IT-001",
-        firstName: "Maria",
-        lastName: "Santos",
-        gender: "female",
-        year: 3,
-        email: "maria.santos@student.clsu.edu.ph",
-        parentEmail: "parent.santos@gmail.com",
-        parentName: "Roberto Santos",
-        rfidCardId: "RFID001",
-        section: "3IT-A"
-      },
-      {
-        studentId: "2021-IT-002", 
-        firstName: "Juan",
-        lastName: "Dela Cruz",
-        gender: "male",
-        year: 3,
-        email: "juan.delacruz@student.clsu.edu.ph",
-        parentEmail: "parent.delacruz@gmail.com",
-        parentName: "Carmen Dela Cruz",
-        rfidCardId: "RFID002",
-        section: "3IT-A"
-      },
-      {
-        studentId: "2021-IT-003",
-        firstName: "Anna",
-        lastName: "Rodriguez", 
-        gender: "female",
-        year: 3,
-        email: "anna.rodriguez@student.clsu.edu.ph",
-        parentEmail: "parent.rodriguez@gmail.com",
-        parentName: "Miguel Rodriguez",
-        rfidCardId: "RFID003",
-        section: "3IT-A"
-      },
-      {
-        studentId: "2021-IT-004",
-        firstName: "Carlos",
-        lastName: "Mendez",
-        gender: "male",
-        year: 3,
-        email: "carlos.mendez@student.clsu.edu.ph", 
-        parentEmail: "parent.mendez@gmail.com",
-        parentName: "Sofia Mendez",
-        rfidCardId: "RFID004",
-        section: "3IT-A"
-      },
-      {
-        studentId: "2021-IT-005",
-        firstName: "Lisa",
-        lastName: "Garcia",
-        gender: "female",
-        year: 3,
-        email: "lisa.garcia@student.clsu.edu.ph",
-        parentEmail: "parent.garcia@gmail.com",
-        parentName: "Pedro Garcia", 
-        rfidCardId: "RFID005",
-        section: "3IT-B"
-      }
-    ];
-
-    for (const studentData of students) {
-      await storage.createStudent(studentData);
-    }
-
-    console.log(`Created ${students.length} sample students`);
+    // Students will be enrolled through the enrollment process
+    // No demo students - system starts empty for realistic deployment
+    console.log("Student enrollment ready - no demo data created");
 
     // Create sample computers for the lab
     const computers = [
@@ -173,16 +107,8 @@ export async function seedDatabase() {
 
     console.log(`Created ${computers.length} computers`);
 
-    // Create a sample class session for testing late attendance
-    const testSession = await storage.createClassSession({
-      professorId: adminUser.id,
-      date: new Date(), // Today
-      startTime: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 hours ago (simulates 9 AM if current time is 12 PM)
-      endTime: new Date(Date.now() + 1 * 60 * 60 * 1000), // 1 hour from now
-      status: "active"
-    });
-
-    console.log(`Created test class session: ${testSession.id}`);
+    // No demo class sessions - sessions will be created from schedules
+    console.log("Class sessions ready - will be auto-generated from uploaded schedules");
 
     // Set some system settings
     await storage.setSystemSetting("attendance_grace_period", "15", "Grace period in minutes for late arrivals");

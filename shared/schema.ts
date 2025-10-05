@@ -91,7 +91,10 @@ export const schedules = pgTable("schedules", {
   dayOfWeek: integer("day_of_week").notNull(), // 1=Monday, 7=Sunday
   startTime: time("start_time").notNull(),
   endTime: time("end_time").notNull(),
+  semester: varchar("semester"), // e.g., "1st", "2nd", "Summer"
+  academicYear: varchar("academic_year"), // e.g., "2024-2025"
   autoStart: boolean("auto_start").default(true),
+  autoPopulate: boolean("auto_populate").default(true), // Auto-create sessions for entire semester
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });

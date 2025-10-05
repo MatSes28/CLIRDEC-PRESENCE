@@ -83,6 +83,7 @@ export interface IStorage {
 
   // Attendance operations
   getAttendanceBySession(sessionId: number): Promise<Attendance[]>;
+  getAttendanceByStudent(studentId: number): Promise<Attendance[]>;
   getAttendanceByStudentAndSession(studentId: number, sessionId: number): Promise<Attendance | undefined>;
   createAttendance(attendance: InsertAttendance): Promise<Attendance>;
   updateAttendance(id: number, attendance: Partial<InsertAttendance>): Promise<Attendance>;
@@ -335,7 +336,10 @@ export class MemStorage implements IStorage {
       professorId: schedule.professorId || null,
       subjectId: schedule.subjectId || null,
       classroomId: schedule.classroomId || null,
+      semester: schedule.semester ?? null,
+      academicYear: schedule.academicYear ?? null,
       autoStart: schedule.autoStart ?? true,
+      autoPopulate: (schedule as any).autoPopulate ?? true,
       isActive: schedule.isActive ?? true,
       createdAt: new Date() 
     };
@@ -396,6 +400,10 @@ export class MemStorage implements IStorage {
   // Attendance operations
   async getAttendanceBySession(sessionId: number): Promise<Attendance[]> {
     return Array.from(this.attendance.values()).filter(a => a.sessionId === sessionId);
+  }
+
+  async getAttendanceByStudent(studentId: number): Promise<Attendance[]> {
+    return Array.from(this.attendance.values()).filter(a => a.studentId === studentId);
   }
 
   async createAttendance(attendance: InsertAttendance): Promise<Attendance> {
@@ -835,6 +843,11 @@ export class DbStorage implements IStorage {
   async getAttendanceBySession(sessionId: number): Promise<Attendance[]> {
     if (!db) throw new Error("Database not available");
     return await db.select().from(attendance).where(eq(attendance.sessionId, sessionId)).orderBy(desc(attendance.checkInTime));
+  }
+
+  async getAttendanceByStudent(studentId: number): Promise<Attendance[]> {
+    if (!db) throw new Error("Database not available");
+    return await db.select().from(attendance).where(eq(attendance.studentId, studentId)).orderBy(desc(attendance.createdAt));
   }
 
   async createAttendance(attendanceRecord: InsertAttendance): Promise<Attendance> {

@@ -47,9 +47,9 @@ export async function analyzeStudentAttendanceBehavior(studentId: number): Promi
   const attendanceRecords = await getStudentAttendanceRecords(studentId, thirtyDaysAgo);
   
   const totalClasses = attendanceRecords.length;
-  const presentCount = attendanceRecords.filter(r => r.status === 'present').length;
-  const absentCount = attendanceRecords.filter(r => r.status === 'absent').length;
-  const lateCount = attendanceRecords.filter(r => r.status === 'late').length;
+  const presentCount = attendanceRecords.filter((r: any) => r.status === 'present').length;
+  const absentCount = attendanceRecords.filter((r: any) => r.status === 'absent').length;
+  const lateCount = attendanceRecords.filter((r: any) => r.status === 'late').length;
   
   const attendanceRate = totalClasses > 0 ? (presentCount + lateCount) / totalClasses * 100 : 100;
   
@@ -102,22 +102,51 @@ export async function analyzeStudentAttendanceBehavior(studentId: number): Promi
 }
 
 async function getStudentAttendanceRecords(studentId: number, since: Date) {
-  // Mock attendance data - in production this would query the database
-  // This simulates various attendance patterns for testing
-  const mockRecords = [
-    { date: '2025-01-27', status: 'absent' },
-    { date: '2025-01-26', status: 'absent' },
-    { date: '2025-01-25', status: 'absent' },
-    { date: '2025-01-24', status: 'late' },
-    { date: '2025-01-23', status: 'present' },
-    { date: '2025-01-22', status: 'late' },
-    { date: '2025-01-21', status: 'late' },
-    { date: '2025-01-20', status: 'present' },
-    { date: '2025-01-19', status: 'absent' },
-    { date: '2025-01-18', status: 'present' }
-  ];
-  
-  return mockRecords;
+  // Fetch actual attendance records from the database
+  try {
+    // Get all attendance records for this student
+    const allRecords = await storage.getAttendanceByStudent(studentId);
+    
+    // Get all class sessions to map attendance records to dates
+    const sessions = await storage.getAllClassSessions();
+    const sessionMap = new Map(sessions.map(s => [s.id, s]));
+    
+    // Map records to include actual session dates
+    const recordsWithDates = allRecords
+      .map((record: any) => {
+        const session = record.sessionId ? sessionMap.get(record.sessionId) : null;
+        const sessionDate = session?.date || session?.createdAt || record.createdAt || new Date();
+        
+        return {
+          date: sessionDate,
+          status: record.status || 'absent',
+          checkInTime: record.checkInTime,
+          checkOutTime: record.checkOutTime,
+          sessionId: record.sessionId
+        };
+      })
+      .filter((record: any) => record.date); // Remove records without valid dates
+    
+    // If no records found, return empty array (student hasn't attended any classes yet)
+    if (recordsWithDates.length === 0) {
+      return [];
+    }
+    
+    // Filter by date range
+    const filteredRecords = recordsWithDates.filter((record: any) => {
+      const recordDate = new Date(record.date);
+      return recordDate >= since;
+    });
+    
+    // Sort by date descending (most recent first)
+    return filteredRecords.sort((a: any, b: any) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+  } catch (error) {
+    console.error(`Error fetching attendance records for student ${studentId}:`, error);
+    // Return empty array if error occurs
+    return [];
+  }
 }
 
 function calculateConsecutiveAbsences(records: any[]): number {
@@ -155,7 +184,7 @@ function determineBehaviorLevel(attendanceRate: number): AttendanceBehavior['beh
   return 'critical';
 }
 
-export async function checkAllStudentsAttendanceBehavior(): Promise<void> {
+export async function checkAllStudentsAttendanceBehavior(): Promise<{studentsAnalyzed: number; alertsSent: number}> {
   console.log('Starting automated attendance behavior monitoring...');
   
   try {
@@ -200,8 +229,10 @@ export async function checkAllStudentsAttendanceBehavior(): Promise<void> {
     }
     
     console.log(`Attendance monitoring completed. ${alertsSent} alerts sent.`);
+    return { studentsAnalyzed: students.length, alertsSent };
   } catch (error) {
     console.error('Error in attendance behavior monitoring:', error);
+    return { studentsAnalyzed: 0, alertsSent: 0 };
   }
 }
 
@@ -334,6 +365,7 @@ Academic Calendar: https://clsu.edu.ph/calendar`;
 export async function startAttendanceMonitoring(): Promise<void> {
   console.log('⚠️ Automated attendance monitoring is disabled by default');
   console.log('💡 To manually trigger monitoring, use the API endpoint: POST /api/attendance/trigger-monitoring');
+  console.log('📧 Email notifications will be queued and can be sent manually via: POST /api/email/process-queue');
   
   // Automatic monitoring disabled to prevent spam
   // await checkAllStudentsAttendanceBehavior();
@@ -357,4 +389,26 @@ export async function startAttendanceMonitoring(): Promise<void> {
   //     global.gc();
   //   }
   // }, 24 * 60 * 60 * 1000);
+}
+
+// Manual trigger for attendance monitoring (called via API)
+export async function triggerAttendanceMonitoring(): Promise<{success: boolean; studentsAnalyzed: number; alertsQueued: number}> {
+  console.log('📊 Manual attendance monitoring triggered');
+  
+  try {
+    const result = await checkAllStudentsAttendanceBehavior();
+    
+    return {
+      success: true,
+      studentsAnalyzed: result.studentsAnalyzed || 0,
+      alertsQueued: result.alertsSent || 0
+    };
+  } catch (error) {
+    console.error('Error in manual attendance monitoring:', error);
+    return {
+      success: false,
+      studentsAnalyzed: 0,
+      alertsQueued: 0
+    };
+  }
 }

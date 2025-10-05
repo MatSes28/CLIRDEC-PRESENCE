@@ -448,6 +448,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const validatedData = insertScheduleSchema.parse(scheduleData);
       const schedule = await storage.createSchedule(validatedData);
+      
+      // Auto-populate sessions for the entire semester
+      if (scheduleData.autoPopulate !== false) {
+        const { populateScheduleSessions } = await import('./services/scheduleService');
+        const populateResult = await populateScheduleSessions(schedule.id);
+        console.log(`📅 Auto-populated ${populateResult.sessionsCreated} sessions for schedule ${schedule.id}`);
+      }
+      
       res.status(201).json(schedule);
     } catch (error) {
       console.error("Error creating schedule:", error);
