@@ -3,24 +3,48 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { 
   Plus, 
   RefreshCw,
   Monitor,
-  Settings,
-  UserPlus,
-  Wrench
+  UserPlus
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { insertComputerSchema } from "@shared/schema";
+import { z } from "zod";
+
+const addComputerFormSchema = insertComputerSchema.extend({
+  name: z.string().min(1, "Computer name is required"),
+  ipAddress: z.string().min(1, "IP address is required"),
+  classroomId: z.number().min(1, "Please select a classroom"),
+});
+
+type AddComputerForm = z.infer<typeof addComputerFormSchema>;
 
 export default function Computers() {
-  const [selectedClassroom, setSelectedClassroom] = useState<string>("1");
+  const [selectedClassroom, setSelectedClassroom] = useState<string>("");
   const [selectedStudent, setSelectedStudent] = useState<string>("");
   const [selectedComputer, setSelectedComputer] = useState<string>("");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const form = useForm<AddComputerForm>({
+    resolver: zodResolver(addComputerFormSchema),
+    defaultValues: {
+      name: "",
+      ipAddress: "",
+      status: "available",
+      classroomId: 0,
+    },
+  });
 
   const { data: classrooms } = useQuery({
     queryKey: ['/api/classrooms'],
@@ -30,9 +54,32 @@ export default function Computers() {
     queryKey: ['/api/students'],
   });
 
-  const { data: computers, isLoading } = useQuery({
+  const { data: computers, isLoading, refetch } = useQuery({
     queryKey: ['/api/computers', selectedClassroom],
     enabled: !!selectedClassroom,
+  });
+
+  const addComputerMutation = useMutation({
+    mutationFn: async (data: AddComputerForm) => {
+      await apiRequest('POST', '/api/computers', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/computers'] });
+      toast({
+        title: "Computer Added",
+        description: "Computer has been successfully added",
+      });
+      setIsAddDialogOpen(false);
+      form.reset();
+      refetch();
+    },
+    onError: () => {
+      toast({
+        title: "Failed to Add Computer",
+        description: "There was an error adding the computer",
+        variant: "destructive",
+      });
+    },
   });
 
   const assignComputerMutation = useMutation({
@@ -47,6 +94,7 @@ export default function Computers() {
       });
       setSelectedStudent("");
       setSelectedComputer("");
+      refetch();
     },
     onError: () => {
       toast({
@@ -67,6 +115,7 @@ export default function Computers() {
         title: "Computer Released",
         description: "Computer is now available for assignment",
       });
+      refetch();
     },
     onError: () => {
       toast({
@@ -76,20 +125,6 @@ export default function Computers() {
       });
     },
   });
-
-  // Mock computer data for Lab 204
-  const mockComputers = [
-    { id: 1, name: 'PC-01', status: 'occupied', assignedStudent: 'Maria Santos', ipAddress: '192.168.1.101' },
-    { id: 2, name: 'PC-02', status: 'available', assignedStudent: null, ipAddress: '192.168.1.102' },
-    { id: 3, name: 'PC-03', status: 'maintenance', assignedStudent: null, ipAddress: '192.168.1.103' },
-    { id: 4, name: 'PC-04', status: 'occupied', assignedStudent: 'Juan Cruz', ipAddress: '192.168.1.104' },
-    { id: 5, name: 'PC-05', status: 'available', assignedStudent: null, ipAddress: '192.168.1.105' },
-    { id: 6, name: 'PC-06', status: 'available', assignedStudent: null, ipAddress: '192.168.1.106' },
-    { id: 7, name: 'PC-07', status: 'occupied', assignedStudent: 'Anna Lopez', ipAddress: '192.168.1.107' },
-    { id: 8, name: 'PC-08', status: 'available', assignedStudent: null, ipAddress: '192.168.1.108' },
-    { id: 9, name: 'PC-09', status: 'maintenance', assignedStudent: null, ipAddress: '192.168.1.109' },
-    { id: 10, name: 'PC-10', status: 'available', assignedStudent: null, ipAddress: '192.168.1.110' },
-  ];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -126,14 +161,12 @@ export default function Computers() {
     }
   };
 
-  const availableStudents = [
-    { id: 1, name: 'Anna Rodriguez' },
-    { id: 2, name: 'Carlos Mendez' },
-    { id: 3, name: 'Diana Lopez' },
-    { id: 4, name: 'Miguel Santos' },
-  ];
+  const onSubmit = (data: AddComputerForm) => {
+    addComputerMutation.mutate(data);
+  };
 
-  const availableComputers = mockComputers.filter(c => c.status === 'available');
+  const displayComputers = computers || [];
+  const availableComputers = displayComputers.filter((c: any) => c.status === 'available');
 
   return (
     <div className="p-6 space-y-6">
@@ -143,7 +176,7 @@ export default function Computers() {
           <h1 className="text-2xl font-semibold">Laboratory Computer Management</h1>
           <p className="text-muted-foreground">Assign computers to students and monitor usage</p>
         </div>
-        <Button>
+        <Button onClick={() => setIsAddDialogOpen(true)} data-testid="button-add-computer">
           <Plus className="mr-2 h-4 w-4" />
           Add Computer
         </Button>
@@ -155,16 +188,18 @@ export default function Computers() {
           <div className="flex items-center space-x-4">
             <label className="text-sm font-medium">Select Laboratory:</label>
             <Select value={selectedClassroom} onValueChange={setSelectedClassroom}>
-              <SelectTrigger className="w-64">
-                <SelectValue />
+              <SelectTrigger className="w-64" data-testid="select-classroom">
+                <SelectValue placeholder="Select a classroom" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="1">Lab 204 - Database Systems</SelectItem>
-                <SelectItem value="2">Lab 205 - Programming</SelectItem>
-                <SelectItem value="3">Lab 206 - Networks</SelectItem>
+                {classrooms?.map((classroom: any) => (
+                  <SelectItem key={classroom.id} value={classroom.id.toString()}>
+                    {classroom.name} - {classroom.location}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => refetch()} data-testid="button-refresh">
               <RefreshCw className="mr-2 h-4 w-4" />
               Refresh Status
             </Button>
@@ -173,173 +208,279 @@ export default function Computers() {
       </Card>
 
       {/* Computer Layout Grid */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Lab 204 - Computer Layout</CardTitle>
-            <div className="flex items-center space-x-6">
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-secondary rounded"></div>
-                <span className="text-sm text-muted-foreground">Occupied</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-muted-foreground rounded"></div>
-                <span className="text-sm text-muted-foreground">Available</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-destructive rounded"></div>
-                <span className="text-sm text-muted-foreground">Maintenance</span>
+      {selectedClassroom && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>
+                {classrooms?.find((c: any) => c.id.toString() === selectedClassroom)?.name || 'Computer Layout'}
+              </CardTitle>
+              <div className="flex items-center space-x-6">
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 bg-secondary rounded"></div>
+                  <span className="text-sm text-muted-foreground">Occupied</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 bg-muted-foreground rounded"></div>
+                  <span className="text-sm text-muted-foreground">Available</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 bg-destructive rounded"></div>
+                  <span className="text-sm text-muted-foreground">Maintenance</span>
+                </div>
               </div>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {/* Computer grid layout */}
-          <div className="grid grid-cols-5 gap-4 mb-8">
-            {mockComputers.map((computer) => (
-              <div
-                key={computer.id}
-                className={`border-2 rounded-lg p-4 text-center relative ${getStatusColor(computer.status)}`}
-              >
-                <div className="absolute top-2 right-2">
-                  <div className={`w-3 h-3 rounded-full ${getStatusIndicator(computer.status)}`}></div>
-                </div>
-                <Monitor className={`text-2xl mb-2 mx-auto h-8 w-8 ${
-                  computer.status === 'occupied' ? 'text-secondary' :
-                  computer.status === 'maintenance' ? 'text-destructive' : 'text-muted-foreground'
-                }`} />
-                <div className="text-sm font-medium mb-1">{computer.name}</div>
-                <div className="text-xs text-muted-foreground mb-2">
-                  {computer.assignedStudent || 'Available'}
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-xs px-2 py-1 h-auto"
-                  onClick={() => {
-                    if (computer.status === 'occupied') {
-                      // Monitor functionality
-                      toast({
-                        title: "Monitoring",
-                        description: `Monitoring ${computer.name} - ${computer.assignedStudent}`,
-                      });
-                    } else if (computer.status === 'maintenance') {
-                      // Repair functionality
-                      toast({
-                        title: "Maintenance",
-                        description: `${computer.name} is scheduled for repair`,
-                      });
-                    } else {
-                      // Assign functionality
-                      setSelectedComputer(computer.id.toString());
-                    }
-                  }}
-                >
-                  {computer.status === 'occupied' && 'Monitor'}
-                  {computer.status === 'maintenance' && 'Repair'}
-                  {computer.status === 'available' && 'Assign'}
-                </Button>
+          </CardHeader>
+          <CardContent>
+            {/* Computer grid layout */}
+            {isLoading ? (
+              <div className="text-center py-8 text-muted-foreground">Loading computers...</div>
+            ) : displayComputers.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No computers found. Click "Add Computer" to add one.
               </div>
-            ))}
-          </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-5 gap-4 mb-8">
+                  {displayComputers.map((computer: any) => (
+                    <div
+                      key={computer.id}
+                      className={`border-2 rounded-lg p-4 text-center relative ${getStatusColor(computer.status)}`}
+                      data-testid={`computer-${computer.id}`}
+                    >
+                      <div className="absolute top-2 right-2">
+                        <div className={`w-3 h-3 rounded-full ${getStatusIndicator(computer.status)}`}></div>
+                      </div>
+                      <Monitor className={`text-2xl mb-2 mx-auto h-8 w-8 ${
+                        computer.status === 'occupied' ? 'text-secondary' :
+                        computer.status === 'maintenance' ? 'text-destructive' : 'text-muted-foreground'
+                      }`} />
+                      <div className="text-sm font-medium mb-1">{computer.name}</div>
+                      <div className="text-xs text-muted-foreground mb-2">
+                        {computer.assignedStudentName || 'Available'}
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs px-2 py-1 h-auto"
+                        onClick={() => {
+                          if (computer.status === 'occupied') {
+                            releaseComputerMutation.mutate(computer.id);
+                          } else if (computer.status === 'maintenance') {
+                            toast({
+                              title: "Maintenance",
+                              description: `${computer.name} is scheduled for repair`,
+                            });
+                          } else {
+                            setSelectedComputer(computer.id.toString());
+                          }
+                        }}
+                        data-testid={`button-${computer.status}-${computer.id}`}
+                      >
+                        {computer.status === 'occupied' && 'Release'}
+                        {computer.status === 'maintenance' && 'Repair'}
+                        {computer.status === 'available' && 'Assign'}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
 
-          {/* Assignment Panel */}
-          <div className="bg-muted/50 rounded-lg p-6">
-            <h4 className="text-lg font-semibold mb-4">Quick Assignment</h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Student</label>
-                <Select value={selectedStudent} onValueChange={setSelectedStudent}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Student" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableStudents.map((student) => (
-                      <SelectItem key={student.id} value={student.id.toString()}>
-                        {student.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Computer</label>
-                <Select value={selectedComputer} onValueChange={setSelectedComputer}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Computer" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableComputers.map((computer) => (
-                      <SelectItem key={computer.id} value={computer.id.toString()}>
-                        {computer.name} (Available)
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-end">
-                <Button 
-                  className="w-full"
-                  onClick={handleAssignment}
-                  disabled={!selectedStudent || !selectedComputer || assignComputerMutation.isPending}
-                >
-                  {assignComputerMutation.isPending ? (
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <UserPlus className="mr-2 h-4 w-4" />
-                  )}
-                  Assign Computer
-                </Button>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+                {/* Assignment Panel */}
+                <div className="bg-muted/50 rounded-lg p-6">
+                  <h4 className="text-lg font-semibold mb-4">Quick Assignment</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Student</label>
+                      <Select value={selectedStudent} onValueChange={setSelectedStudent}>
+                        <SelectTrigger data-testid="select-student">
+                          <SelectValue placeholder="Select Student" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {students?.map((student: any) => (
+                            <SelectItem key={student.id} value={student.id.toString()}>
+                              {student.firstName} {student.lastName}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Computer</label>
+                      <Select value={selectedComputer} onValueChange={setSelectedComputer}>
+                        <SelectTrigger data-testid="select-computer">
+                          <SelectValue placeholder="Select Computer" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableComputers.map((computer: any) => (
+                            <SelectItem key={computer.id} value={computer.id.toString()}>
+                              {computer.name} (Available)
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-end">
+                      <Button 
+                        className="w-full"
+                        onClick={handleAssignment}
+                        disabled={!selectedStudent || !selectedComputer || assignComputerMutation.isPending}
+                        data-testid="button-assign-computer"
+                      >
+                        {assignComputerMutation.isPending ? (
+                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <UserPlus className="mr-2 h-4 w-4" />
+                        )}
+                        Assign Computer
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Computer Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-center">
-              <p className="text-2xl font-bold">{mockComputers.length}</p>
-              <p className="text-sm text-muted-foreground">Total Computers</p>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-secondary">
-                {mockComputers.filter(c => c.status === 'occupied').length}
-              </p>
-              <p className="text-sm text-muted-foreground">Occupied</p>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-muted-foreground">
-                {mockComputers.filter(c => c.status === 'available').length}
-              </p>
-              <p className="text-sm text-muted-foreground">Available</p>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-destructive">
-                {mockComputers.filter(c => c.status === 'maintenance').length}
-              </p>
-              <p className="text-sm text-muted-foreground">Maintenance</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {selectedClassroom && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-center">
+                <p className="text-2xl font-bold">{displayComputers.length}</p>
+                <p className="text-sm text-muted-foreground">Total Computers</p>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-secondary">
+                  {displayComputers.filter((c: any) => c.status === 'occupied').length}
+                </p>
+                <p className="text-sm text-muted-foreground">Occupied</p>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-muted-foreground">
+                  {displayComputers.filter((c: any) => c.status === 'available').length}
+                </p>
+                <p className="text-sm text-muted-foreground">Available</p>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-destructive">
+                  {displayComputers.filter((c: any) => c.status === 'maintenance').length}
+                </p>
+                <p className="text-sm text-muted-foreground">Maintenance</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Add Computer Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Computer</DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Computer Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., PC-001" {...field} data-testid="input-computer-name" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="ipAddress"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>IP Address</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., 192.168.1.101" {...field} data-testid="input-ip-address" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="classroomId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Classroom</FormLabel>
+                    <Select 
+                      onValueChange={(value) => field.onChange(parseInt(value))} 
+                      value={field.value?.toString()}
+                    >
+                      <FormControl>
+                        <SelectTrigger data-testid="select-computer-classroom">
+                          <SelectValue placeholder="Select a classroom" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {classrooms?.map((classroom: any) => (
+                          <SelectItem key={classroom.id} value={classroom.id.toString()}>
+                            {classroom.name} - {classroom.location}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsAddDialogOpen(false)}
+                  data-testid="button-cancel-add"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={addComputerMutation.isPending}
+                  data-testid="button-submit-computer"
+                >
+                  {addComputerMutation.isPending ? (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      Adding...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Computer
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
