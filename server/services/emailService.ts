@@ -336,7 +336,7 @@ function isValidEmail(email: string): boolean {
   return emailRegex.test(email);
 }
 
-async function sendEmail(params: {
+export async function sendEmail(params: {
   to: string;
   from: string;
   subject: string;
