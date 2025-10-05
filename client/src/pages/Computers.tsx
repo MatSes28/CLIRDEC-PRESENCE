@@ -22,7 +22,7 @@ import { z } from "zod";
 
 const addComputerFormSchema = insertComputerSchema.extend({
   name: z.string().min(1, "Computer name is required"),
-  ipAddress: z.string().min(1, "IP address is required"),
+  ipAddress: z.string().optional(),
   classroomId: z.number().min(1, "Please select a classroom"),
 });
 
@@ -55,7 +55,9 @@ export default function Computers() {
   });
 
   const { data: computers, isLoading, refetch } = useQuery<Computer[]>({
-    queryKey: ['/api/computers', selectedClassroom],
+    queryKey: selectedClassroom 
+      ? [`/api/computers?classroomId=${selectedClassroom}`]
+      : ['/api/computers'],
     enabled: !!selectedClassroom,
   });
 
@@ -169,6 +171,10 @@ export default function Computers() {
   const availableComputers = displayComputers.filter((c) => c.status === 'available');
   const classroomsList = classrooms ?? [];
   const studentsList = students ?? [];
+  
+  const selectedClassroomForForm = form.watch("classroomId");
+  const selectedClassroomData = classroomsList.find(c => c.id === selectedClassroomForForm);
+  const isLaboratory = selectedClassroomData?.type === 'laboratory';
 
   return (
     <div className="p-6 space-y-6">
@@ -412,19 +418,21 @@ export default function Computers() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="ipAddress"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>IP Address</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., 192.168.1.101" {...field} data-testid="input-ip-address" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {!isLaboratory && (
+                <FormField
+                  control={form.control}
+                  name="ipAddress"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>IP Address</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., 192.168.1.101" {...field} data-testid="input-ip-address" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
               <FormField
                 control={form.control}
                 name="classroomId"
