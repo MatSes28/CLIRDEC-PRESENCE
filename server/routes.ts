@@ -1815,11 +1815,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('   📍 Client IP:', clientIP);
     console.log('   🌐 User-Agent:', userAgent?.slice(0, 50) + '...');
     console.log('   📊 Total connections:', wss.clients.size);
+    console.log('   🔌 WebSocket ready state:', ws.readyState);
+    
+    let pingInterval: NodeJS.Timeout | null = null;
     
     ws.on('message', (message) => {
       try {
         const data = JSON.parse(message.toString());
         console.log('📨 WebSocket message received:', data);
+        
+        // Respond to hello/ping messages to keep connection alive
+        if (data.type === 'hello' || data.type === 'ping') {
+          console.log('🔄 Responding to', data.type, 'message');
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+              type: 'pong',
+              timestamp: new Date().toISOString()
+            }));
+          }
+        }
       } catch (error) {
         console.error('❌ Invalid WebSocket message:', error);
       }
@@ -1830,18 +1844,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('   📊 Close code:', code);
       console.log('   📝 Reason:', reason.toString());
       console.log('   📊 Remaining connections:', wss.clients.size);
+      if (pingInterval) clearInterval(pingInterval);
     });
     
     ws.on('error', (error) => {
       console.error('❌ WebSocket connection error:', error);
+      if (pingInterval) clearInterval(pingInterval);
     });
     
     // Set up ping/pong keepalive to maintain connection stability
-    const pingInterval = setInterval(() => {
+    pingInterval = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) {
         ws.ping();
       } else {
-        clearInterval(pingInterval);
+        if (pingInterval) clearInterval(pingInterval);
       }
     }, 30000); // Ping every 30 seconds
 
@@ -1849,15 +1865,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ws.on('pong', () => {
       console.log('📶 Received pong from client');
     });
-
-    // Temporarily disable welcome message to debug connection stability issue
-    // TODO: Re-enable once connection stability is fixed
-    console.log('📤 WebSocket connected successfully (welcome message disabled for debugging)');
     
-    // Clean up ping interval when connection closes
-    ws.on('close', () => {
-      clearInterval(pingInterval);
-    });
+    // Send welcome message after a small delay to ensure connection is fully established
+    setTimeout(() => {
+      if (ws.readyState === WebSocket.OPEN) {
+        try {
+          ws.send(JSON.stringify({
+            type: 'connected',
+            message: 'Connected to CLIRDEC server',
+            timestamp: new Date().toISOString()
+          }));
+          console.log('📤 Sent welcome message to client');
+        } catch (error) {
+          console.error('❌ Error sending welcome message:', error);
+        }
+      } else {
+        console.log('⚠️ Cannot send welcome message - WebSocket not open. State:', ws.readyState);
+      }
+    }, 100);
   });
   
   wss.on('error', (error) => {

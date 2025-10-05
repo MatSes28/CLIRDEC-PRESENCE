@@ -14,6 +14,13 @@ export async function seedDatabase() {
   try {
     console.log("Seeding database with sample data...");
 
+    // Check if database is already seeded
+    const existingAdmin = await storage.getUserByEmail("admin@clsu.edu.ph");
+    if (existingAdmin) {
+      console.log("Database already seeded - skipping seed data");
+      return;
+    }
+
     // Create sample users with hashed passwords
     const adminUser = await storage.createUser({
       email: "admin@clsu.edu.ph",

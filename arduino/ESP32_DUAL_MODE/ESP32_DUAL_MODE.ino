@@ -5,7 +5,7 @@
  * 1. USB_REGISTRATION_MODE: Connects via USB, types RFID UIDs directly into web forms
  * 2. WIFI_ATTENDANCE_MODE: Connects via WiFi, sends real-time attendance data to server
  * 
- * Hardware: ESP32-WROOM-32 with RC522 RFID + HC-SR501 PIR
+ * Hardware: ESP32-WROOM-32 with RC522 RFID + 2x HC-SR04 Ultrasonic Sensors
  * 
  * Pin Connections:
  * RC522 RFID Module:
@@ -17,10 +17,17 @@
  *   SCK -> GPIO 18
  *   SDA -> GPIO 5
  * 
- * HC-SR501 PIR Sensor:
+ * HC-SR04 Ultrasonic Sensor #1 (Entry):
  *   VCC -> 5V
  *   GND -> GND
- *   OUT -> GPIO 4
+ *   TRIG -> GPIO 4
+ *   ECHO -> GPIO 16
+ * 
+ * HC-SR04 Ultrasonic Sensor #2 (Exit):
+ *   VCC -> 5V
+ *   GND -> GND
+ *   TRIG -> GPIO 17
+ *   ECHO -> GPIO 21
  * 
  * Mode Switch:
  *   Push Button -> GPIO 0 (Boot button can be used)
@@ -36,10 +43,17 @@
 // Pin definitions
 #define SS_PIN 5
 #define RST_PIN 22
-#define PIR_PIN 4
 #define LED_PIN 2
 #define MODE_BUTTON_PIN 0  // Boot button
 #define BUZZER_PIN 25
+
+// HC-SR04 Ultrasonic Sensor #1 (Entry)
+#define TRIG_PIN_1 4
+#define ECHO_PIN_1 16
+
+// HC-SR04 Ultrasonic Sensor #2 (Exit)
+#define TRIG_PIN_2 17
+#define ECHO_PIN_2 21
 
 // WiFi credentials (update these)
 const char* ssid = "YOUR_WIFI_SSID";
@@ -74,10 +88,15 @@ String lastUID = "";
 unsigned long lastRFIDTime = 0;
 const unsigned long RFID_COOLDOWN = 2000; // 2 seconds to prevent duplicate reads
 
-// Motion detection
-bool motionDetected = false;
-unsigned long lastMotionTime = 0;
-const unsigned long MOTION_TIMEOUT = 5000; // 5 seconds
+// Ultrasonic sensor detection
+const float DETECTION_DISTANCE = 50.0; // Detect objects within 50cm
+bool entrySensorDetected = false;
+bool exitSensorDetected = false;
+unsigned long lastEntrySensorTime = 0;
+unsigned long lastExitSensorTime = 0;
+const unsigned long SENSOR_TIMEOUT = 3000; // 3 seconds
+float entryDistance = 999.9;
+float exitDistance = 999.9;
 
 // Mode switching
 unsigned long lastModeCheck = 0;
@@ -120,7 +139,7 @@ void loop() {
     // WiFi mode operations
     webSocket.loop();
     checkWiFiConnection();
-    checkPresenceSensor();
+    checkUltrasonicSensors();
     sendHeartbeat();
   }
   
@@ -133,10 +152,19 @@ void setupHardware() {
   rfid.PCD_Init();
   
   // Initialize pins
-  pinMode(PIR_PIN, INPUT);
   pinMode(LED_PIN, OUTPUT);
   pinMode(MODE_BUTTON_PIN, INPUT_PULLUP);
   pinMode(BUZZER_PIN, OUTPUT);
+  
+  // Initialize ultrasonic sensor pins
+  pinMode(TRIG_PIN_1, OUTPUT);
+  pinMode(ECHO_PIN_1, INPUT);
+  pinMode(TRIG_PIN_2, OUTPUT);
+  pinMode(ECHO_PIN_2, INPUT);
+  
+  // Set trigger pins low initially
+  digitalWrite(TRIG_PIN_1, LOW);
+  digitalWrite(TRIG_PIN_2, LOW);
   
   // Test RFID module
   Serial.println("Testing RFID module...");
@@ -149,6 +177,10 @@ void setupHardware() {
   
   // Re-initialize RFID for normal operation
   rfid.PCD_Init();
+  
+  // Test ultrasonic sensors
+  Serial.println("Testing ultrasonic sensors...");
+  testUltrasonicSensors();
   
   // Initialize preferences
   preferences.begin("clirdec", false);
@@ -300,7 +332,10 @@ void handleWiFiRFID(String cardId) {
     doc["deviceId"] = deviceId;
     doc["rfidCardId"] = cardId;
     doc["timestamp"] = millis();
-    doc["presenceDetected"] = motionDetected;
+    doc["entrySensorDetected"] = entrySensorDetected;
+    doc["exitSensorDetected"] = exitSensorDetected;
+    doc["entryDistance"] = entryDistance;
+    doc["exitDistance"] = exitDistance;
     
     String message;
     serializeJson(doc, message);
@@ -386,7 +421,9 @@ void registerDevice() {
   doc["macAddress"] = WiFi.macAddress();
   doc["capabilities"] = JsonArray();
   doc["capabilities"].add("rfid_scan");
-  doc["capabilities"].add("presence_detection");
+  doc["capabilities"].add("entry_detection");
+  doc["capabilities"].add("exit_detection");
+  doc["capabilities"].add("ultrasonic_sensors");
   doc["capabilities"].add("mode_switching");
   
   String message;
@@ -435,21 +472,97 @@ void checkWiFiConnection() {
   }
 }
 
-void checkPresenceSensor() {
-  bool currentMotion = digitalRead(PIR_PIN);
+void testUltrasonicSensors() {
+  // Test entry sensor
+  float dist1 = readDistance(TRIG_PIN_1, ECHO_PIN_1);
+  if (dist1 > 0 && dist1 < 400) {
+    Serial.println("✅ Entry sensor working: " + String(dist1) + " cm");
+  } else {
+    Serial.println("⚠️ Entry sensor may have issues");
+  }
+  
+  delay(100);
+  
+  // Test exit sensor
+  float dist2 = readDistance(TRIG_PIN_2, ECHO_PIN_2);
+  if (dist2 > 0 && dist2 < 400) {
+    Serial.println("✅ Exit sensor working: " + String(dist2) + " cm");
+  } else {
+    Serial.println("⚠️ Exit sensor may have issues");
+  }
+}
+
+float readDistance(int trigPin, int echoPin) {
+  // Clear the trigger pin
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  
+  // Trigger the sensor by sending a 10µs pulse
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  
+  // Read the echo pin, timeout after 30ms (5m range)
+  long duration = pulseIn(echoPin, HIGH, 30000);
+  
+  // Calculate distance in cm (speed of sound is 343m/s or 0.0343cm/µs)
+  // Distance = (duration / 2) * 0.0343
+  float distance = (duration * 0.0343) / 2.0;
+  
+  // Return 999.9 if reading is invalid
+  if (duration == 0) {
+    return 999.9;
+  }
+  
+  return distance;
+}
+
+void checkUltrasonicSensors() {
   unsigned long currentTime = millis();
   
-  if (currentMotion != motionDetected) {
-    motionDetected = currentMotion;
-    lastMotionTime = currentTime;
+  // Read distances from both sensors
+  entryDistance = readDistance(TRIG_PIN_1, ECHO_PIN_1);
+  delay(30); // Small delay between sensor readings
+  exitDistance = readDistance(TRIG_PIN_2, ECHO_PIN_2);
+  
+  // Check entry sensor
+  bool entryDetected = (entryDistance > 0 && entryDistance < DETECTION_DISTANCE);
+  if (entryDetected != entrySensorDetected) {
+    entrySensorDetected = entryDetected;
+    lastEntrySensorTime = currentTime;
     
-    Serial.println("👁️ Motion " + String(motionDetected ? "detected" : "cleared"));
+    Serial.println("🚪 Entry sensor: " + String(entrySensorDetected ? "DETECTED" : "cleared") + 
+                   " (distance: " + String(entryDistance) + " cm)");
     
-    if (isOnline) {
+    if (isOnline && entrySensorDetected) {
       DynamicJsonDocument doc(256);
       doc["type"] = "presence_detected";
       doc["deviceId"] = deviceId;
-      doc["presenceDetected"] = motionDetected;
+      doc["sensorType"] = "entry";
+      doc["distance"] = entryDistance;
+      doc["timestamp"] = currentTime;
+      
+      String message;
+      serializeJson(doc, message);
+      webSocket.sendTXT(message);
+    }
+  }
+  
+  // Check exit sensor
+  bool exitDetected = (exitDistance > 0 && exitDistance < DETECTION_DISTANCE);
+  if (exitDetected != exitSensorDetected) {
+    exitSensorDetected = exitDetected;
+    lastExitSensorTime = currentTime;
+    
+    Serial.println("🚪 Exit sensor: " + String(exitSensorDetected ? "DETECTED" : "cleared") + 
+                   " (distance: " + String(exitDistance) + " cm)");
+    
+    if (isOnline && exitSensorDetected) {
+      DynamicJsonDocument doc(256);
+      doc["type"] = "presence_detected";
+      doc["deviceId"] = deviceId;
+      doc["sensorType"] = "exit";
+      doc["distance"] = exitDistance;
       doc["timestamp"] = currentTime;
       
       String message;
