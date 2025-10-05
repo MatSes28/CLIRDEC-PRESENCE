@@ -593,6 +593,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/computers', requireAdminOrFaculty, async (req, res) => {
     try {
       const computerData = insertComputerSchema.parse(req.body);
+      
+      // Check for duplicate computer name in the same classroom
+      if (computerData.classroomId) {
+        const existingComputers = await storage.getComputersByClassroom(computerData.classroomId);
+        const duplicate = existingComputers.find(c => c.name.toLowerCase() === computerData.name.toLowerCase());
+        
+        if (duplicate) {
+          return res.status(400).json({ message: `Computer "${computerData.name}" already exists in this classroom` });
+        }
+      }
+      
       const computer = await storage.createComputer(computerData);
       res.status(201).json(computer);
     } catch (error) {

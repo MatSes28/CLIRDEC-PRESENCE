@@ -13,7 +13,8 @@ import {
   Plus, 
   RefreshCw,
   Monitor,
-  UserPlus
+  UserPlus,
+  Trash2
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -73,7 +74,8 @@ export default function Computers() {
 
   const addComputerMutation = useMutation({
     mutationFn: async (data: AddComputerForm) => {
-      await apiRequest('POST', '/api/computers', data);
+      const response = await apiRequest('POST', '/api/computers', data);
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/computers'] });
@@ -85,10 +87,19 @@ export default function Computers() {
       form.reset();
       refetch();
     },
-    onError: () => {
+    onError: async (error: any) => {
+      let errorMessage = "There was an error adding the computer";
+      try {
+        const errorText = error.message || "";
+        if (errorText.includes("already exists")) {
+          errorMessage = errorText.split(": ")[1] || errorMessage;
+        }
+      } catch (e) {
+        // Use default error message
+      }
       toast({
         title: "Failed to Add Computer",
-        description: "There was an error adding the computer",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -133,6 +144,27 @@ export default function Computers() {
       toast({
         title: "Release Failed",
         description: "Failed to release computer",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteComputerMutation = useMutation({
+    mutationFn: async (computerId: number) => {
+      await apiRequest('DELETE', `/api/computers/${computerId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/computers'] });
+      toast({
+        title: "Computer Deleted",
+        description: "Computer has been successfully removed",
+      });
+      refetch();
+    },
+    onError: () => {
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete computer",
         variant: "destructive",
       });
     },
@@ -262,8 +294,21 @@ export default function Computers() {
                       className={`border-2 rounded-lg p-4 text-center relative ${getStatusColor(computer.status || 'available')}`}
                       data-testid={`computer-${computer.id}`}
                     >
-                      <div className="absolute top-2 right-2">
+                      <div className="absolute top-2 right-2 flex gap-1">
                         <div className={`w-3 h-3 rounded-full ${getStatusIndicator(computer.status || 'available')}`}></div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-5 w-5 p-0 hover:bg-destructive/10"
+                          onClick={() => {
+                            if (confirm(`Delete ${computer.name}?`)) {
+                              deleteComputerMutation.mutate(computer.id);
+                            }
+                          }}
+                          data-testid={`button-delete-${computer.id}`}
+                        >
+                          <Trash2 className="h-3 w-3 text-destructive" />
+                        </Button>
                       </div>
                       <Monitor className={`text-2xl mb-2 mx-auto h-8 w-8 ${
                         computer.status === 'occupied' ? 'text-secondary' :
