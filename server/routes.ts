@@ -701,12 +701,23 @@ Central Luzon State University
   });
 
   // Computer management routes
-  app.get('/api/computers', requireAdminOrFaculty, async (req, res) => {
+  app.get('/api/computers', requireAdminOrFaculty, async (req: any, res) => {
     try {
       const { classroomId } = req.query;
-      const computers = classroomId 
-        ? await storage.getComputersByClassroom(parseInt(classroomId as string))
-        : await storage.getComputers();
+      const currentUser = req.user;
+      
+      let computers;
+      if (classroomId) {
+        computers = await storage.getComputersByClassroom(parseInt(classroomId as string));
+      } else {
+        computers = await storage.getComputers();
+      }
+      
+      // Faculty only sees their own computers, admin sees all
+      if (currentUser.role !== 'admin') {
+        computers = computers.filter(c => c.professorId === currentUser.id);
+      }
+      
       res.json(computers);
     } catch (error) {
       console.error("Error fetching computers:", error);
@@ -714,14 +725,18 @@ Central Luzon State University
     }
   });
 
-  app.post('/api/computers', requireAdminOrFaculty, async (req, res) => {
+  app.post('/api/computers', requireAdminOrFaculty, async (req: any, res) => {
     try {
-      const computerData = insertComputerSchema.parse(req.body);
+      const professorId = req.user.id;
+      const computerData = insertComputerSchema.parse({ ...req.body, professorId });
       
-      // Check for duplicate computer name in the same classroom
+      // Check for duplicate computer name in the same classroom for this professor
       if (computerData.classroomId) {
         const existingComputers = await storage.getComputersByClassroom(computerData.classroomId);
-        const duplicate = existingComputers.find(c => c.name.toLowerCase() === computerData.name.toLowerCase());
+        const duplicate = existingComputers.find(c => 
+          c.name.toLowerCase() === computerData.name.toLowerCase() && 
+          c.professorId === professorId
+        );
         
         if (duplicate) {
           return res.status(400).json({ message: `Computer "${computerData.name}" already exists in this classroom` });

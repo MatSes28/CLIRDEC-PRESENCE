@@ -157,6 +157,7 @@ export const computers = pgTable("computers", {
   ipAddress: varchar("ip_address"),
   status: varchar("status").default("available"), // available, occupied, maintenance
   assignedStudentId: integer("assigned_student_id").references(() => students.id),
+  professorId: varchar("professor_id").notNull(), // Track which faculty created this computer
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -266,6 +267,10 @@ export const computersRelations = relations(computers, ({ one, many }) => ({
   assignedStudent: one(students, {
     fields: [computers.assignedStudentId],
     references: [students.id],
+  }),
+  professor: one(users, {
+    fields: [computers.professorId],
+    references: [users.id],
   }),
   attendance: many(attendance),
 }));
