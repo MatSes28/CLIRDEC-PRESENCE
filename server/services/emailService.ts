@@ -562,11 +562,12 @@ export async function processEmailQueue(): Promise<void> {
   }
 }
 
-// Start email queue processor (runs every 5 minutes) with error handling
-setInterval(async () => {
-  try {
-    await processEmailQueue();
-  } catch (error) {
-    console.error('Email queue processing failed:', error);
-  }
-}, 5 * 60 * 1000);
+// Automatic email queue processor disabled to prevent spam when API key is invalid
+// To manually process the queue, call processEmailQueue() or trigger via API endpoint
+// setInterval(async () => {
+//   try {
+//     await processEmailQueue();
+//   } catch (error) {
+//     console.error('Email queue processing failed:', error);
+//   }
+// }, 5 * 60 * 1000);
