@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { insertComputerSchema } from "@shared/schema";
+import { insertComputerSchema, type Computer, type Student, type Classroom } from "@shared/schema";
 import { z } from "zod";
 
 const addComputerFormSchema = insertComputerSchema.extend({
@@ -46,15 +46,15 @@ export default function Computers() {
     },
   });
 
-  const { data: classrooms } = useQuery({
+  const { data: classrooms } = useQuery<Classroom[]>({
     queryKey: ['/api/classrooms'],
   });
 
-  const { data: students } = useQuery({
+  const { data: students } = useQuery<Student[]>({
     queryKey: ['/api/students'],
   });
 
-  const { data: computers, isLoading, refetch } = useQuery({
+  const { data: computers, isLoading, refetch } = useQuery<Computer[]>({
     queryKey: ['/api/computers', selectedClassroom],
     enabled: !!selectedClassroom,
   });
@@ -165,8 +165,10 @@ export default function Computers() {
     addComputerMutation.mutate(data);
   };
 
-  const displayComputers = computers || [];
-  const availableComputers = displayComputers.filter((c: any) => c.status === 'available');
+  const displayComputers = computers ?? [];
+  const availableComputers = displayComputers.filter((c) => c.status === 'available');
+  const classroomsList = classrooms ?? [];
+  const studentsList = students ?? [];
 
   return (
     <div className="p-6 space-y-6">
@@ -192,7 +194,7 @@ export default function Computers() {
                 <SelectValue placeholder="Select a classroom" />
               </SelectTrigger>
               <SelectContent>
-                {classrooms?.map((classroom: any) => (
+                {classroomsList.map((classroom) => (
                   <SelectItem key={classroom.id} value={classroom.id.toString()}>
                     {classroom.name} - {classroom.location}
                   </SelectItem>
@@ -213,7 +215,7 @@ export default function Computers() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>
-                {classrooms?.find((c: any) => c.id.toString() === selectedClassroom)?.name || 'Computer Layout'}
+                {classroomsList.find((c) => c.id.toString() === selectedClassroom)?.name || 'Computer Layout'}
               </CardTitle>
               <div className="flex items-center space-x-6">
                 <div className="flex items-center space-x-2">
@@ -242,14 +244,14 @@ export default function Computers() {
             ) : (
               <>
                 <div className="grid grid-cols-5 gap-4 mb-8">
-                  {displayComputers.map((computer: any) => (
+                  {displayComputers.map((computer) => (
                     <div
                       key={computer.id}
-                      className={`border-2 rounded-lg p-4 text-center relative ${getStatusColor(computer.status)}`}
+                      className={`border-2 rounded-lg p-4 text-center relative ${getStatusColor(computer.status || 'available')}`}
                       data-testid={`computer-${computer.id}`}
                     >
                       <div className="absolute top-2 right-2">
-                        <div className={`w-3 h-3 rounded-full ${getStatusIndicator(computer.status)}`}></div>
+                        <div className={`w-3 h-3 rounded-full ${getStatusIndicator(computer.status || 'available')}`}></div>
                       </div>
                       <Monitor className={`text-2xl mb-2 mx-auto h-8 w-8 ${
                         computer.status === 'occupied' ? 'text-secondary' :
@@ -257,7 +259,7 @@ export default function Computers() {
                       }`} />
                       <div className="text-sm font-medium mb-1">{computer.name}</div>
                       <div className="text-xs text-muted-foreground mb-2">
-                        {computer.assignedStudentName || 'Available'}
+                        {(computer as any).assignedStudentName || 'Available'}
                       </div>
                       <Button
                         size="sm"
@@ -296,7 +298,7 @@ export default function Computers() {
                           <SelectValue placeholder="Select Student" />
                         </SelectTrigger>
                         <SelectContent>
-                          {students?.map((student: any) => (
+                          {studentsList.map((student) => (
                             <SelectItem key={student.id} value={student.id.toString()}>
                               {student.firstName} {student.lastName}
                             </SelectItem>
@@ -311,7 +313,7 @@ export default function Computers() {
                           <SelectValue placeholder="Select Computer" />
                         </SelectTrigger>
                         <SelectContent>
-                          {availableComputers.map((computer: any) => (
+                          {availableComputers.map((computer) => (
                             <SelectItem key={computer.id} value={computer.id.toString()}>
                               {computer.name} (Available)
                             </SelectItem>
@@ -358,7 +360,7 @@ export default function Computers() {
             <CardContent className="p-6">
               <div className="text-center">
                 <p className="text-2xl font-bold text-secondary">
-                  {displayComputers.filter((c: any) => c.status === 'occupied').length}
+                  {displayComputers.filter((c) => c.status === 'occupied').length}
                 </p>
                 <p className="text-sm text-muted-foreground">Occupied</p>
               </div>
@@ -369,7 +371,7 @@ export default function Computers() {
             <CardContent className="p-6">
               <div className="text-center">
                 <p className="text-2xl font-bold text-muted-foreground">
-                  {displayComputers.filter((c: any) => c.status === 'available').length}
+                  {displayComputers.filter((c) => c.status === 'available').length}
                 </p>
                 <p className="text-sm text-muted-foreground">Available</p>
               </div>
@@ -380,7 +382,7 @@ export default function Computers() {
             <CardContent className="p-6">
               <div className="text-center">
                 <p className="text-2xl font-bold text-destructive">
-                  {displayComputers.filter((c: any) => c.status === 'maintenance').length}
+                  {displayComputers.filter((c) => c.status === 'maintenance').length}
                 </p>
                 <p className="text-sm text-muted-foreground">Maintenance</p>
               </div>
@@ -439,7 +441,7 @@ export default function Computers() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {classrooms?.map((classroom: any) => (
+                        {classroomsList.map((classroom) => (
                           <SelectItem key={classroom.id} value={classroom.id.toString()}>
                             {classroom.name} - {classroom.location}
                           </SelectItem>
