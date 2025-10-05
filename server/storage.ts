@@ -364,11 +364,14 @@ export class MemStorage implements IStorage {
     const newSession: ClassSession = { 
       ...session, 
       id: this.nextId++, 
-      professorId: session.professorId || null,
-      startTime: session.startTime || null,
-      endTime: session.endTime || null,
-      scheduleId: session.scheduleId || null,
-      status: session.status || null,
+      professorId: session.professorId ?? null,
+      startTime: session.startTime ?? null,
+      endTime: session.endTime ?? null,
+      scheduleId: session.scheduleId ?? null,
+      status: session.status ?? null,
+      attendanceMode: session.attendanceMode ?? null,
+      lateThresholdMinutes: session.lateThresholdMinutes ?? null,
+      absentThresholdPercent: session.absentThresholdPercent ?? null,
       createdAt: new Date() 
     };
     this.classSessions.set(newSession.id, newSession);
@@ -399,13 +402,19 @@ export class MemStorage implements IStorage {
     const newAttendance: Attendance = { 
       ...attendance, 
       id: this.nextId++, 
-      studentId: attendance.studentId || null,
-      sessionId: attendance.sessionId || null,
-      status: attendance.status || null,
-      checkInTime: attendance.checkInTime || null,
-      checkOutTime: attendance.checkOutTime || null,
+      studentId: attendance.studentId ?? null,
+      sessionId: attendance.sessionId ?? null,
+      status: attendance.status ?? null,
+      checkInTime: attendance.checkInTime ?? null,
+      checkOutTime: attendance.checkOutTime ?? null,
       proximityValidated: attendance.proximityValidated ?? null,
-      computerId: attendance.computerId || null,
+      computerId: attendance.computerId ?? null,
+      entryValidated: attendance.entryValidated ?? null,
+      exitValidated: attendance.exitValidated ?? null,
+      discrepancyFlag: attendance.discrepancyFlag ?? null,
+      rfidTapTime: attendance.rfidTapTime ?? null,
+      validationTimeout: attendance.validationTimeout ?? null,
+      sensorDetectionTime: attendance.sensorDetectionTime ?? null,
       createdAt: new Date(), 
       updatedAt: new Date() 
     };
@@ -541,8 +550,9 @@ export class MemStorage implements IStorage {
     const newEnrollment: Enrollment = {
       ...enrollment,
       id: this.nextId++,
-      enrolledAt: enrollment.enrolledAt || new Date(),
-      droppedAt: enrollment.droppedAt || null,
+      status: enrollment.status ?? null,
+      enrolledAt: enrollment.enrolledAt ?? new Date(),
+      droppedAt: enrollment.droppedAt ?? null,
       isActive: enrollment.isActive ?? true,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -607,6 +617,7 @@ export class DbStorage implements IStorage {
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
+    if (!db) throw new Error("Database not available");
     const [user] = await db
       .insert(users)
       .values(userData)
@@ -623,25 +634,30 @@ export class DbStorage implements IStorage {
 
   // Student operations
   async getStudents(): Promise<Student[]> {
+    if (!db) throw new Error("Database not available");
     return await db.select().from(students).where(eq(students.isActive, true)).orderBy(asc(students.lastName));
   }
 
   async getStudent(id: number): Promise<Student | undefined> {
+    if (!db) throw new Error("Database not available");
     const [student] = await db.select().from(students).where(eq(students.id, id));
     return student;
   }
 
   async getStudentByRFID(rfidCardId: string): Promise<Student | undefined> {
+    if (!db) throw new Error("Database not available");
     const [student] = await db.select().from(students).where(eq(students.rfidCardId, rfidCardId));
     return student;
   }
 
   async createStudent(student: InsertStudent): Promise<Student> {
+    if (!db) throw new Error("Database not available");
     const [newStudent] = await db.insert(students).values(student).returning();
     return newStudent;
   }
 
   async updateStudent(id: number, student: Partial<InsertStudent>): Promise<Student> {
+    if (!db) throw new Error("Database not available");
     const [updatedStudent] = await db
       .update(students)
       .set({ ...student, updatedAt: new Date() })
@@ -651,25 +667,30 @@ export class DbStorage implements IStorage {
   }
 
   async deleteStudent(id: number): Promise<void> {
+    if (!db) throw new Error("Database not available");
     await db.update(students).set({ isActive: false }).where(eq(students.id, id));
   }
 
   // Classroom operations
   async getClassrooms(): Promise<Classroom[]> {
+    if (!db) throw new Error("Database not available");
     return await db.select().from(classrooms).where(eq(classrooms.isActive, true)).orderBy(asc(classrooms.name));
   }
 
   async getClassroom(id: number): Promise<Classroom | undefined> {
+    if (!db) throw new Error("Database not available");
     const [classroom] = await db.select().from(classrooms).where(eq(classrooms.id, id));
     return classroom;
   }
 
   async createClassroom(classroom: InsertClassroom): Promise<Classroom> {
+    if (!db) throw new Error("Database not available");
     const [newClassroom] = await db.insert(classrooms).values(classroom).returning();
     return newClassroom;
   }
 
   async updateClassroom(id: number, classroom: Partial<InsertClassroom>): Promise<Classroom> {
+    if (!db) throw new Error("Database not available");
     const [updatedClassroom] = await db
       .update(classrooms)
       .set(classroom)
@@ -680,24 +701,29 @@ export class DbStorage implements IStorage {
 
   // Subject operations
   async getSubjects(): Promise<Subject[]> {
+    if (!db) throw new Error("Database not available");
     return await db.select().from(subjects).orderBy(asc(subjects.name));
   }
 
   async getSubjectsByProfessor(professorId: string): Promise<Subject[]> {
+    if (!db) throw new Error("Database not available");
     return await db.select().from(subjects).where(eq(subjects.professorId, professorId)).orderBy(asc(subjects.name));
   }
 
   async getSubjectByName(name: string): Promise<Subject | null> {
+    if (!db) throw new Error("Database not available");
     const result = await db.select().from(subjects).where(eq(subjects.name, name)).limit(1);
     return result.length > 0 ? result[0] : null;
   }
 
   async createSubject(subject: InsertSubject): Promise<Subject> {
+    if (!db) throw new Error("Database not available");
     const [newSubject] = await db.insert(subjects).values(subject).returning();
     return newSubject;
   }
 
   async updateSubject(id: number, subject: Partial<InsertSubject>): Promise<Subject> {
+    if (!db) throw new Error("Database not available");
     const [updatedSubject] = await db
       .update(subjects)
       .set(subject)
@@ -707,15 +733,18 @@ export class DbStorage implements IStorage {
   }
 
   async deleteSubject(id: number): Promise<void> {
+    if (!db) throw new Error("Database not available");
     await db.delete(subjects).where(eq(subjects.id, id));
   }
 
   // Schedule operations
   async getSchedules(): Promise<Schedule[]> {
+    if (!db) throw new Error("Database not available");
     return await db.select().from(schedules).where(eq(schedules.isActive, true)).orderBy(asc(schedules.dayOfWeek), asc(schedules.startTime));
   }
 
   async getSchedulesByProfessor(professorId: string): Promise<Schedule[]> {
+    if (!db) throw new Error("Database not available");
     return await db
       .select()
       .from(schedules)
@@ -724,11 +753,13 @@ export class DbStorage implements IStorage {
   }
 
   async createSchedule(schedule: InsertSchedule): Promise<Schedule> {
+    if (!db) throw new Error("Database not available");
     const [newSchedule] = await db.insert(schedules).values(schedule).returning();
     return newSchedule;
   }
 
   async updateSchedule(id: number, schedule: Partial<InsertSchedule>): Promise<Schedule> {
+    if (!db) throw new Error("Database not available");
     const [updatedSchedule] = await db
       .update(schedules)
       .set(schedule)
@@ -738,11 +769,13 @@ export class DbStorage implements IStorage {
   }
 
   async deleteSchedule(id: number): Promise<void> {
+    if (!db) throw new Error("Database not available");
     await db.delete(schedules).where(eq(schedules.id, id));
   }
 
   // Class session operations
   async getActiveSession(professorId: string): Promise<ClassSession | undefined> {
+    if (!db) throw new Error("Database not available");
     const [session] = await db
       .select()
       .from(sessions_class)
@@ -752,11 +785,13 @@ export class DbStorage implements IStorage {
   }
 
   async createClassSession(session: InsertClassSession): Promise<ClassSession> {
+    if (!db) throw new Error("Database not available");
     const [newSession] = await db.insert(sessions_class).values(session).returning();
     return newSession;
   }
 
   async updateClassSession(id: number, session: Partial<InsertClassSession>): Promise<ClassSession> {
+    if (!db) throw new Error("Database not available");
     const [updatedSession] = await db
       .update(sessions_class)
       .set(session)
@@ -766,6 +801,7 @@ export class DbStorage implements IStorage {
   }
 
   async getActiveClassSessions(): Promise<ClassSession[]> {
+    if (!db) throw new Error("Database not available");
     return await db
       .select()
       .from(sessions_class)
@@ -774,6 +810,7 @@ export class DbStorage implements IStorage {
   }
 
   async getAllClassSessions(): Promise<ClassSession[]> {
+    if (!db) throw new Error("Database not available");
     return await db
       .select()
       .from(sessions_class)
@@ -781,6 +818,7 @@ export class DbStorage implements IStorage {
   }
 
   async getClassSessionsByDate(date: Date): Promise<ClassSession[]> {
+    if (!db) throw new Error("Database not available");
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(date);
@@ -795,15 +833,18 @@ export class DbStorage implements IStorage {
 
   // Attendance operations
   async getAttendanceBySession(sessionId: number): Promise<Attendance[]> {
+    if (!db) throw new Error("Database not available");
     return await db.select().from(attendance).where(eq(attendance.sessionId, sessionId)).orderBy(desc(attendance.checkInTime));
   }
 
   async createAttendance(attendanceRecord: InsertAttendance): Promise<Attendance> {
+    if (!db) throw new Error("Database not available");
     const [newAttendance] = await db.insert(attendance).values(attendanceRecord).returning();
     return newAttendance;
   }
 
   async updateAttendance(id: number, attendanceRecord: Partial<InsertAttendance>): Promise<Attendance> {
+    if (!db) throw new Error("Database not available");
     const [updatedAttendance] = await db
       .update(attendance)
       .set({ ...attendanceRecord, updatedAt: new Date() })
@@ -813,6 +854,7 @@ export class DbStorage implements IStorage {
   }
 
   async checkStudentAttendance(studentId: number, sessionId: number): Promise<Attendance | undefined> {
+    if (!db) throw new Error("Database not available");
     const [attendanceRecord] = await db
       .select()
       .from(attendance)
@@ -822,10 +864,12 @@ export class DbStorage implements IStorage {
 
   // Computer operations
   async getComputers(): Promise<Computer[]> {
+    if (!db) throw new Error("Database not available");
     return await db.select().from(computers).where(eq(computers.isActive, true)).orderBy(asc(computers.name));
   }
 
   async getComputersByClassroom(classroomId: number): Promise<Computer[]> {
+    if (!db) throw new Error("Database not available");
     return await db
       .select()
       .from(computers)
@@ -834,11 +878,13 @@ export class DbStorage implements IStorage {
   }
 
   async createComputer(computer: InsertComputer): Promise<Computer> {
+    if (!db) throw new Error("Database not available");
     const [newComputer] = await db.insert(computers).values(computer).returning();
     return newComputer;
   }
 
   async updateComputer(id: number, computer: Partial<InsertComputer>): Promise<Computer> {
+    if (!db) throw new Error("Database not available");
     const [updatedComputer] = await db
       .update(computers)
       .set(computer)
@@ -848,10 +894,12 @@ export class DbStorage implements IStorage {
   }
 
   async deleteComputer(id: number): Promise<void> {
+    if (!db) throw new Error("Database not available");
     await db.delete(computers).where(eq(computers.id, id));
   }
 
   async assignComputerToStudent(computerId: number, studentId: number): Promise<Computer> {
+    if (!db) throw new Error("Database not available");
     const [updatedComputer] = await db
       .update(computers)
       .set({ assignedStudentId: studentId, status: "occupied" })
@@ -861,6 +909,7 @@ export class DbStorage implements IStorage {
   }
 
   async releaseComputer(computerId: number): Promise<Computer> {
+    if (!db) throw new Error("Database not available");
     const [updatedComputer] = await db
       .update(computers)
       .set({ assignedStudentId: null, status: "available" })
@@ -871,15 +920,18 @@ export class DbStorage implements IStorage {
 
   // Email notification operations
   async createEmailNotification(notification: InsertEmailNotification): Promise<EmailNotification> {
+    if (!db) throw new Error("Database not available");
     const [newNotification] = await db.insert(emailNotifications).values(notification).returning();
     return newNotification;
   }
 
   async getUnsentNotifications(): Promise<EmailNotification[]> {
+    if (!db) throw new Error("Database not available");
     return await db.select().from(emailNotifications).where(eq(emailNotifications.status, "pending")).orderBy(asc(emailNotifications.createdAt));
   }
 
   async markNotificationAsSent(id: number): Promise<void> {
+    if (!db) throw new Error("Database not available");
     await db
       .update(emailNotifications)
       .set({ status: "sent", sentAt: new Date() })
@@ -888,11 +940,13 @@ export class DbStorage implements IStorage {
 
   // System settings operations
   async getSystemSetting(key: string): Promise<SystemSetting | undefined> {
+    if (!db) throw new Error("Database not available");
     const [setting] = await db.select().from(systemSettings).where(eq(systemSettings.key, key));
     return setting;
   }
 
   async setSystemSetting(key: string, value: string, description?: string): Promise<SystemSetting> {
+    if (!db) throw new Error("Database not available");
     const [setting] = await db
       .insert(systemSettings)
       .values({ key, value, description, updatedAt: new Date() })
