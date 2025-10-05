@@ -113,6 +113,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Forgot password route - sends password reset request to IT support
+  app.post('/api/forgot-password', async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      // Check if user exists (but don't reveal this in response for security)
+      const user = await storage.getUserByEmail(email);
+      
+      if (user) {
+        // Send email to IT support to handle password reset manually
+        const FROM_EMAIL = process.env.FROM_EMAIL || "matt.feria@clsu2.edu.ph";
+        const SUPPORT_EMAIL = "support@clsu.edu.ph";
+        
+        const resetEmailHtml = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #2596be; color: white; padding: 20px; text-align: center;">
+              <h1>CLIRDEC: PRESENCE</h1>
+              <p>Password Reset Request</p>
+            </div>
+            <div style="padding: 20px; background-color: #f9f9f9;">
+              <h2 style="color: #2596be;">Password Reset Request</h2>
+              <p>A password reset has been requested for the following account:</p>
+              <div style="background-color: white; padding: 15px; border-left: 4px solid #2596be; margin: 20px 0;">
+                <p><strong>Email:</strong> ${email}</p>
+                <p><strong>Name:</strong> ${user.firstName} ${user.lastName}</p>
+                <p><strong>Role:</strong> ${user.role}</p>
+                <p><strong>Request Time:</strong> ${new Date().toLocaleString()}</p>
+              </div>
+              <p>Please contact the user to verify their identity and manually reset their password in the admin panel.</p>
+              <p><strong>Next Steps:</strong></p>
+              <ol>
+                <li>Verify the user's identity through official channels</li>
+                <li>Login to the CLIRDEC admin panel</li>
+                <li>Navigate to User Management</li>
+                <li>Update the user's password</li>
+                <li>Inform the user of their new temporary password</li>
+              </ol>
+              <p>If you did not expect this request, please ignore this email or contact the system administrator.</p>
+              <p>Best regards,<br>CLIRDEC: PRESENCE System<br>Department of Information Technology<br>Central Luzon State University</p>
+            </div>
+          </div>
+        `;
+
+        const resetEmailText = `
+CLIRDEC: PRESENCE - Password Reset Request
+
+A password reset has been requested for the following account:
+
+Email: ${email}
+Name: ${user.firstName} ${user.lastName}
+Role: ${user.role}
+Request Time: ${new Date().toLocaleString()}
+
+Please contact the user to verify their identity and manually reset their password in the admin panel.
+
+Next Steps:
+1. Verify the user's identity through official channels
+2. Login to the CLIRDEC admin panel
+3. Navigate to User Management
+4. Update the user's password
+5. Inform the user of their new temporary password
+
+If you did not expect this request, please ignore this email or contact the system administrator.
+
+Best regards,
+CLIRDEC: PRESENCE System
+Department of Information Technology
+Central Luzon State University
+        `;
+
+        // Send email to IT support
+        const { sendEmail } = await import('./services/emailService');
+        try {
+          await sendEmail({
+            to: SUPPORT_EMAIL,
+            from: FROM_EMAIL,
+            subject: `Password Reset Request - ${email}`,
+            html: resetEmailHtml,
+            text: resetEmailText
+          });
+          console.log(`Password reset request sent to IT support for ${email}`);
+        } catch (emailError) {
+          console.error("Failed to send password reset email:", emailError);
+          // Don't reveal the error to the user
+        }
+      }
+      
+      // Always return success for security (don't reveal if email exists)
+      res.json({ 
+        success: true, 
+        message: "If an account exists with this email, a password reset request has been sent to IT support. You will be contacted shortly." 
+      });
+    } catch (error) {
+      console.error("Error processing forgot password request:", error);
+      res.status(500).json({ message: "Failed to process password reset request" });
+    }
+  });
+
 
 
   // Role-based dashboard statistics
