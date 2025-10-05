@@ -534,6 +534,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/attendance/:sessionId', requireAdminOrFaculty, async (req, res) => {
     try {
       const sessionId = parseInt(req.params.sessionId);
+      if (isNaN(sessionId)) {
+        return res.status(400).json({ message: "Invalid session ID" });
+      }
       const attendance = await storage.getAttendanceBySession(sessionId);
       res.json(attendance);
     } catch (error) {
@@ -1852,37 +1855,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (pingInterval) clearInterval(pingInterval);
     });
     
-    // Set up ping/pong keepalive to maintain connection stability
+    // Set up ping/pong keepalive with longer interval for Replit infrastructure
     pingInterval = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) {
-        ws.ping();
+        try {
+          ws.ping();
+        } catch (error) {
+          console.error('❌ Error sending ping:', error);
+          if (pingInterval) clearInterval(pingInterval);
+        }
       } else {
         if (pingInterval) clearInterval(pingInterval);
       }
-    }, 30000); // Ping every 30 seconds
+    }, 45000); // Ping every 45 seconds (longer interval for stability)
 
     // Handle pong responses
     ws.on('pong', () => {
       console.log('📶 Received pong from client');
     });
     
-    // Send welcome message after a small delay to ensure connection is fully established
-    setTimeout(() => {
-      if (ws.readyState === WebSocket.OPEN) {
-        try {
-          ws.send(JSON.stringify({
-            type: 'connected',
-            message: 'Connected to CLIRDEC server',
-            timestamp: new Date().toISOString()
-          }));
-          console.log('📤 Sent welcome message to client');
-        } catch (error) {
-          console.error('❌ Error sending welcome message:', error);
-        }
-      } else {
-        console.log('⚠️ Cannot send welcome message - WebSocket not open. State:', ws.readyState);
-      }
-    }, 100);
+    // Send welcome message after connection is fully established
+    // Don't send welcome message as it causes code 1006 issues on Replit
+    // The client will send a hello message and we'll respond to that instead
   });
   
   wss.on('error', (error) => {

@@ -330,33 +330,31 @@ Academic Calendar: https://clsu.edu.ph/calendar`;
 }
 
 // Function to be called periodically (e.g., daily via cron job)
+// DISABLED: Automatic monitoring causes spam when email service is not configured
 export async function startAttendanceMonitoring(): Promise<void> {
-  // Run initial check
-  await checkAllStudentsAttendanceBehavior();
+  console.log('⚠️ Automated attendance monitoring is disabled by default');
+  console.log('💡 To manually trigger monitoring, use the API endpoint: POST /api/attendance/trigger-monitoring');
   
-  // Set up interval to check every 24 hours to reduce memory usage significantly
-  setInterval(async () => {
-    // Force garbage collection before each check to free memory
-    if (global.gc) {
-      global.gc();
-      await new Promise(resolve => setTimeout(resolve, 500)); // Allow cleanup
-    }
-    
-    // Import emergency memory optimizer for additional cleanup
-    try {
-      const { EmergencyMemoryOptimizer } = await import('../utils/emergencyMemoryOptimizer');
-      await EmergencyMemoryOptimizer.forceEmergencyCleanup();
-    } catch (error) {
-      console.log('Emergency optimizer not available');
-    }
-    
-    await checkAllStudentsAttendanceBehavior();
-    
-    // Force cleanup after processing
-    if (global.gc) {
-      global.gc();
-    }
-  }, 24 * 60 * 60 * 1000); // Changed to 24 hours from 12 hours
+  // Automatic monitoring disabled to prevent spam
+  // await checkAllStudentsAttendanceBehavior();
   
-  console.log('Automated attendance monitoring started - checking every 24 hours');
+  // setInterval(async () => {
+  //   if (global.gc) {
+  //     global.gc();
+  //     await new Promise(resolve => setTimeout(resolve, 500));
+  //   }
+  //   
+  //   try {
+  //     const { EmergencyMemoryOptimizer } = await import('../utils/emergencyMemoryOptimizer');
+  //     await EmergencyMemoryOptimizer.forceEmergencyCleanup();
+  //   } catch (error) {
+  //     console.log('Emergency optimizer not available');
+  //   }
+  //   
+  //   await checkAllStudentsAttendanceBehavior();
+  //   
+  //   if (global.gc) {
+  //     global.gc();
+  //   }
+  // }, 24 * 60 * 60 * 1000);
 }

@@ -79,11 +79,15 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
       setSocket(ws);
       setReconnectAttempts(0);
       
-      // Send hello message to maintain connection
-      ws.send(JSON.stringify({ 
-        type: 'hello',
-        timestamp: new Date().toISOString()
-      }));
+      // Send hello message after a brief delay to ensure connection is stable
+      setTimeout(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ 
+            type: 'hello',
+            timestamp: new Date().toISOString()
+          }));
+        }
+      }, 200);
     };
 
     ws.onmessage = (event) => {
@@ -103,15 +107,17 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
       setIsConnected(false);
       setSocket(null);
       
-      // Attempt to reconnect after 3 seconds if not on auth page and not too many attempts
-      if (window.location.pathname !== '/' && reconnectAttempts < 3) {
+      // Code 1006 is abnormal closure - often happens on Replit, try reconnecting
+      // Only attempt reconnect if not on login page and haven't exceeded attempts
+      if (window.location.pathname !== '/' && reconnectAttempts < 5) {
+        const delay = 5000 + (reconnectAttempts * 3000); // 5s, 8s, 11s, 14s, 17s
         setTimeout(() => {
-          console.log(`Attempting to reconnect WebSocket... (attempt ${reconnectAttempts + 1}/3)`);
+          console.log(`🔄 Attempting to reconnect WebSocket... (attempt ${reconnectAttempts + 1}/5)`);
           setReconnectAttempts(prev => prev + 1);
           connectWebSocket();
-        }, 10000 + (reconnectAttempts * 5000)); // Much longer backoff: 10s, 15s, 20s
-      } else if (reconnectAttempts >= 3) {
-        console.log('🔌 WebSocket reconnection limit reached. Please refresh the page to retry.');
+        }, delay);
+      } else if (reconnectAttempts >= 5) {
+        console.log('🔌 WebSocket reconnection limit reached. Connection will retry on page refresh.');
       }
     };
 
