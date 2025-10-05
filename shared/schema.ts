@@ -11,10 +11,10 @@ import {
   time,
   decimal
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { z } from "zod";
-import { randomUUID } from "crypto";
 
 // Session storage table - required for Replit Auth
 export const sessions = pgTable(
@@ -29,7 +29,7 @@ export const sessions = pgTable(
 
 // User/Professor storage table
 export const users = pgTable("users", {
-  id: varchar("id").primaryKey().notNull().$defaultFn(() => randomUUID()),
+  id: varchar("id").primaryKey().notNull().default(sql`gen_random_uuid()`),
   email: varchar("email").unique().notNull(),
   password: varchar("password").notNull(),
   firstName: varchar("first_name").notNull(),
