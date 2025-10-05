@@ -50,7 +50,7 @@
 // ========== CONFIGURATION - UPDATE THESE ==========
 const char* ssid = "Kupal kaba boss?";           // Your WiFi network name
 const char* password = "MatMir@12030908";    // Your WiFi password
-const char* serverHost = "clirdec-presence.replit.app";  // Your Replit app URL (without https://)
+const char* serverHost = "03e2bce6-b0a5-4306-b014-9edab35e528e-00-2gnxw5t0zy3c8.sisko.replit.dev/";  // Your Replit app URL (without https://)
 // ==================================================
 
 // RFID Pin Configuration
