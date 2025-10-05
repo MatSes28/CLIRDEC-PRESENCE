@@ -13,15 +13,16 @@
  * - Ghost tap detection (RFID without physical presence)
  * - Session-based attendance tracking
  * 
+ /*
  * WIRING DIAGRAM:
  * ===============
  * 
  * RC522 RFID Module → ESP32-S3:
  * VCC  → 3.3V
- * RST  → GPIO 22
+ * RST  → GPIO 4
  * GND  → GND
- * MISO → GPIO 19
- * MOSI → GPIO 23
+ * MISO → GPIO 11
+ * MOSI → GPIO 10
  * SCK  → GPIO 18
  * SDA  → GPIO 21
  * 
@@ -34,10 +35,10 @@
  * HC-SR04 Sensor #2 (EXIT) → ESP32-S3:
  * VCC  → 5V
  * GND  → GND
- * Trig → GPIO 25
- * Echo → GPIO 26
+ * Trig → GPIO 9
+ * Echo → GPIO 46
  * 
- * Built-in LED → GPIO 2
+ * Built-in LED → GPIO 5
  */
 
 #include <WiFi.h>
@@ -47,13 +48,13 @@
 #include <MFRC522.h>
 
 // ========== CONFIGURATION - UPDATE THESE ==========
-const char* ssid = "YOUR_WIFI_SSID";           // Your WiFi network name
-const char* password = "YOUR_WIFI_PASSWORD";    // Your WiFi password
-const char* serverHost = "YOUR_REPLIT_URL.replit.dev";  // Your Replit app URL (without https://)
+const char* ssid = "Kupal kaba boss?";           // Your WiFi network name
+const char* password = "MatMir@12030908";    // Your WiFi password
+const char* serverHost = "clirdec-presence.replit.app";  // Your Replit app URL (without https://)
 // ==================================================
 
 // RFID Pin Configuration
-#define RST_PIN         22
+#define RST_PIN         4
 #define SS_PIN          21
 
 // HC-SR04 Entry Sensor (Sensor 1)
@@ -61,12 +62,12 @@ const char* serverHost = "YOUR_REPLIT_URL.replit.dev";  // Your Replit app URL (
 #define ENTRY_ECHO_PIN  13
 
 // HC-SR04 Exit Sensor (Sensor 2)  
-#define EXIT_TRIG_PIN   25
-#define EXIT_ECHO_PIN   26
+#define EXIT_TRIG_PIN   9
+#define EXIT_ECHO_PIN   46
 
 // LED & Buzzer
-#define LED_PIN         2
-#define BUZZER_PIN      4
+#define LED_PIN         5
+#define BUZZER_PIN      7
 
 // Sensor Configuration
 #define PRESENCE_THRESHOLD_CM   50    // Distance threshold (cm)
