@@ -40,8 +40,8 @@ class AutoRFIDService:
         
         # Browser detection
         self.target_urls = [
-            'localhost:5000',
-            '127.0.0.1:5000', 
+            'localhost:5432',
+            '127.0.0.1:5432',
             'clirdec',
             'student',
             'registration'

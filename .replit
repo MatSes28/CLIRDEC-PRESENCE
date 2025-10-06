@@ -12,7 +12,7 @@ build = ["npm", "run", "build"]
 run = ["npm", "run", "start"]
 
 [[ports]]
-localPort = 5000
+localPort = 5432
 externalPort = 80
 
 [[ports]]
@@ -54,7 +54,7 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run dev"
-waitForPort = 5000
+waitForPort = 5432
 
 [agent]
 integrations = ["javascript_log_in_with_replit:1.0.0"]

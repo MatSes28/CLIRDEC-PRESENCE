@@ -228,7 +228,7 @@ void initWebSocket() {
   
   webSocket.beginSSL(websocket_server, websocket_port, websocket_path);
   webSocket.onEvent(webSocketEvent);
-  webSocket.setReconnectInterval(5000);
+  webSocket.setReconnectInterval(5432);
   
   Serial.println("WebSocket connection initiated");
 }
@@ -347,7 +347,7 @@ bool checkRFID() {
   uid.toUpperCase();
   
   // Check if same card as last read
-  if (uid == lastUID && (now - lastRFIDTime) < 5000) {
+  if (uid == lastUID && (now - lastRFIDTime) < 5432) {
     return false;
   }
   
