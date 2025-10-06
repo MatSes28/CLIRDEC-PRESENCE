@@ -46,7 +46,7 @@ export async function setupAuth(app: Express) {
   });
 
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET!,
+    secret: process.env.SESSION_SECRET || 'default-secret-change-in-production',
     resave: false,
     saveUninitialized: false,
     store: sessionStore,
