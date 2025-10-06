@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 from datetime import datetime, date, timedelta
 from typing import List, Optional
 
-from models import Student, Classroom, Subject, Schedule, ClassSession, AttendanceRecord, Computer
-from schemas import *
+from ..models import Student, Classroom, Subject, Schedule, ClassSession, AttendanceRecord, Computer
+from ..schemas import *
 
 class AttendanceService:
     """Service for managing attendance operations"""

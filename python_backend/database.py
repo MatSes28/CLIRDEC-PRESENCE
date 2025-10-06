@@ -54,5 +54,5 @@ def get_db():
 def init_db():
     """Initialize database tables"""
     # Import all models to ensure they're registered
-    from models import User, Student, Classroom, Subject, Schedule, ClassSession, AttendanceRecord, Computer
+    from .models import User, Student, Classroom, Subject, Schedule, ClassSession, AttendanceRecord, Computer
     Base.metadata.create_all(bind=engine)

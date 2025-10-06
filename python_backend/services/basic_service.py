@@ -3,8 +3,8 @@ Basic service methods for simple CRUD operations
 """
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from models import Student, Classroom, Subject, Schedule, ClassSession, AttendanceRecord, Computer
-from schemas import *
+from ..models import Student, Classroom, Subject, Schedule, ClassSession, AttendanceRecord, Computer
+from ..schemas import *
 
 class BasicService:
     """Basic service for simple operations"""

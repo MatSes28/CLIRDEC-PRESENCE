@@ -8,14 +8,14 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 import uvicorn
 
-from database import get_db, init_db
-from models import User, Student, Classroom, Subject, Schedule, ClassSession, AttendanceRecord, Computer
-from schemas import *
-from auth import get_current_user
-from services.attendance_service import attendance_service
-from services.email_service import EmailService
-from services.rfid_service import RFIDService
-from services.basic_service import basic_service
+from .database import get_db, init_db
+from .models import User, Student, Classroom, Subject, Schedule, ClassSession, AttendanceRecord, Computer
+from .schemas import *
+from .auth import get_current_user
+from .services.attendance_service import attendance_service
+from .services.email_service import EmailService
+from .services.rfid_service import RFIDService
+from .services.basic_service import basic_service
 
 # Initialize services  
 email_service = EmailService()

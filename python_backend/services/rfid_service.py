@@ -5,8 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 import random
 
-from schemas import RFIDSimulation
-from services.attendance_service import AttendanceService
+from ..schemas import RFIDSimulation
+from .attendance_service import AttendanceService
 
 class RFIDService:
     """Service for RFID operations and simulation"""
@@ -34,7 +34,7 @@ class RFIDService:
                 }
             
             # Try to check in the student
-            from schemas import AttendanceCheckin
+            from ..schemas import AttendanceCheckin
             checkin_data = AttendanceCheckin(rfid_card_id=rfid_data.rfid_card_id)
             
             try:
@@ -49,7 +49,7 @@ class RFIDService:
             except ValueError as e:
                 # If check-in fails, try check-out
                 if "already checked in" in str(e):
-                    from schemas import AttendanceCheckout
+                    from ..schemas import AttendanceCheckout
                     checkout_data = AttendanceCheckout(rfid_card_id=rfid_data.rfid_card_id)
                     
                     try:
