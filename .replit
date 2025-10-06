@@ -8,9 +8,11 @@ packages = ["concurrently", "libxcrypt", "postgresql"]
 
 [deployment]
 deploymentTarget = "autoscale"
-install = ["npm", "ci", "--omit=dev"]
 build = ["npm", "run", "build"]
 run = ["npm", "run", "start"]
+
+[env]
+NPM_CONFIG_OMIT = "dev"
 
 [[ports]]
 localPort = 5432
