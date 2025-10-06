@@ -1,0 +1,10 @@
+%echo Generating an ECC OpenPGP key
+Key-Type: EdDSA
+Key-Curve: Ed25519
+Subkey-Type: ECDH
+Subkey-Curve: Curve25519
+Name-Real: MatSes28
+Name-Email: 124756270+MatSes28@users.noreply.github.com
+Expire-Date: 0
+%no-protection
+%commit
