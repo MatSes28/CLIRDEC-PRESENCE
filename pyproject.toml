@@ -20,5 +20,5 @@ dependencies = [
     "websocket-client>=1.8.0",
 ]
 
-[tool.uv]
-scripts = { start = "uvicorn python_backend.main:app --host 0.0.0.0 --port 8000" }
+[project.scripts]
+start = "uvicorn python_backend.main:app --host 0.0.0.0 --port 8000"

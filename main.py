@@ -2,7 +2,11 @@
 """
 Entry point for Railpack deployment
 """
+from fastapi import FastAPI
 from python_backend.main import app
+
+# Re-export the app for Railpack detection
+app = app
 
 if __name__ == "__main__":
     import uvicorn
