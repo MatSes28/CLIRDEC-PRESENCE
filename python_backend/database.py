@@ -20,12 +20,12 @@ if not DATABASE_URL or DATABASE_URL.strip() == "":
     # Only build URL if we have actual values
     if all([PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE]):
         DATABASE_URL = f"postgresql://{PGUSER}:{PGPASSWORD}@{PGHOST}:{PGPORT}/{PGDATABASE}"
-        print(f"✅ Built DATABASE_URL from components: postgresql://{PGUSER}:***@{PGHOST}:{PGPORT}/{PGDATABASE}")
+        print(f"[SUCCESS] Built DATABASE_URL from components: postgresql://{PGUSER}:***@{PGHOST}:{PGPORT}/{PGDATABASE}")
     else:
-        print("❌ PostgreSQL database not configured. Checking database provisioning...")
-        
+        print("[ERROR] PostgreSQL database not configured. Checking database provisioning...")
+
         # Use in-memory SQLite for development if PostgreSQL not available
-        print("🔧 Falling back to SQLite for development")
+        print("[INFO] Falling back to SQLite for development")
         DATABASE_URL = "sqlite:///./clirdec_presence.db"
 
 print(f"Connecting to database: {DATABASE_URL}")
