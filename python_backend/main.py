@@ -44,10 +44,20 @@ app.add_middleware(
 
 security = HTTPBearer()
 
+# Root endpoint
+@app.get("/")
+def root():
+    return {"message": "CLIRDEC Presence API", "status": "running"}
+
 # Health check endpoint
 @app.get("/health")
-async def health_check():
-    return {"status": "healthy", "message": "Presence system operational"}
+def health_check():
+    try:
+        print("Health check called")
+        return {"status": "healthy", "message": "Presence system operational"}
+    except Exception as e:
+        print(f"Health check error: {e}")
+        return {"status": "error", "message": str(e)}
 
 # Authentication endpoints
 @app.post("/api/auth/login", response_model=TokenResponse)
