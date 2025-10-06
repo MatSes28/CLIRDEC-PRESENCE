@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
-    "preinstall": "npm config delete production --global 2>/dev/null",
-    "prestart": "npm config delete production --global 2>/dev/null",
+    "preinstall": "npm config set production false --global 2>/dev/null",
+    "prestart": "npm config set production false --global 2>/dev/null",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc",
     "db:push": "drizzle-kit push"
