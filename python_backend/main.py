@@ -176,7 +176,7 @@ def create_schedule(
 @app.get("/api/class-sessions", response_model=list[ClassSessionResponse])
 async def get_class_sessions(
     active_only: bool = False,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get list of class sessions"""
@@ -185,7 +185,7 @@ async def get_class_sessions(
 @app.post("/api/class-sessions", response_model=ClassSessionResponse)
 async def create_class_session(
     session: ClassSessionCreate,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Create new class session"""
@@ -194,7 +194,7 @@ async def create_class_session(
 @app.patch("/api/class-sessions/{session_id}/end")
 async def end_class_session(
     session_id: int,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """End a class session"""
@@ -205,7 +205,7 @@ async def end_class_session(
 async def get_attendance_records(
     session_id: int = None,
     student_id: int = None,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get attendance records"""
@@ -214,7 +214,7 @@ async def get_attendance_records(
 @app.post("/api/attendance/checkin", response_model=AttendanceRecordResponse)
 async def checkin_student(
     checkin: AttendanceCheckin,
-    db: AsyncSession = Depends(get_db)
+    db: Session = Depends(get_db)
 ):
     """Check in student via RFID"""
     return await attendance_service.checkin_student(db, checkin)
@@ -222,7 +222,7 @@ async def checkin_student(
 @app.post("/api/attendance/checkout", response_model=AttendanceRecordResponse)
 async def checkout_student(
     checkout: AttendanceCheckout,
-    db: AsyncSession = Depends(get_db)
+    db: Session = Depends(get_db)
 ):
     """Check out student via RFID"""
     return await attendance_service.checkout_student(db, checkout)
@@ -231,7 +231,7 @@ async def checkout_student(
 @app.post("/api/rfid/simulate")
 async def simulate_rfid_tap(
     rfid_data: RFIDSimulation,
-    db: AsyncSession = Depends(get_db)
+    db: Session = Depends(get_db)
 ):
     """Simulate RFID card tap for development/testing"""
     return await rfid_service.simulate_tap(db, rfid_data)
@@ -241,7 +241,7 @@ async def simulate_rfid_tap(
 async def get_attendance_summary(
     start_date: str = None,
     end_date: str = None,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get attendance analytics summary"""
@@ -249,7 +249,7 @@ async def get_attendance_summary(
 
 @app.get("/api/analytics/student-behavior")
 async def get_student_behavior_analysis(
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get student behavior analysis"""
@@ -259,7 +259,7 @@ async def get_student_behavior_analysis(
 @app.get("/api/computers", response_model=list[ComputerResponse])
 async def get_computers(
     classroom_id: int = None,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get list of computers"""
@@ -268,7 +268,7 @@ async def get_computers(
 @app.post("/api/computers", response_model=ComputerResponse)
 async def create_computer(
     computer: ComputerCreate,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Create new computer"""
@@ -277,7 +277,7 @@ async def create_computer(
 # Email notification endpoints
 @app.post("/api/notifications/send-alerts")
 async def send_attendance_alerts(
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Send attendance alerts to parents"""

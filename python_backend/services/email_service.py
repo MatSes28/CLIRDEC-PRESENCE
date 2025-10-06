@@ -23,7 +23,7 @@ class EmailService:
         else:
             self.sg = None
     
-    async def send_attendance_alerts(self, db: AsyncSession) -> dict:
+    async def send_attendance_alerts(self, db: Session) -> dict:
         """Send attendance alerts to parents"""
         if not self.sg:
             return {"error": "SendGrid API key not configured"}

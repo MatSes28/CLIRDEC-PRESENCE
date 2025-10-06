@@ -14,7 +14,7 @@ class RFIDService:
     def __init__(self):
         self.attendance_service = AttendanceService()
     
-    async def simulate_tap(self, db: AsyncSession, rfid_data: RFIDSimulation) -> dict:
+    async def simulate_tap(self, db: Session, rfid_data: RFIDSimulation) -> dict:
         """Simulate RFID card tap for development/testing"""
         try:
             # Simulate proximity detection
