@@ -1,7 +1,7 @@
 """
 RFID simulation and hardware integration service
 """
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from datetime import datetime
 import random
 
