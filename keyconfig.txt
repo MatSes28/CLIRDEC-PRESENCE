@@ -1,0 +1,10 @@
+%echo Generating a basic OpenPGP key
+Key-Type: RSA
+Key-Length: 2048
+Subkey-Type: RSA
+Subkey-Length: 2048
+Name-Real: MatSes28
+Name-Email: 124756270+MatSes28@users.noreply.github.com
+Expire-Date: 0
+%no-protection
+%commit
