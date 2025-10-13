@@ -83,7 +83,7 @@ function Router() {
           {/* Mobile Layout */}
           <div className="lg:hidden min-h-screen">
             <TopBar />
-            <main className="p-4 space-y-4">
+            <main className="p-3 sm:p-4 space-y-3 sm:space-y-4 pb-6">
               <Switch>
                 <Route path="/" component={EnhancedDashboard} />
                 <Route path="/attendance" component={LiveAttendance} />

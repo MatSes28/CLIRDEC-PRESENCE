@@ -160,15 +160,15 @@ export default function EnhancedDashboard() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="space-y-3 sm:space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
           {[...Array(4)].map((_, i) => (
             <Card key={i} className="animate-pulse">
-              <CardContent className="p-6">
-                <div className="space-y-3">
-                  <div className="h-4 bg-muted rounded w-3/4"></div>
-                  <div className="h-8 bg-muted rounded w-1/2"></div>
-                  <div className="h-3 bg-muted rounded w-2/3"></div>
+              <CardContent className="p-4 sm:p-6">
+                <div className="space-y-2 sm:space-y-3">
+                  <div className="h-3 sm:h-4 bg-muted rounded w-3/4"></div>
+                  <div className="h-6 sm:h-8 bg-muted rounded w-1/2"></div>
+                  <div className="h-2 sm:h-3 bg-muted rounded w-2/3"></div>
                 </div>
               </CardContent>
             </Card>
@@ -179,17 +179,17 @@ export default function EnhancedDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-6">
       {/* Enhanced Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         {statCards.map((stat, index) => {
           const IconComponent = stat.icon;
           return (
             <Card key={index} className="group hover:shadow-lg transition-all duration-300 border-0 bg-gradient-to-br from-background via-background to-muted/30">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 group-hover:scale-110 transition-transform duration-300`}>
-                    <IconComponent className={`h-6 w-6 ${stat.color}`} />
+              <CardContent className="p-3 sm:p-4 md:p-6">
+                <div className="flex items-center justify-between mb-2 sm:mb-4">
+                  <div className={`p-2 sm:p-3 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 group-hover:scale-110 transition-transform duration-300`}>
+                    <IconComponent className={`h-4 w-4 sm:h-5 md:h-6 sm:w-5 md:w-6 ${stat.color}`} />
                   </div>
                   <div className="flex items-center space-x-1">
                     {getTrendIcon(stat.trend)}
@@ -202,10 +202,10 @@ export default function EnhancedDashboard() {
                   </div>
                 </div>
                 
-                <div className="space-y-2">
-                  <h3 className="font-medium text-sm text-muted-foreground">{stat.title}</h3>
-                  <p className="text-3xl font-bold text-gradient">{stat.value}</p>
-                  <p className="text-xs text-muted-foreground">{stat.description}</p>
+                <div className="space-y-1 sm:space-y-2">
+                  <h3 className="font-medium text-xs sm:text-sm text-muted-foreground">{stat.title}</h3>
+                  <p className="text-xl sm:text-2xl md:text-3xl font-bold text-gradient">{stat.value}</p>
+                  <p className="text-xs text-muted-foreground hidden sm:block">{stat.description}</p>
                 </div>
               </CardContent>
             </Card>
@@ -215,7 +215,7 @@ export default function EnhancedDashboard() {
 
       {/* Main Dashboard Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 mb-6">
+        <TabsList className="grid w-full grid-cols-5 mb-3 sm:mb-6 text-xs sm:text-sm">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
@@ -224,14 +224,14 @@ export default function EnhancedDashboard() {
         </TabsList>
 
         {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <TabsContent value="overview" className="space-y-3 sm:space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6">
             {/* Active Session Card */}
             <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="flex items-center justify-between text-sm sm:text-base">
                   <div className="flex items-center gap-2">
-                    <Activity className="h-5 w-5" />
+                    <Activity className="h-4 w-4 sm:h-5 sm:w-5" />
                     Active Session
                   </div>
                   {(stats as any)?.activeSession && (
@@ -242,13 +242,13 @@ export default function EnhancedDashboard() {
                   )}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6">
                 {(stats as any)?.activeSession ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg">
+                  <div className="space-y-3 sm:space-y-4">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 sm:p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg">
                       <div>
-                        <h3 className="font-semibold text-lg">Current Class Session</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <h3 className="font-semibold text-sm sm:text-base md:text-lg">Current Class Session</h3>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
                           Started: {new Date((stats as any).activeSession.startTime).toLocaleTimeString()}
                         </p>
                       </div>
@@ -257,13 +257,14 @@ export default function EnhancedDashboard() {
                         disabled={endSessionMutation.isPending}
                         variant="destructive"
                         size="sm"
+                        className="w-full sm:w-auto"
                       >
-                        <LogOut className="h-4 w-4 mr-2" />
-                        End Session
+                        <LogOut className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                        <span className="text-xs sm:text-sm">End Session</span>
                       </Button>
                     </div>
                     
-                    <div className="grid grid-cols-3 gap-4 text-center">
+                    <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
                       <div>
                         <p className="text-2xl font-bold text-green-600">{(stats as any).presentStudents}</p>
                         <p className="text-xs text-muted-foreground">Present</p>
