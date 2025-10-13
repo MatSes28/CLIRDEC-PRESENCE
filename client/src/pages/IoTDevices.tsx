@@ -182,11 +182,11 @@ export default function IoTDevicesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
         <div className="flex items-center space-x-2">
-          <Smartphone className="w-6 h-6 text-blue-600" />
+          <Smartphone className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
           <h1 className="text-2xl font-bold">IoT Device Management</h1>
         </div>
       </div>

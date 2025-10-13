@@ -136,39 +136,39 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="auth-page fixed inset-0 w-full h-full flex overflow-hidden">
-      {/* Left side - Modern Branding & Features */}
-      <div className="w-1/2 relative overflow-hidden gradient-primary">
+    <div className="auth-page fixed inset-0 w-full h-full flex flex-col md:flex-row overflow-hidden">
+      {/* Left side - Modern Branding & Features (Hidden on mobile) */}
+      <div className="hidden md:flex md:w-1/2 relative overflow-hidden gradient-primary">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute -top-20 -right-20 w-96 h-96 bg-white/20 rounded-full blur-3xl"></div>
           <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-white/10 rounded-full blur-2xl"></div>
           <div className="absolute top-1/2 left-1/4 w-32 h-32 bg-white/5 rounded-full blur-xl"></div>
         </div>
         
-        <div className="relative z-10 h-full flex flex-col justify-center px-12 py-8 overflow-hidden">
-          <div className="mb-8">
-            <div className="flex items-center space-x-4 mb-6">
-              <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                <Zap className="h-8 w-8 text-white" />
+        <div className="relative z-10 h-full flex flex-col justify-center px-6 lg:px-12 py-8 overflow-auto">
+          <div className="mb-6 lg:mb-8">
+            <div className="flex items-center space-x-3 lg:space-x-4 mb-4 lg:mb-6">
+              <div className="w-12 h-12 lg:w-14 lg:h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                <Zap className="h-6 w-6 lg:h-8 lg:w-8 text-white" />
               </div>
               <div>
-                <h1 className="text-4xl font-bold text-white tracking-tight">CLIRDEC</h1>
-                <p className="text-lg text-white/80 font-medium">Presence System</p>
+                <h1 className="text-2xl lg:text-4xl font-bold text-white tracking-tight">CLIRDEC</h1>
+                <p className="text-base lg:text-lg text-white/80 font-medium">Presence System</p>
               </div>
             </div>
-            <p className="text-white/70 text-sm leading-relaxed max-w-lg mb-3">
+            <p className="text-white/70 text-xs lg:text-sm leading-relaxed max-w-lg mb-2 lg:mb-3">
               <span className="font-semibold text-white/90">PROXIMITY AND RFID-ENABLED SMART ENTRY FOR NOTATION OF CLASSROOM ENGAGEMENT</span>
             </p>
-            <p className="text-white/70 text-base leading-relaxed max-w-lg">
+            <p className="text-white/70 text-sm lg:text-base leading-relaxed max-w-lg">
               IoT-based attendance monitoring system for Central Luzon State University's 
               Information Technology department. Seamlessly track, monitor, and analyze 
               student attendance with cutting-edge RFID and proximity sensor technology.
             </p>
           </div>
 
-          <div className="space-y-4">
-            <h3 className="text-xl font-bold text-white mb-4">Key Features</h3>
-            <div className="grid grid-cols-1 gap-4">
+          <div className="space-y-3 lg:space-y-4">
+            <h3 className="text-lg lg:text-xl font-bold text-white mb-3 lg:mb-4">Key Features</h3>
+            <div className="grid grid-cols-1 gap-3 lg:gap-4">
               {features.map((feature, index) => {
                 const Icon = feature.icon;
                 return (
@@ -189,8 +189,8 @@ export default function AuthPage() {
             </div>
           </div>
 
-          <div className="mt-8 p-4 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20">
-            <div className="flex items-center space-x-2 mb-3">
+          <div className="mt-6 lg:mt-8 p-3 lg:p-4 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20">
+            <div className="flex items-center space-x-2 mb-2 lg:mb-3">
               <CheckCircle className="h-4 w-4 text-white" />
               <span className="text-white font-semibold text-sm">System Status</span>
             </div>
@@ -209,21 +209,34 @@ export default function AuthPage() {
       </div>
 
       {/* Right side - Modern Login Form */}
-      <div className="w-1/2 flex items-center justify-center p-8 bg-background overflow-hidden">
+      <div className="w-full md:w-1/2 flex items-center justify-center p-4 sm:p-6 md:p-8 bg-background overflow-auto">
         <div className="w-full max-w-sm">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gradient mb-2">Welcome Back</h2>
-            <p className="text-muted-foreground">Sign in to access the attendance management system</p>
+          {/* Mobile branding header */}
+          <div className="md:hidden text-center mb-6">
+            <div className="flex items-center justify-center space-x-3 mb-4">
+              <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                <Zap className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-primary">CLIRDEC</h1>
+                <p className="text-xs text-muted-foreground">Presence System</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center mb-6 sm:mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gradient mb-2">Welcome Back</h2>
+            <p className="text-sm sm:text-base text-muted-foreground">Sign in to access the attendance management system</p>
           </div>
 
           {error && (
-            <Alert variant="destructive" className="mb-6 border-destructive/50 bg-destructive/5">
+            <Alert variant="destructive" className="mb-4 sm:mb-6 border-destructive/50 bg-destructive/5">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription className="text-sm">{error}</AlertDescription>
             </Alert>
           )}
 
-          <div className="card-elevated p-8">
+          <div className="card-elevated p-4 sm:p-6 md:p-8">
             <form onSubmit={handleLogin} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-semibold text-foreground">

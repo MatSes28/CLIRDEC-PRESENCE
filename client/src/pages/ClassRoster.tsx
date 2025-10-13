@@ -131,10 +131,10 @@ export default function ClassRoster() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="p-3 sm:p-6">
+        <div className="animate-pulse space-y-4 sm:space-y-6">
+          <div className="h-6 sm:h-8 bg-gray-200 rounded w-1/2 sm:w-1/3"></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-6">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="h-32 bg-gray-200 rounded"></div>
             ))}
@@ -145,11 +145,11 @@ export default function ClassRoster() {
   }
 
   return (
-    <div className="p-6 space-y-6" data-testid="class-roster-page">
+    <div className="space-y-4 sm:space-y-6" data-testid="class-roster-page">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
         <div>
-          <h1 className="text-2xl font-semibold">Class Roster</h1>
+          <h1 className="text-xl sm:text-2xl font-semibold">Class Roster</h1>
           <p className="text-muted-foreground">View and manage student enrollments by class</p>
         </div>
         <Button data-testid="button-manage-enrollments">

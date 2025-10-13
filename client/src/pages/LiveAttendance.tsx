@@ -99,7 +99,7 @@ export default function LiveAttendance() {
   const displayStudents = Array.isArray(attendance) && attendance.length > 0 ? attendance : [];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* RFID Scanner Status */}
       <Card>
         <CardHeader>

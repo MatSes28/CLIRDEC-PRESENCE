@@ -138,20 +138,20 @@ export default function UserManagement() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Loading users...</div>
+      <div className="container mx-auto p-3 sm:p-6">
+        <div className="flex items-center justify-center h-48 sm:h-64">
+          <div className="text-base sm:text-lg">Loading users...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="container mx-auto space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0">
         <div>
-          <h1 className="text-3xl font-bold">User Management</h1>
-          <p className="text-muted-foreground">Manage system users and their permissions</p>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">User Management</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Manage system users and their permissions</p>
         </div>
         
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>

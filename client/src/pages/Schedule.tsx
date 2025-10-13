@@ -88,12 +88,12 @@ export default function Schedule() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-          <div className="grid grid-cols-7 gap-4">
+      <div className="p-3 sm:p-6">
+        <div className="animate-pulse space-y-4 sm:space-y-6">
+          <div className="h-6 sm:h-8 bg-gray-200 rounded w-1/2 sm:w-1/3"></div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 sm:gap-4">
             {[...Array(21)].map((_, i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded"></div>
+              <div key={i} className="h-24 sm:h-32 bg-gray-200 rounded"></div>
             ))}
           </div>
         </div>
@@ -102,24 +102,24 @@ export default function Schedule() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
         <div>
-          <h1 className="text-2xl font-semibold">Class Schedule Management</h1>
-          <p className="text-muted-foreground">Manage your class schedules and automated session triggers</p>
+          <h1 className="text-xl sm:text-2xl font-semibold">Class Schedule Management</h1>
+          <p className="text-sm text-muted-foreground hidden sm:block">Manage your class schedules and automated session triggers</p>
         </div>
-        <Button onClick={() => setShowAddModal(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add New Schedule
+        <Button onClick={() => setShowAddModal(true)} size="sm" className="w-full sm:w-auto">
+          <Plus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+          <span className="text-xs sm:text-sm">Add New Schedule</span>
         </Button>
       </div>
 
       {/* Schedule Upload Section */}
       <Card>
-        <CardHeader>
-          <CardTitle>Upload Schedule</CardTitle>
-          <p className="text-muted-foreground">Upload your class schedule file (CSV/Excel format)</p>
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-base sm:text-lg">Upload Schedule</CardTitle>
+          <p className="text-xs sm:text-sm text-muted-foreground">Upload your class schedule file (CSV/Excel format)</p>
         </CardHeader>
         <CardContent>
           <FileUpload 
@@ -136,19 +136,19 @@ export default function Schedule() {
 
       {/* Current Schedule */}
       <Card>
-        <CardHeader>
-          <CardTitle>Current Week Schedule</CardTitle>
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-base sm:text-lg">Current Week Schedule</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-7 gap-4">
+        <CardContent className="p-2 sm:p-6">
+          <div className="hidden md:grid md:grid-cols-7 gap-2 lg:gap-4">
             {/* Days Header */}
             {days.map((day) => (
-              <div key={day} className="text-center font-semibold text-muted-foreground p-3">
+              <div key={day} className="text-center font-semibold text-muted-foreground p-2 lg:p-3 text-xs lg:text-sm">
                 {day.slice(0, 3)}
               </div>
             ))}
             
-            {/* Schedule Blocks */}
+            {/* Schedule Blocks - Desktop */}
             {days.map((day) => (
               <div key={day} className="space-y-2">
                 {scheduleBlocks
@@ -156,9 +156,9 @@ export default function Schedule() {
                   .map((block) => (
                     <div
                       key={block.id}
-                      className={`border rounded-lg p-3 ${getColorClasses(block.color)}`}
+                      className={`border rounded-lg p-2 lg:p-3 ${getColorClasses(block.color)}`}
                     >
-                      <div className="font-medium text-sm mb-1">{block.subject}</div>
+                      <div className="font-medium text-xs lg:text-sm mb-1">{block.subject}</div>
                       <div className="text-xs mb-1">{block.time}</div>
                       <div className="text-xs text-muted-foreground mb-2">{block.room}</div>
                       <div>
@@ -173,20 +173,46 @@ export default function Schedule() {
                   ))}
                 
                 {/* Add Class Slot */}
-                <button className="w-full border-2 border-dashed border-muted-foreground/25 rounded-lg p-3 text-center text-muted-foreground hover:border-muted-foreground/50 hover:text-foreground transition-colors">
-                  <Plus className="h-4 w-4 mx-auto mb-1" />
+                <button className="w-full border-2 border-dashed border-muted-foreground/25 rounded-lg p-2 lg:p-3 text-center text-muted-foreground hover:border-muted-foreground/50 hover:text-foreground transition-colors">
+                  <Plus className="h-3 w-3 lg:h-4 lg:w-4 mx-auto mb-1" />
                   <div className="text-xs">Add Class</div>
                 </button>
               </div>
             ))}
           </div>
+
+          {/* Mobile View - List Format */}
+          <div className="md:hidden space-y-3">
+            {days.map((day) => {
+              const daySchedules = scheduleBlocks.filter(block => block.day === day);
+              if (daySchedules.length === 0) return null;
+              
+              return (
+                <div key={day} className="border rounded-lg p-3">
+                  <h4 className="font-semibold text-sm mb-3">{day}</h4>
+                  <div className="space-y-2">
+                    {daySchedules.map((block) => (
+                      <div key={block.id} className={`border rounded-lg p-3 ${getColorClasses(block.color)}`}>
+                        <div className="font-medium text-sm mb-1">{block.subject}</div>
+                        <div className="text-xs mb-1">{block.time}</div>
+                        <div className="text-xs text-muted-foreground mb-2">{block.room}</div>
+                        <Badge variant={block.autoStart ? "secondary" : "outline"} className="text-xs">
+                          {block.autoStart ? 'Auto-Start' : 'Manual'}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </CardContent>
       </Card>
 
       {/* Schedule Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-3 sm:p-6">
             <div className="flex items-center space-x-3">
               <Calendar className="h-8 w-8 text-primary" />
               <div>

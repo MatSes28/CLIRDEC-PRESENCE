@@ -114,11 +114,11 @@ export default function DiscrepancyDashboard() {
   const pendingValidations = pendingData?.pendingValidations || [];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Attendance Discrepancy Dashboard</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Attendance Discrepancy Dashboard</h1>
           <p className="text-muted-foreground mt-2">
             Monitor and review attendance validation issues from the Final Logic system
           </p>
