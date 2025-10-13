@@ -14,6 +14,8 @@
  * - Session-based attendance tracking
  * 
  /*
+ /* 
+ /* 
  * WIRING DIAGRAM:
  * ===============
  * 
@@ -39,6 +41,7 @@
  * Echo → GPIO 46
  * 
  * Built-in LED → GPIO 5
+ * Buzzer → GPIO 7
  */
 
 #include <WiFi.h>
@@ -48,8 +51,8 @@
 #include <MFRC522.h>
 
 // ========== CONFIGURATION - UPDATE THESE ==========
-const char* ssid = "Kupal kaba boss?";           // Your WiFi network name
-const char* password = "MatMir@12030908";    // Your WiFi password
+const char* ssid = "Kupal kaba boss?";
+const char* password = "MatMir@12030908";
 const char* serverHost = "03e2bce6-b0a5-4306-b014-9edab35e528e-00-2gnxw5t0zy3c8.sisko.replit.dev/";  // Your Replit app URL (without https://)
 // ==================================================
 
@@ -61,13 +64,14 @@ const char* serverHost = "03e2bce6-b0a5-4306-b014-9edab35e528e-00-2gnxw5t0zy3c8.
 #define ENTRY_TRIG_PIN  12
 #define ENTRY_ECHO_PIN  13
 
-// HC-SR04 Exit Sensor (Sensor 2)  
+// HC-SR04 Exit Sensor (Sensor 2)
 #define EXIT_TRIG_PIN   9
 #define EXIT_ECHO_PIN   46
 
 // LED & Buzzer
 #define LED_PIN         5
 #define BUZZER_PIN      7
+
 
 // Sensor Configuration
 #define PRESENCE_THRESHOLD_CM   50    // Distance threshold (cm)

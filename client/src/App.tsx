@@ -94,6 +94,10 @@ function Router() {
                 <Route path="/reports" component={Reports} />
                 <Route path="/users" component={UserManagement} />
                 <Route path="/monitoring" component={AttendanceMonitoring} />
+                <Route path="/iot" component={IoTDevicesPage} />
+                <Route path="/discrepancies" component={DiscrepancyDashboard} />
+                <Route path="/health" component={SystemHealthPage} />
+                <Route path="/testing" component={SystemTestingPage} />
                 <Route path="/settings" component={Settings} />
                 <Route component={NotFound} />
               </Switch>
