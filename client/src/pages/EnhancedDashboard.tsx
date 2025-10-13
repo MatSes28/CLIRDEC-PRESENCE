@@ -266,15 +266,15 @@ export default function EnhancedDashboard() {
                     
                     <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
                       <div>
-                        <p className="text-2xl font-bold text-green-600">{(stats as any).presentStudents}</p>
+                        <p className="text-lg sm:text-xl md:text-2xl font-bold text-green-600">{(stats as any).presentStudents}</p>
                         <p className="text-xs text-muted-foreground">Present</p>
                       </div>
                       <div>
-                        <p className="text-2xl font-bold text-red-600">{(stats as any).absentStudents}</p>
+                        <p className="text-lg sm:text-xl md:text-2xl font-bold text-red-600">{(stats as any).absentStudents}</p>
                         <p className="text-xs text-muted-foreground">Absent</p>
                       </div>
                       <div>
-                        <p className="text-2xl font-bold text-primary">{(stats as any).attendanceRate}</p>
+                        <p className="text-lg sm:text-xl md:text-2xl font-bold text-primary">{(stats as any).attendanceRate}</p>
                         <p className="text-xs text-muted-foreground">Rate</p>
                       </div>
                     </div>
@@ -297,23 +297,24 @@ export default function EnhancedDashboard() {
 
             {/* Quick Actions */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Zap className="h-5 w-5" />
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                  <Zap className="h-4 w-4 sm:h-5 sm:w-5" />
                   Quick Actions
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-2 sm:space-y-3 p-4 sm:p-6">
                 {quickActions.map((action, index) => {
                   const IconComponent = action.icon;
                   return (
                     <Button
                       key={index}
                       onClick={action.action}
-                      className={`w-full justify-start ${action.color} text-white`}
+                      className={`w-full justify-start ${action.color} text-white text-xs sm:text-sm`}
                       variant="default"
+                      size="sm"
                     >
-                      <IconComponent className="h-4 w-4 mr-2" />
+                      <IconComponent className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                       {action.label}
                     </Button>
                   );
@@ -324,8 +325,8 @@ export default function EnhancedDashboard() {
         </TabsContent>
 
         {/* Analytics Tab */}
-        <TabsContent value="analytics" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <TabsContent value="analytics" className="space-y-3 sm:space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
