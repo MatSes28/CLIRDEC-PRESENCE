@@ -111,50 +111,50 @@ export default function Students() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-          <div className="h-64 bg-gray-200 rounded"></div>
+      <div className="p-3 sm:p-6">
+        <div className="animate-pulse space-y-4 sm:space-y-6">
+          <div className="h-6 sm:h-8 bg-gray-200 rounded w-1/2 sm:w-1/3"></div>
+          <div className="h-48 sm:h-64 bg-gray-200 rounded"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
         <div>
-          <h1 className="text-2xl font-semibold">Student Management</h1>
-          <p className="text-muted-foreground">Manage student information and parent contact details</p>
+          <h1 className="text-xl sm:text-2xl font-semibold">Student Management</h1>
+          <p className="text-sm text-muted-foreground hidden sm:block">Manage student information and parent contact details</p>
         </div>
-        <div className="flex space-x-3">
-          <Button variant="outline">
-            <FolderInput className="mr-2 h-4 w-4" />
-            Import Students
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+          <Button variant="outline" size="sm" className="w-full sm:w-auto">
+            <FolderInput className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="text-xs sm:text-sm">Import</span>
           </Button>
-          <Button onClick={() => setAddModalOpen(true)} data-tour="add-student">
-            <UserPlus className="mr-2 h-4 w-4" />
-            Add Student
+          <Button onClick={() => setAddModalOpen(true)} data-tour="add-student" size="sm" className="w-full sm:w-auto">
+            <UserPlus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="text-xs sm:text-sm">Add Student</span>
           </Button>
         </div>
       </div>
 
       {/* Search and Filters */}
       <Card>
-        <CardContent className="p-6" data-tour="search-filters">
-          <div className="flex items-center space-x-4">
+        <CardContent className="p-3 sm:p-6" data-tour="search-filters">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
               <Input
                 placeholder="Search students..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-9 sm:pl-10 text-sm"
               />
             </div>
             <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-full sm:w-32 text-xs sm:text-sm">
                 <SelectValue placeholder="All Years" />
               </SelectTrigger>
               <SelectContent>
@@ -167,7 +167,7 @@ export default function Students() {
               </SelectContent>
             </Select>
             <Select value={selectedSection} onValueChange={setSelectedSection}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-full sm:w-32 text-xs sm:text-sm">
                 <SelectValue placeholder="All Sections" />
               </SelectTrigger>
               <SelectContent>
@@ -181,8 +181,42 @@ export default function Students() {
         </CardContent>
       </Card>
 
-      {/* Students Table */}
-      <Card>
+      {/* Students Table - Mobile Cards */}
+      <div className="block sm:hidden space-y-3">
+        {filteredStudents.map((student) => (
+          <Card key={student.id}>
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <GenderAvatar gender={student.gender} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm truncate">{student.firstName} {student.lastName}</h3>
+                  <p className="text-xs text-muted-foreground">ID: {student.studentId}</p>
+                  <p className="text-xs text-muted-foreground truncate">RFID: {student.rfidCard || 'Not Assigned'}</p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <Badge className={`text-xs ${getAttendanceColor(student.attendanceRate || 0)}`}>
+                      {student.attendanceRate || 0}% Attendance
+                    </Badge>
+                  </div>
+                  <div className="mt-3 flex gap-1">
+                    <Button size="sm" variant="outline" onClick={() => handleViewStudent(student)} className="flex-1 text-xs h-8">
+                      <Eye className="h-3 w-3 mr-1" /> View
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => handleEditStudent(student)} className="flex-1 text-xs h-8">
+                      <Edit className="h-3 w-3 mr-1" /> Edit
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => handleContactStudent(student)} className="flex-1 text-xs h-8">
+                      <Mail className="h-3 w-3 mr-1" /> Contact
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Students Table - Desktop */}
+      <Card className="hidden sm:block">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <div className="min-w-full">

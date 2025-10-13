@@ -215,26 +215,26 @@ export default function Computers() {
   const studentsList = students ?? [];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
         <div>
-          <h1 className="text-2xl font-semibold">Laboratory Computer Management</h1>
-          <p className="text-muted-foreground">Assign computers to students and monitor usage</p>
+          <h1 className="text-xl sm:text-2xl font-semibold">Lab Computer Management</h1>
+          <p className="text-sm text-muted-foreground hidden sm:block">Assign computers to students and monitor usage</p>
         </div>
-        <Button onClick={() => setIsAddDialogOpen(true)} data-testid="button-add-computer">
-          <Plus className="mr-2 h-4 w-4" />
-          Add Computer
+        <Button onClick={() => setIsAddDialogOpen(true)} data-testid="button-add-computer" size="sm" className="w-full sm:w-auto">
+          <Plus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+          <span className="text-xs sm:text-sm">Add Computer</span>
         </Button>
       </div>
 
       {/* Lab Room Selection */}
       <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center space-x-4">
-            <label className="text-sm font-medium">Select Laboratory:</label>
+        <CardContent className="p-3 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+            <label className="text-xs sm:text-sm font-medium">Select Laboratory:</label>
             <Select value={selectedClassroom} onValueChange={setSelectedClassroom}>
-              <SelectTrigger className="w-64" data-testid="select-classroom">
+              <SelectTrigger className="w-full sm:w-64 text-xs sm:text-sm" data-testid="select-classroom">
                 <SelectValue placeholder="Select a classroom" />
               </SelectTrigger>
               <SelectContent>
@@ -287,11 +287,11 @@ export default function Computers() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-5 gap-4 mb-8">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4 mb-4 sm:mb-8">
                   {displayComputers.map((computer) => (
                     <div
                       key={computer.id}
-                      className={`border-2 rounded-lg p-4 text-center relative ${getStatusColor(computer.status || 'available')}`}
+                      className={`border-2 rounded-lg p-2 sm:p-3 md:p-4 text-center relative ${getStatusColor(computer.status || 'available')}`}
                       data-testid={`computer-${computer.id}`}
                     >
                       <div className="absolute top-2 right-2 flex gap-1">
@@ -345,9 +345,9 @@ export default function Computers() {
                 </div>
 
                 {/* Assignment Panel */}
-                <div className="bg-muted/50 rounded-lg p-6">
-                  <h4 className="text-lg font-semibold mb-4">Quick Assignment</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-muted/50 rounded-lg p-3 sm:p-6">
+                  <h4 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Quick Assignment</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-2">Student</label>
                       <Select value={selectedStudent} onValueChange={setSelectedStudent}>
