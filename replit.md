@@ -25,7 +25,8 @@ UI Style: Modern glass effects, gradient backgrounds, professional typography, a
 - **Language**: TypeScript with Drizzle ORM
 - **Database**: PostgreSQL with connection pooling
 - **Authentication**: Session-based authentication with Replit Auth integration
-- **WebSocket**: Real-time notifications via WebSocket server (port 5000 for web clients, dedicated /iot for ESP32 devices)
+- **WebSocket**: Real-time notifications via WebSocket server (port 5000 for web clients, dedicated /iot for ESP32 devices) with strict CORS origin validation
+- **Security**: Production-hardened WebSocket CORS with exact-match origin whitelist. Development-only Replit domain access with pattern validation. No debug logging in production builds.
 - **Error Handling**: Comprehensive global error handlers.
 - **Memory Optimization**: Aggressive garbage collection and cleanup to maintain low memory usage (targeting ~42MB optimal performance).
 
@@ -55,6 +56,10 @@ UI Style: Modern glass effects, gradient backgrounds, professional typography, a
 - **Manual Monitoring Triggers**: Attendance monitoring and email processing disabled by default, activated via API endpoints to prevent spam: `POST /api/attendance/trigger-monitoring` and `POST /api/email/process-queue`.
 - **Ghost Attendance Detection**: Fully functional validation system flags RFID-without-sensor (`ghost_tap`) and sensor-without-RFID (`sensor_without_rfid`) discrepancies within 7-second validation window.
 - **Behavior-Based Parent Alerts**: Analyzes real attendance patterns (rates, consecutive absences ≥3, late arrivals ≥3/week) to queue appropriate email notifications.
+- **WebSocket Security Hardening (Oct 14, 2025)**: Implemented strict CORS origin validation with exact-match whitelist to prevent subdomain bypass attacks. Replaced vulnerable `startsWith()` checks with secure `includes()` matching. Replit domains restricted to development mode only with pattern validation (`endsWith('.replit.dev')` or `endsWith('.replit.app')`).
+- **Production Logging Cleanup (Oct 14, 2025)**: All debug console.log statements now conditional on environment. Server uses `NODE_ENV === 'development'`, client uses `import.meta.env.DEV`. Production builds run clean without debug overhead.
+- **WebSocket Stability Improvements (Oct 14, 2025)**: Added immediate server welcome message on connection, implemented "connected" message type handling, removed connection delays. WebSocket now establishes and maintains stable connections without code 1006 errors.
+- **Dependency Updates (Oct 14, 2025)**: Updated browserslist database (caniuse-lite) from 12 months outdated to latest version for accurate browser compatibility checks.
 
 ### Previous Changes (January 2025)
 - **Email Integration**: Migrated from SendGrid to Brevo for email delivery using verified sender address (matt.feria@clsu2.edu.ph).
