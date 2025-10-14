@@ -209,17 +209,17 @@ export default function AuthPage() {
       </div>
 
       {/* Right side - Modern Login Form */}
-      <div className="w-full md:w-1/2 flex items-center justify-center p-4 sm:p-6 md:p-8 bg-background overflow-auto">
-        <div className="w-full max-w-sm">
+      <div className="w-full md:w-1/2 flex items-center justify-center p-6 sm:p-8 md:p-8 bg-background overflow-auto">
+        <div className="w-full max-w-sm mx-auto">
           {/* Mobile branding header */}
-          <div className="md:hidden text-center mb-6">
-            <div className="flex items-center justify-center space-x-3 mb-4">
-              <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                <Zap className="h-6 w-6 text-primary" />
+          <div className="md:hidden mb-8">
+            <div className="flex flex-col items-center text-center space-y-3">
+              <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center">
+                <Zap className="h-8 w-8 text-primary" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-primary">CLIRDEC</h1>
-                <p className="text-xs text-muted-foreground">Presence System</p>
+                <h1 className="text-2xl font-bold text-primary">CLIRDEC PRESENCE</h1>
+                <p className="text-sm text-muted-foreground mt-1">Attendance Management System</p>
               </div>
             </div>
           </div>
