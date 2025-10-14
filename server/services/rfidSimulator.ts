@@ -44,26 +44,35 @@ export async function simulateRFIDTap(rfidCardId: string, sessionId: number): Pr
         // Calculate time elapsed since session started (in minutes)
         const timeElapsed = (currentTime.getTime() - sessionStart.getTime()) / (1000 * 60);
         
-        // Debug log for testing
-        console.log(`🕐 ATTENDANCE CHECK DEBUG:`);
-        console.log(`- Student: ${student.firstName} ${student.lastName}`);
-        console.log(`- Session Start: ${sessionStart.toLocaleTimeString()}`);
-        console.log(`- Check-in Time: ${currentTime.toLocaleTimeString()}`);
-        console.log(`- Time Elapsed: ${Math.round(timeElapsed)} minutes`);
-        console.log(`- Class Duration: ${classDuration} minutes`);
-        console.log(`- 60% Threshold: ${Math.round(classDuration * 0.6)} minutes (${Math.round((classDuration * 0.6)/60)}h ${Math.round((classDuration * 0.6)%60)}m)`);
         const lateThreshold = classDuration * 0.6; // 60% of class time
+        
+        // Debug log for testing (development only)
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`🕐 ATTENDANCE CHECK DEBUG:`);
+          console.log(`- Student: ${student.firstName} ${student.lastName}`);
+          console.log(`- Session Start: ${sessionStart.toLocaleTimeString()}`);
+          console.log(`- Check-in Time: ${currentTime.toLocaleTimeString()}`);
+          console.log(`- Time Elapsed: ${Math.round(timeElapsed)} minutes`);
+          console.log(`- Class Duration: ${classDuration} minutes`);
+          console.log(`- 60% Threshold: ${Math.round(classDuration * 0.6)} minutes (${Math.round((classDuration * 0.6)/60)}h ${Math.round((classDuration * 0.6)%60)}m)`);
+        }
         
         // If student arrives after 60% of class time, mark as absent
         // If student arrives between 15 minutes and 60% of class time, mark as late
         if (timeElapsed > lateThreshold) {
           status = 'absent'; // After 60% = absent even if they check in
-          console.log(`❌ STATUS: ABSENT (arrived after 60% threshold)`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`❌ STATUS: ABSENT (arrived after 60% threshold)`);
+          }
         } else if (timeElapsed > 15) {
           status = 'late'; // Between 15 min and 60% = late
-          console.log(`⚠️ STATUS: LATE (arrived after 15 min but before 60%)`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`⚠️ STATUS: LATE (arrived after 15 min but before 60%)`);
+          }
         } else {
-          console.log(`✅ STATUS: PRESENT (arrived on time)`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`✅ STATUS: PRESENT (arrived on time)`);
+          }
         }
       }
       

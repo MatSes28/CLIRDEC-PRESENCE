@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import {
   AreaChart,
@@ -72,15 +73,17 @@ export default function AttendanceCharts() {
     staleTime: 2 * 60 * 1000 // 2 minutes
   });
 
-  // Debug logging
-  console.log('AttendanceCharts render:', {
-    trendData,
-    trendLoading,
-    trendError: trendError?.message,
-    studentData, 
-    studentLoading,
-    studentError: studentError?.message
-  });
+  // Debug logging (development only)
+  if (import.meta.env.DEV) {
+    console.log('AttendanceCharts render:', {
+      trendData,
+      trendLoading,
+      trendError: trendError?.message,
+      studentData, 
+      studentLoading,
+      studentError: studentError?.message
+    });
+  }
 
   // Check for authentication errors with comprehensive error handling
   const isAuthError = (error: any): boolean => {

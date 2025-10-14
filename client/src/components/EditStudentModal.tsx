@@ -32,8 +32,6 @@ export default function EditStudentModal({ open, onClose, student }: EditStudent
 
   useEffect(() => {
     if (student) {
-      console.log('Setting form data for student:', student); // Debug log
-      
       // Extract section letter from formats like "3IT-A" or "A"
       const sectionLetter = student.section ? 
         (student.section.includes('-') ? student.section.split('-')[1] : student.section) : '';

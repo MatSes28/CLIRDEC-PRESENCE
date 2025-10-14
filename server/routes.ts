@@ -1950,18 +1950,49 @@ Central Luzon State University
     server: httpServer, 
     path: '/ws',
     verifyClient: (info: { origin: string; req: any; secure: boolean }) => {
-      console.log('🔍 WebSocket connection attempt from:', info.origin, 'to:', info.req.url);
-      console.log('   🔐 Secure:', info.secure);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔍 WebSocket connection attempt from:', info.origin, 'to:', info.req.url);
+        console.log('   🔐 Secure:', info.secure);
+        
+        // Log headers but redact sensitive data
+        const safeHeaders = { ...info.req.headers };
+        if (safeHeaders.cookie) safeHeaders.cookie = '[REDACTED]';
+        if (safeHeaders.authorization) safeHeaders.authorization = '[REDACTED]';
+        console.log('   📋 Headers:', JSON.stringify(safeHeaders, null, 2));
+      }
       
-      // Log headers but redact sensitive data
-      const safeHeaders = { ...info.req.headers };
-      if (safeHeaders.cookie) safeHeaders.cookie = '[REDACTED]';
-      if (safeHeaders.authorization) safeHeaders.authorization = '[REDACTED]';
-      console.log('   📋 Headers:', JSON.stringify(safeHeaders, null, 2));
+      // Strict CORS validation for WebSocket connections
+      const origin = info.origin;
+      const host = info.req.headers.host;
       
-      // Allow all origins for now to debug connection issues
-      const allowed = true;
-      console.log('   ✅ Connection allowed:', allowed);
+      // Build allowed origins list with exact matches
+      const allowedOrigins: string[] = [
+        `http://${host}`,
+        `https://${host}`,
+        'http://localhost:5000',
+        'https://localhost:5000',
+      ];
+      
+      // In production, add Railway domain
+      if (process.env.RAILWAY_STATIC_URL) {
+        allowedOrigins.push(`https://${process.env.RAILWAY_STATIC_URL}`);
+      }
+      
+      // In development, allow Replit domains with strict pattern matching
+      if (process.env.NODE_ENV === 'development') {
+        // Only allow specific Replit domain patterns (not any arbitrary origin)
+        if (origin && (origin.endsWith('.replit.dev') || origin.endsWith('.replit.app'))) {
+          allowedOrigins.push(origin);
+        }
+      }
+      
+      // Use strict equality check, not startsWith
+      const allowed = allowedOrigins.includes(origin || '');
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('   ✅ Connection allowed:', allowed);
+      }
+      
       return allowed;
     }
   });
@@ -1970,24 +2001,39 @@ Central Luzon State University
   iotDeviceManager.init(httpServer);
   
   wss.on('connection', (ws: WebSocket, req) => {
-    const clientIP = req.socket.remoteAddress;
-    const userAgent = req.headers['user-agent'];
-    console.log('✅ New WebSocket connection established');
-    console.log('   📍 Client IP:', clientIP);
-    console.log('   🌐 User-Agent:', userAgent?.slice(0, 50) + '...');
-    console.log('   📊 Total connections:', wss.clients.size);
-    console.log('   🔌 WebSocket ready state:', ws.readyState);
+    if (process.env.NODE_ENV === 'development') {
+      const clientIP = req.socket.remoteAddress;
+      const userAgent = req.headers['user-agent'];
+      console.log('✅ New WebSocket connection established');
+      console.log('   📍 Client IP:', clientIP);
+      console.log('   🌐 User-Agent:', userAgent?.slice(0, 50) + '...');
+      console.log('   📊 Total connections:', wss.clients.size);
+      console.log('   🔌 WebSocket ready state:', ws.readyState);
+    }
     
     let pingInterval: NodeJS.Timeout | null = null;
+    
+    // Send immediate welcome message to confirm connection
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        type: 'connected',
+        message: 'WebSocket connection established',
+        timestamp: new Date().toISOString()
+      }));
+    }
     
     ws.on('message', (message) => {
       try {
         const data = JSON.parse(message.toString());
-        console.log('📨 WebSocket message received:', data);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('📨 WebSocket message received:', data);
+        }
         
         // Respond to hello/ping messages to keep connection alive
         if (data.type === 'hello' || data.type === 'ping') {
-          console.log('🔄 Responding to', data.type, 'message');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🔄 Responding to', data.type, 'message');
+          }
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({
               type: 'pong',
@@ -1996,20 +2042,26 @@ Central Luzon State University
           }
         }
       } catch (error) {
-        console.error('❌ Invalid WebSocket message:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('❌ Invalid WebSocket message:', error);
+        }
       }
     });
     
     ws.on('close', (code, reason) => {
-      console.log('🔌 WebSocket connection closed');
-      console.log('   📊 Close code:', code);
-      console.log('   📝 Reason:', reason.toString());
-      console.log('   📊 Remaining connections:', wss.clients.size);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔌 WebSocket connection closed');
+        console.log('   📊 Close code:', code);
+        console.log('   📝 Reason:', reason.toString());
+        console.log('   📊 Remaining connections:', wss.clients.size);
+      }
       if (pingInterval) clearInterval(pingInterval);
     });
     
     ws.on('error', (error) => {
-      console.error('❌ WebSocket connection error:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('❌ WebSocket connection error:', error);
+      }
       if (pingInterval) clearInterval(pingInterval);
     });
     

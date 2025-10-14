@@ -2,8 +2,8 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { useToast } from '@/hooks/use-toast';
 
 interface WebSocketMessage {
-  type: 'system' | 'alert' | 'attendance' | 'notification';
-  title: string;
+  type: 'connected' | 'system' | 'alert' | 'attendance' | 'notification';
+  title?: string;
   message: string;
   timestamp: Date;
   data?: any;
@@ -62,7 +62,9 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
       wsUrl = `${protocol}//${host}:${defaultPort}/ws`;
     }
 
-    console.log('Connecting to WebSocket:', wsUrl);
+    if (import.meta.env.DEV) {
+      console.log('Connecting to WebSocket:', wsUrl);
+    }
 
     // Create WebSocket connection with error handling
     let ws: WebSocket;
@@ -74,36 +76,41 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
     }
 
     ws.onopen = () => {
-      console.log('WebSocket connected');
+      if (import.meta.env.DEV) {
+        console.log('WebSocket connected');
+      }
       setIsConnected(true);
       setSocket(ws);
       setReconnectAttempts(0);
       
-      // Send hello message after a brief delay to ensure connection is stable
-      setTimeout(() => {
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ 
-            type: 'hello',
-            timestamp: new Date().toISOString()
-          }));
-        }
-      }, 200);
+      // Send hello message immediately to establish communication
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ 
+          type: 'hello',
+          timestamp: new Date().toISOString()
+        }));
+      }
     };
 
     ws.onmessage = (event) => {
       try {
-        console.log('📨 Raw WebSocket message received:', event.data);
         const message: WebSocketMessage = JSON.parse(event.data);
-        console.log('📨 Parsed WebSocket message:', message);
+        if (import.meta.env.DEV) {
+          console.log('📨 WebSocket message:', message);
+        }
         handleWebSocketMessage(message);
       } catch (error) {
-        console.error('❌ Error parsing WebSocket message:', error);
-        console.error('❌ Raw message data:', event.data);
+        if (import.meta.env.DEV) {
+          console.error('❌ Error parsing WebSocket message:', error);
+          console.error('❌ Raw message data:', event.data);
+        }
       }
     };
 
     ws.onclose = (event) => {
-      console.log('WebSocket disconnected', { code: event.code, reason: event.reason });
+      if (import.meta.env.DEV) {
+        console.log('WebSocket disconnected', { code: event.code, reason: event.reason });
+      }
       setIsConnected(false);
       setSocket(null);
       
@@ -112,17 +119,21 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
       if (window.location.pathname !== '/' && reconnectAttempts < 5) {
         const delay = 5000 + (reconnectAttempts * 3000); // 5s, 8s, 11s, 14s, 17s
         setTimeout(() => {
-          console.log(`🔄 Attempting to reconnect WebSocket... (attempt ${reconnectAttempts + 1}/5)`);
+          if (import.meta.env.DEV) {
+            console.log(`🔄 Attempting to reconnect WebSocket... (attempt ${reconnectAttempts + 1}/5)`);
+          }
           setReconnectAttempts(prev => prev + 1);
           connectWebSocket();
         }, delay);
-      } else if (reconnectAttempts >= 5) {
+      } else if (reconnectAttempts >= 5 && import.meta.env.DEV) {
         console.log('🔌 WebSocket reconnection limit reached. Connection will retry on page refresh.');
       }
     };
 
     ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
+      if (import.meta.env.DEV) {
+        console.error('WebSocket error:', error);
+      }
       setIsConnected(false);
     };
 
@@ -141,6 +152,13 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
 
   const handleWebSocketMessage = (message: WebSocketMessage) => {
     switch (message.type) {
+      case 'connected':
+        // Silent connection confirmation - don't show toast
+        if (import.meta.env.DEV) {
+          console.log('WebSocket connection confirmed by server');
+        }
+        break;
+        
       case 'system':
         if (message.title !== 'Connected') { // Don't show connection toast
           toast({
@@ -177,7 +195,9 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
         break;
       
       default:
-        console.log('Unknown WebSocket message type:', message.type);
+        if (import.meta.env.DEV) {
+          console.log('Unknown WebSocket message type:', message.type);
+        }
     }
   };
 
