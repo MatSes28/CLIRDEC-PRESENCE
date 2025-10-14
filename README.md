@@ -163,6 +163,13 @@ npm run check        # TypeScript type check
 
 ## 🚂 Railway Deployment
 
+### Automated Deployment via GitHub (Recommended)
+
+**🚀 GitHub Actions CI/CD included!**
+- ✅ Auto-deploy on push to `main`
+- ✅ Type checking on every PR
+- ✅ Build verification before deployment
+
 ### Quick Deploy (5 minutes)
 1. Push code to GitHub
 2. Create Railway project from repo
@@ -170,7 +177,7 @@ npm run check        # TypeScript type check
 4. Set environment variables
 5. Deploy! 🎉
 
-**See `RAILWAY_SETUP.md` for detailed instructions**
+**See `RAILWAY_DEPLOY.md` for complete GitHub + Railway + VS Code guide**
 
 ---
 
@@ -308,8 +315,8 @@ npm run db:push
 
 ## 📚 Documentation
 
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Complete deployment guide
-- **[RAILWAY_SETUP.md](RAILWAY_SETUP.md)** - Quick Railway deployment
+- **[RAILWAY_DEPLOY.md](RAILWAY_DEPLOY.md)** - **⭐ Complete GitHub + Railway + VS Code deployment guide**
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - General deployment guide
 - **[VSCODE_SETUP.md](VSCODE_SETUP.md)** - VS Code configuration
 - **[QUICK_START_ESP32_S3.md](QUICK_START_ESP32_S3.md)** - ESP32 hardware setup
 - **[replit.md](replit.md)** - Project architecture & preferences
