@@ -60,6 +60,7 @@ UI Style: Modern glass effects, gradient backgrounds, professional typography, a
 - **Production Logging Cleanup (Oct 14, 2025)**: All debug console.log statements now conditional on environment. Server uses `NODE_ENV === 'development'`, client uses `import.meta.env.DEV`. Production builds run clean without debug overhead.
 - **WebSocket Stability Improvements (Oct 14, 2025)**: Added immediate server welcome message on connection, implemented "connected" message type handling, removed connection delays. WebSocket now establishes and maintains stable connections without code 1006 errors.
 - **Dependency Updates (Oct 14, 2025)**: Updated browserslist database (caniuse-lite) from 12 months outdated to latest version for accurate browser compatibility checks.
+- **Railway Deployment Ready (Oct 14, 2025)**: Port configuration now uses `process.env.PORT` for Railway compatibility. GitHub Actions CI/CD workflows configured for automated deployment. Complete deployment guides created (RAILWAY_DEPLOY.md, DEPLOYMENT_CHECKLIST.md) with VS Code integration instructions.
 
 ### Previous Changes (January 2025)
 - **Email Integration**: Migrated from SendGrid to Brevo for email delivery using verified sender address (matt.feria@clsu2.edu.ph).
@@ -74,8 +75,13 @@ UI Style: Modern glass effects, gradient backgrounds, professional typography, a
 
 ### Deployment Strategy
 - **Development Environment**: Replit-hosted with hot reload, PostgreSQL module auto-provisioning, Replit secrets for environment variables.
-- **Production Deployment**: Replit autoscale target, frontend (Vite) + backend (ESBuild) build process, internal port 5000 mapped to external 80.
-- **Database Management**: Drizzle Kit for schema migrations.
+- **Production Deployment Options**:
+  - **Railway (Recommended)**: Auto-deploy from GitHub with CI/CD, PostgreSQL database, environment variable management, WebSocket support
+  - **Replit**: Autoscale target with internal port mapping
+- **Build Process**: Frontend (Vite) + Backend (ESBuild) → `dist/` directory
+- **Port Configuration**: Uses `process.env.PORT` (Railway-compatible) with fallback to 5000 (Replit)
+- **Database Management**: Drizzle Kit for schema migrations
+- **CI/CD**: GitHub Actions workflows for automated testing and deployment
 
 ## External Dependencies
 
@@ -85,9 +91,12 @@ UI Style: Modern glass effects, gradient backgrounds, professional typography, a
 - **Brevo**: Transactional email service.
 
 ### Development & Deployment
-- **Replit**: Primary hosting and development environment.
+- **Replit**: Primary development environment.
+- **Railway**: Recommended production hosting platform.
+- **GitHub Actions**: CI/CD pipeline for automated deployment.
 - **Vite**: Frontend build system.
 - **ESBuild**: Server-side TypeScript compilation.
+- **VS Code**: Development IDE with optimized configuration.
 
 ### UI & Styling
 - **Radix UI**: Accessible component primitives.
