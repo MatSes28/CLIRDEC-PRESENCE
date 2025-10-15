@@ -2014,14 +2014,8 @@ Central Luzon State University
     
     let pingInterval: NodeJS.Timeout | null = null;
     
-    // Send immediate welcome message to confirm connection
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({
-        type: 'connected',
-        message: 'WebSocket connection established',
-        timestamp: new Date().toISOString()
-      }));
-    }
+    // Don't send welcome message immediately - let client initiate
+    // This prevents race conditions and code 1006 errors
     
     ws.on('message', (message) => {
       try {
@@ -2031,9 +2025,20 @@ Central Luzon State University
         }
         
         // Respond to hello/ping messages to keep connection alive
-        if (data.type === 'hello' || data.type === 'ping') {
+        if (data.type === 'hello') {
           if (process.env.NODE_ENV === 'development') {
-            console.log('🔄 Responding to', data.type, 'message');
+            console.log('🔄 Responding to hello with connected confirmation');
+          }
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+              type: 'connected',
+              message: 'WebSocket connection established',
+              timestamp: new Date().toISOString()
+            }));
+          }
+        } else if (data.type === 'ping') {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🔄 Responding to ping with pong');
           }
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({

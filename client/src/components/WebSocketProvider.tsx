@@ -87,13 +87,16 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
       setSocket(ws);
       setReconnectAttempts(0);
       
-      // Send hello message immediately to establish communication
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ 
-          type: 'hello',
-          timestamp: new Date().toISOString()
-        }));
-      }
+      // Send hello message with small delay to ensure connection is fully established
+      // This prevents race conditions and code 1006 errors
+      setTimeout(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ 
+            type: 'hello',
+            timestamp: new Date().toISOString()
+          }));
+        }
+      }, 100); // 100ms delay to ensure connection is stable
     };
 
     ws.onmessage = (event) => {
