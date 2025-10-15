@@ -1969,21 +1969,22 @@ Central Luzon State University
       const allowedOrigins: string[] = [
         `http://${host}`,
         `https://${host}`,
-        'http://localhost:5000',
-        'https://localhost:5000',
       ];
       
-      // In production, add Railway domain
-      if (process.env.RAILWAY_STATIC_URL) {
-        allowedOrigins.push(`https://${process.env.RAILWAY_STATIC_URL}`);
-      }
-      
-      // In development, allow Replit domains with strict pattern matching
+      // In development, allow localhost
       if (process.env.NODE_ENV === 'development') {
+        allowedOrigins.push('http://localhost:5000');
+        allowedOrigins.push('https://localhost:5000');
+        
         // Only allow specific Replit domain patterns (not any arbitrary origin)
         if (origin && (origin.endsWith('.replit.dev') || origin.endsWith('.replit.app'))) {
           allowedOrigins.push(origin);
         }
+      }
+      
+      // In production, add Railway domain
+      if (process.env.RAILWAY_STATIC_URL) {
+        allowedOrigins.push(`https://${process.env.RAILWAY_STATIC_URL}`);
       }
       
       // Use strict equality check, not startsWith

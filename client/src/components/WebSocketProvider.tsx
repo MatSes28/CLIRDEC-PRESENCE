@@ -45,21 +45,25 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
     
     // Handle Replit environment
     if (host.includes('replit.dev') || host.includes('replit.app')) {
-      // Replit uses the same host and port, but with WebSocket protocol
+      // Replit uses the same host, but with WebSocket protocol
+      wsUrl = `${protocol}//${host}/ws`;
+    }
+    // Handle Railway and other production environments
+    else if (host.includes('railway.app') || host.includes('up.railway.app')) {
+      // Railway uses standard ports (no explicit port in URL)
       wsUrl = `${protocol}//${host}/ws`;
     }
     // Handle development environment
     else if (host === 'localhost' || host.includes('127.0.0.1')) {
       wsUrl = `${protocol}//${host}:5000/ws`;
     }
-    // Handle production with explicit port
+    // Handle production with explicit port (non-standard ports)
     else if (port && port !== '80' && port !== '443') {
       wsUrl = `${protocol}//${host}:${port}/ws`;
     }
-    // Handle production with default ports
+    // Handle production with standard ports (80/443) - DO NOT include port in URL
     else {
-      const defaultPort = protocol === 'wss:' ? '443' : '80';
-      wsUrl = `${protocol}//${host}:${defaultPort}/ws`;
+      wsUrl = `${protocol}//${host}/ws`;
     }
 
     if (import.meta.env.DEV) {
