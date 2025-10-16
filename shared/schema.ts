@@ -472,6 +472,44 @@ export const updateComputerSchema = z.object({
   isActive: z.boolean().optional(),
 });
 
+// Privacy consent logs - ISO 27701 compliance
+export const consentLogs = pgTable("consent_logs", {
+  id: serial("id").primaryKey(),
+  userType: varchar("user_type").notNull(), // 'parent' or 'student'
+  userEmail: varchar("user_email").notNull(),
+  studentId: integer("student_id").references(() => students.id),
+  consentType: varchar("consent_type").notNull(), // 'privacy_policy', 'email_notifications', 'data_processing'
+  consentGiven: boolean("consent_given").notNull(),
+  consentVersion: varchar("consent_version").default("1.0"), // Track policy version
+  ipAddress: varchar("ip_address"),
+  userAgent: text("user_agent"),
+  consentedAt: timestamp("consented_at").defaultNow(),
+});
+
+// Data retention policies - ISO 27701 compliance
+export const dataRetentionPolicies = pgTable("data_retention_policies", {
+  id: serial("id").primaryKey(),
+  entityType: varchar("entity_type").notNull(), // 'attendance', 'audit_logs', 'email_notifications', etc.
+  retentionPeriodMonths: integer("retention_period_months").notNull(),
+  autoDelete: boolean("auto_delete").default(false),
+  description: text("description"),
+  lastCleanupAt: timestamp("last_cleanup_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Consent log schemas
+export const insertConsentLogSchema = createInsertSchema(consentLogs).omit({
+  id: true,
+  consentedAt: true,
+});
+
+export const insertDataRetentionPolicySchema = createInsertSchema(dataRetentionPolicies).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type UpsertUser = z.infer<typeof insertUserSchema>;
 export type UpdateUser = z.infer<typeof updateUserSchema>;
@@ -502,3 +540,7 @@ export type InsertLoginAttempt = z.infer<typeof insertLoginAttemptSchema>;
 export type LoginAttempt = typeof loginAttempts.$inferSelect;
 export type InsertDeletionRequest = z.infer<typeof insertDeletionRequestSchema>;
 export type DeletionRequest = typeof deletionRequests.$inferSelect;
+export type InsertConsentLog = z.infer<typeof insertConsentLogSchema>;
+export type ConsentLog = typeof consentLogs.$inferSelect;
+export type InsertDataRetentionPolicy = z.infer<typeof insertDataRetentionPolicySchema>;
+export type DataRetentionPolicy = typeof dataRetentionPolicies.$inferSelect;
