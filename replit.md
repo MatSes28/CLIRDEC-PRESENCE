@@ -79,6 +79,9 @@ UI Style: Modern glass effects, gradient backgrounds, professional typography, a
   - **GDPR Hard Delete**: "Right to be Forgotten" compliance with permanent deletion endpoints (`/api/users/:id/permanent`, `/api/students/:id/permanent`) requiring explicit confirmation token 'PERMANENTLY_DELETE'
   - **Privacy-First Design**: Admins cannot edit user accounts (only create/delete) to protect faculty passwords and personal information
   - **Deletion Tracking**: Dedicated `deletion_requests` table for managing and auditing data removal requests
+  - **Privacy Consent Management**: Full consent tracking system with `consent_logs` table to record privacy policy acceptance, email notification consent, and data processing agreements with IP/user agent logging
+  - **Data Retention Policies**: Automated data lifecycle management with configurable retention periods - 5 years for attendance (academic law), 2 years for audit logs, 1 year for emails, 6 months for login attempts
+  - **GDPR Data Export**: Full data portability via `/api/export/student/:id` and `/api/export/parent/:email` endpoints providing JSON export of all student data, attendance records, enrollments, and consent history
 
 ### Previous Changes (January 2025)
 - **Email Integration**: Migrated from SendGrid to Brevo for email delivery using verified sender address (matt.feria@clsu2.edu.ph).
