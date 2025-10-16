@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { UserPlus, Trash2, Users, Shield, GraduationCap } from "lucide-react";
 import { GenderAvatar } from "@/components/GenderAvatar";
 import { PasswordInput, ConfirmPasswordInput } from "@/components/PasswordInput";
+import { HelpTooltip } from "@/components/HelpTooltip";
 import apiClient from "@/lib/api";
 
 interface User {
@@ -205,7 +206,10 @@ export default function UserManagement() {
               </div>
               
               <div>
-                <Label htmlFor="email">Email</Label>
+                <div className="flex items-center gap-2 mb-2">
+                  <Label htmlFor="email">Email</Label>
+                  <HelpTooltip content="This will be used for login. Use institutional email address (@clsu.edu.ph)" />
+                </div>
                 <Input
                   id="email"
                   type="email"
@@ -234,7 +238,10 @@ export default function UserManagement() {
               />
               
               <div>
-                <Label htmlFor="role">Role</Label>
+                <div className="flex items-center gap-2 mb-2">
+                  <Label htmlFor="role">Role</Label>
+                  <HelpTooltip content="Faculty: Can manage classes and attendance. Admin: Full system access including user management" />
+                </div>
                 <Select
                   value={newUser.role}
                   onValueChange={(value: 'admin' | 'faculty') => setNewUser({ ...newUser, role: value })}
@@ -251,7 +258,10 @@ export default function UserManagement() {
               
               {newUser.role === 'faculty' && (
                 <div>
-                  <Label htmlFor="facultyId">Faculty ID</Label>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Label htmlFor="facultyId">Faculty ID</Label>
+                    <HelpTooltip content="Unique identifier for faculty members (e.g., FAC-2025-001)" />
+                  </div>
                   <Input
                     id="facultyId"
                     value={newUser.facultyId}

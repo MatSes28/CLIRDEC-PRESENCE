@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { RFIDRegistrationHelper } from "./RFIDRegistrationHelper";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { HelpTooltip } from "./HelpTooltip";
 
 interface AddStudentModalProps {
   open: boolean;
@@ -214,7 +215,10 @@ export default function AddStudentModal({ open, onClose }: AddStudentModalProps)
           </div>
 
           <div>
-            <Label htmlFor="rfidCardId">RFID Card ID</Label>
+            <div className="flex items-center gap-2 mb-2">
+              <Label htmlFor="rfidCardId">RFID Card ID</Label>
+              <HelpTooltip content="Use the RFID Registration Helper below to automatically scan and fill this field from your ESP32 device" />
+            </div>
             <Input
               id="rfidCardId"
               value={formData.rfidCardId}
@@ -260,7 +264,10 @@ export default function AddStudentModal({ open, onClose }: AddStudentModalProps)
           </div>
 
           <div>
-            <Label htmlFor="parentEmail">Parent/Guardian Email *</Label>
+            <div className="flex items-center gap-2 mb-2">
+              <Label htmlFor="parentEmail">Parent/Guardian Email *</Label>
+              <HelpTooltip content="This email will receive automated attendance notifications and alerts about absences or tardiness" />
+            </div>
             <Input
               id="parentEmail"
               type="email"
