@@ -6,6 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
+import { auditService } from "./services/auditService";
 // Removed connectPg import - using memorystore instead
 
 declare global {
@@ -125,14 +126,89 @@ export async function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    res.status(200).json(req.user);
+  app.post("/api/login", async (req: any, res, next) => {
+    const { username: email } = req.body;
+    const ipAddress = req.ip || req.headers['x-forwarded-for'] || 'unknown';
+    const userAgent = req.headers['user-agent'] || 'unknown';
+
+    try {
+      // Check rate limit (ISO 27001: max 5 failed attempts in 5 minutes)
+      const isRateLimited = await auditService.checkRateLimit(email, ipAddress);
+      if (isRateLimited) {
+        await auditService.logLoginAttempt({
+          email,
+          ipAddress,
+          success: false,
+          userAgent,
+        });
+        
+        return res.status(429).json({ 
+          message: "Too many failed login attempts. Please try again in 5 minutes." 
+        });
+      }
+
+      // Attempt authentication
+      passport.authenticate("local", async (err: any, user: any, info: any) => {
+        if (err) return next(err);
+
+        const success = !!user;
+
+        // Log login attempt
+        await auditService.logLoginAttempt({
+          email,
+          ipAddress,
+          success,
+          userAgent,
+        });
+
+        if (!user) {
+          return res.status(401).json({ message: info?.message || "Invalid credentials" });
+        }
+
+        // Log successful login in audit trail
+        await auditService.logAction({
+          userId: user.id,
+          action: "LOGIN",
+          entityType: "auth",
+          entityId: user.id,
+          ipAddress,
+          userAgent,
+          status: "success",
+        });
+
+        req.login(user, (loginErr: any) => {
+          if (loginErr) return next(loginErr);
+          res.status(200).json(req.user);
+        });
+      })(req, res, next);
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ message: "Login failed" });
+    }
   });
 
   // Handle both GET and POST logout requests
-  const logoutHandler = (req: any, res: any, next: any) => {
+  const logoutHandler = async (req: any, res: any, next: any) => {
+    const userId = req.user?.id;
+    const ipAddress = req.ip || req.headers['x-forwarded-for'] || 'unknown';
+    const userAgent = req.headers['user-agent'] || 'unknown';
+
     req.logout((err: any) => {
       if (err) return next(err);
+      
+      // Log logout in audit trail
+      if (userId) {
+        auditService.logAction({
+          userId,
+          action: "LOGOUT",
+          entityType: "auth",
+          entityId: userId,
+          ipAddress,
+          userAgent,
+          status: "success",
+        });
+      }
+
       req.session.destroy((destroyErr: any) => {
         if (destroyErr) {
           console.error("Session destroy error:", destroyErr);

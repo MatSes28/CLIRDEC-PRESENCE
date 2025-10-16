@@ -2,7 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
+import { db } from "./db";
 import { setupAuth, requireAuth, requireAdmin, requireAdminOrFaculty } from "./auth";
+import { eq } from "drizzle-orm";
 import { 
   insertStudentSchema,
   updateStudentSchema,
@@ -17,7 +19,9 @@ import {
   insertAttendanceSchema,
   insertComputerSchema,
   insertEnrollmentSchema,
-  strongPasswordSchema
+  strongPasswordSchema,
+  users,
+  students
 } from "@shared/schema";
 import { sendEmailNotification } from "./services/emailService";
 import { simulateRFIDTap } from "./services/rfidSimulator";
@@ -155,20 +159,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/users/:id', requireAdmin, async (req, res) => {
+  app.delete('/api/users/:id', requireAdmin, async (req: any, res) => {
     try {
       const userId = req.params.id;
       
       // Prevent admin from deleting themselves
-      if (userId === (req as any).user.id) {
+      if (userId === req.user.id) {
         return res.status(400).json({ message: "Cannot delete your own account" });
       }
 
+      // Soft delete (default)
       await storage.deleteUser(userId);
+      
+      // Audit log
+      await auditService.logAction({
+        userId: req.user.id,
+        action: "DELETE",
+        entityType: "users",
+        entityId: userId,
+        ipAddress: req.ip || 'unknown',
+        userAgent: req.headers['user-agent'] || 'unknown',
+        status: "success",
+      });
+
       res.status(204).send();
     } catch (error) {
       console.error("Error deleting user:", error);
       res.status(400).json({ message: "Failed to delete user" });
+    }
+  });
+
+  // Hard delete endpoint - GDPR/Privacy compliance (Right to be Forgotten)
+  app.delete('/api/users/:id/permanent', requireAdmin, async (req: any, res) => {
+    try {
+      const userId = req.params.id;
+      const { confirmation } = req.body;
+
+      if (confirmation !== 'PERMANENTLY_DELETE') {
+        return res.status(400).json({ 
+          message: "Confirmation required. Send {confirmation: 'PERMANENTLY_DELETE'}" 
+        });
+      }
+
+      // Prevent admin from permanently deleting themselves
+      if (userId === req.user.id) {
+        return res.status(400).json({ message: "Cannot permanently delete your own account" });
+      }
+
+      // Permanently delete from database
+      if (!db) throw new Error("Database not available");
+      
+      await db.delete(users).where(eq(users.id, userId));
+      
+      // Audit log
+      await auditService.logAction({
+        userId: req.user.id,
+        action: "HARD_DELETE",
+        entityType: "users",
+        entityId: userId,
+        ipAddress: req.ip || 'unknown',
+        userAgent: req.headers['user-agent'] || 'unknown',
+        status: "success",
+      });
+
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error permanently deleting user:", error);
+      res.status(400).json({ message: "Failed to permanently delete user" });
     }
   });
 
@@ -505,14 +562,63 @@ Central Luzon State University
     }
   });
 
-  app.delete('/api/students/:id', requireAdmin, async (req, res) => {
+  app.delete('/api/students/:id', requireAdmin, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
+      
+      // Soft delete (default)
       await storage.deleteStudent(id);
+      
+      // Audit log
+      await auditService.logAction({
+        userId: req.user.id,
+        action: "DELETE",
+        entityType: "students",
+        entityId: id.toString(),
+        ipAddress: req.ip || 'unknown',
+        userAgent: req.headers['user-agent'] || 'unknown',
+        status: "success",
+      });
+
       res.status(204).send();
     } catch (error) {
       console.error("Error deleting student:", error);
       res.status(400).json({ message: "Failed to delete student" });
+    }
+  });
+
+  // Hard delete student endpoint - GDPR/Privacy compliance
+  app.delete('/api/students/:id/permanent', requireAdmin, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { confirmation } = req.body;
+
+      if (confirmation !== 'PERMANENTLY_DELETE') {
+        return res.status(400).json({ 
+          message: "Confirmation required. Send {confirmation: 'PERMANENTLY_DELETE'}" 
+        });
+      }
+
+      // Permanently delete from database
+      if (!db) throw new Error("Database not available");
+      
+      await db.delete(students).where(eq(students.id, id));
+      
+      // Audit log
+      await auditService.logAction({
+        userId: req.user.id,
+        action: "HARD_DELETE",
+        entityType: "students",
+        entityId: id.toString(),
+        ipAddress: req.ip || 'unknown',
+        userAgent: req.headers['user-agent'] || 'unknown',
+        status: "success",
+      });
+
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error permanently deleting student:", error);
+      res.status(400).json({ message: "Failed to permanently delete student" });
     }
   });
 
