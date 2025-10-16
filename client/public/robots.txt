@@ -1,0 +1,32 @@
+# robots.txt for CLIRDEC Presence - Attendance Management System
+
+# Allow all search engines to crawl the site
+User-agent: *
+Allow: /
+
+# Specific instructions for major search engines
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+User-agent: YandexBot
+Allow: /
+
+# Disallow access to admin and API endpoints for security
+Disallow: /api/
+Disallow: /admin/
+Disallow: /settings/
+
+# Sitemap location
+Sitemap: https://clirdec-presence-production.up.railway.app/sitemap.xml
