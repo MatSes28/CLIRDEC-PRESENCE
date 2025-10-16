@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus, Trash2, Users, Shield, GraduationCap } from "lucide-react";
 import { GenderAvatar } from "@/components/GenderAvatar";
+import { PasswordInput, ConfirmPasswordInput } from "@/components/PasswordInput";
 import apiClient from "@/lib/api";
 
 interface User {
@@ -99,6 +100,27 @@ export default function UserManagement() {
     },
   });
 
+  const validatePassword = (password: string): boolean => {
+    const requirements = [
+      { test: password.length >= 8, message: "at least 8 characters" },
+      { test: /[A-Z]/.test(password), message: "one uppercase letter" },
+      { test: /[a-z]/.test(password), message: "one lowercase letter" },
+      { test: /[0-9]/.test(password), message: "one number" },
+      { test: /[^A-Za-z0-9]/.test(password), message: "one special character" },
+    ];
+
+    const failedRequirement = requirements.find(req => !req.test);
+    if (failedRequirement) {
+      toast({
+        title: "Password Requirements Not Met",
+        description: `Password must contain ${failedRequirement.message}`,
+        variant: "destructive",
+      });
+      return false;
+    }
+    return true;
+  };
+
   const handleCreateUser = () => {
     if (!newUser.email || !newUser.password || !newUser.firstName || !newUser.lastName) {
       toast({
@@ -109,19 +131,14 @@ export default function UserManagement() {
       return;
     }
 
+    if (!validatePassword(newUser.password)) {
+      return;
+    }
+
     if (newUser.password !== newUser.confirmPassword) {
       toast({
         title: "Validation Error",
         description: "Passwords do not match",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (newUser.password.length < 6) {
-      toast({
-        title: "Validation Error",
-        description: "Password must be at least 6 characters long",
         variant: "destructive",
       });
       return;
@@ -198,32 +215,23 @@ export default function UserManagement() {
                 />
               </div>
               
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={newUser.password}
-                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                  placeholder="Enter secure password (min. 6 characters)"
-                  data-testid="input-password"
-                />
-              </div>
+              <PasswordInput
+                id="password"
+                label="Password"
+                value={newUser.password}
+                onChange={(value) => setNewUser({ ...newUser, password: value })}
+                placeholder="Create a strong password"
+                showRequirements={true}
+                testId="input-password"
+              />
 
-              <div>
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={newUser.confirmPassword}
-                  onChange={(e) => setNewUser({ ...newUser, confirmPassword: e.target.value })}
-                  placeholder="Re-enter password"
-                  data-testid="input-confirm-password"
-                />
-                {newUser.password && newUser.confirmPassword && newUser.password !== newUser.confirmPassword && (
-                  <p className="text-sm text-destructive mt-1">Passwords do not match</p>
-                )}
-              </div>
+              <ConfirmPasswordInput
+                id="confirmPassword"
+                value={newUser.confirmPassword}
+                password={newUser.password}
+                onChange={(value) => setNewUser({ ...newUser, confirmPassword: value })}
+                testId="input-confirm-password"
+              />
               
               <div>
                 <Label htmlFor="role">Role</Label>
