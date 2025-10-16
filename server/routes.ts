@@ -16,7 +16,8 @@ import {
   insertClassSessionSchema,
   insertAttendanceSchema,
   insertComputerSchema,
-  insertEnrollmentSchema
+  insertEnrollmentSchema,
+  strongPasswordSchema
 } from "@shared/schema";
 import { sendEmailNotification } from "./services/emailService";
 import { simulateRFIDTap } from "./services/rfidSimulator";
@@ -25,6 +26,7 @@ import { performanceMonitor } from "./services/performanceMonitor";
 import { generateAttendanceTrendData, generateStudentPerformanceData } from "./services/reportingService";
 import { iotDeviceManager } from "./services/iotService";
 import { attendanceValidationService } from "./services/attendanceValidationService";
+import { auditService } from "./services/auditService";
 
 // Helper function to calculate duration between two times
 function calculateDuration(checkIn: string, checkOut: string): string {
@@ -73,13 +75,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/users', requireAdmin, async (req, res) => {
+  app.post('/api/users', requireAdmin, async (req: any, res) => {
     try {
       const { email, password, firstName, lastName, role, facultyId, department, gender } = req.body;
       
       // Input validation
       if (!email || !password || !firstName || !lastName) {
         return res.status(400).json({ message: "Email, password, first name, and last name are required" });
+      }
+
+      // Validate password strength (ISO 27001 compliance)
+      const passwordValidation = strongPasswordSchema.safeParse(password);
+      if (!passwordValidation.success) {
+        return res.status(400).json({ 
+          message: "Password does not meet security requirements", 
+          errors: passwordValidation.error.errors.map(e => e.message)
+        });
       }
 
       // Trim inputs

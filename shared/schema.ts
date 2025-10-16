@@ -188,6 +188,44 @@ export const systemSettings = pgTable("system_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Audit logs table - ISO 27001 compliance
+export const auditLogs = pgTable("audit_logs", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id"), // Who performed the action
+  action: varchar("action").notNull(), // CREATE, UPDATE, DELETE, LOGIN, LOGOUT, ACCESS
+  entityType: varchar("entity_type").notNull(), // users, students, attendance, etc.
+  entityId: varchar("entity_id"), // ID of the affected record
+  changes: jsonb("changes"), // Before/after values for updates
+  ipAddress: varchar("ip_address"),
+  userAgent: varchar("user_agent"),
+  status: varchar("status").default("success"), // success, failed
+  errorMessage: text("error_message"),
+  timestamp: timestamp("timestamp").defaultNow(),
+});
+
+// Login attempts table - Rate limiting & security
+export const loginAttempts = pgTable("login_attempts", {
+  id: serial("id").primaryKey(),
+  email: varchar("email").notNull(),
+  ipAddress: varchar("ip_address").notNull(),
+  success: boolean("success").notNull(),
+  userAgent: varchar("user_agent"),
+  timestamp: timestamp("timestamp").defaultNow(),
+});
+
+// Data deletion requests - GDPR/Privacy compliance
+export const deletionRequests = pgTable("deletion_requests", {
+  id: serial("id").primaryKey(),
+  entityType: varchar("entity_type").notNull(), // user, student
+  entityId: varchar("entity_id").notNull(),
+  requestedBy: varchar("requested_by").notNull(), // Admin user ID
+  reason: text("reason"),
+  status: varchar("status").default("pending"), // pending, approved, completed
+  scheduledDate: timestamp("scheduled_date"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   subjects: many(subjects),
@@ -347,10 +385,33 @@ export const insertEnrollmentSchema = createInsertSchema(enrollments).omit({
   updatedAt: true,
 });
 
+export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
+  id: true,
+  timestamp: true,
+});
+
+export const insertLoginAttemptSchema = createInsertSchema(loginAttempts).omit({
+  id: true,
+  timestamp: true,
+});
+
+export const insertDeletionRequestSchema = createInsertSchema(deletionRequests).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Password validation schema - ISO 27001 compliant
+export const strongPasswordSchema = z.string()
+  .min(8, "Password must be at least 8 characters")
+  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+  .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+  .regex(/[0-9]/, "Password must contain at least one number")
+  .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character");
+
 // Update schemas - all fields optional for partial updates
 export const updateUserSchema = z.object({
   email: z.string().email().optional(),
-  password: z.string().min(6).optional(),
+  password: strongPasswordSchema.optional(),
   firstName: z.string().min(1).optional(),
   lastName: z.string().min(1).optional(),
   role: z.enum(["admin", "faculty"]).optional(),
@@ -435,3 +496,9 @@ export type EmailNotification = typeof emailNotifications.$inferSelect;
 export type InsertEnrollment = z.infer<typeof insertEnrollmentSchema>;
 export type Enrollment = typeof enrollments.$inferSelect;
 export type SystemSetting = typeof systemSettings.$inferSelect;
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertLoginAttempt = z.infer<typeof insertLoginAttemptSchema>;
+export type LoginAttempt = typeof loginAttempts.$inferSelect;
+export type InsertDeletionRequest = z.infer<typeof insertDeletionRequestSchema>;
+export type DeletionRequest = typeof deletionRequests.$inferSelect;
