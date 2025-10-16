@@ -248,15 +248,15 @@ export default function Sidebar() {
             <Button 
               variant="ghost" 
               disabled={isLoggingOut}
-              className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all duration-200 rounded-xl p-3 group"
+              className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors duration-200 rounded-xl p-3 group"
             >
-              <LogOut className="mr-3 h-4 w-4 transition-transform group-hover:scale-110" />
+              <LogOut className="mr-3 h-4 w-4" />
               <span className="font-medium">
                 {isLoggingOut ? "Signing Out..." : "Sign Out"}
               </span>
             </Button>
           </AlertDialogTrigger>
-          <AlertDialogContent className="card-elevated border-0">
+          <AlertDialogContent className="card-elevated border-0 sm:max-w-md">
             <AlertDialogHeader>
               <AlertDialogTitle className="text-gradient text-xl font-bold">
                 Confirm Sign Out
@@ -265,7 +265,7 @@ export default function Sidebar() {
                 Are you sure you want to sign out of CLIRDEC Presence? You'll need to authenticate again to access the attendance management system.
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter className="gap-3">
+            <AlertDialogFooter className="gap-3 sm:gap-2">
               <AlertDialogCancel className="btn-modern bg-muted hover:bg-muted/80">
                 Stay Logged In
               </AlertDialogCancel>
