@@ -4,7 +4,13 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { setupAuth, requireAuth, requireAdmin, requireAdminOrFaculty } from "./auth";
 import { 
-  insertStudentSchema, 
+  insertStudentSchema,
+  updateStudentSchema,
+  updateUserSchema,
+  updateClassroomSchema,
+  updateSubjectSchema,
+  updateScheduleSchema,
+  updateComputerSchema,
   insertClassroomSchema, 
   insertSubjectSchema, 
   insertScheduleSchema,
@@ -72,20 +78,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { email, password, firstName, lastName, role, facultyId, department, gender } = req.body;
       
-      const existingUser = await storage.getUserByEmail(email);
+      // Input validation
+      if (!email || !password || !firstName || !lastName) {
+        return res.status(400).json({ message: "Email, password, first name, and last name are required" });
+      }
+
+      // Trim inputs
+      const trimmedEmail = email.trim().toLowerCase();
+      const trimmedFirstName = firstName.trim();
+      const trimmedLastName = lastName.trim();
+      const trimmedFacultyId = facultyId?.trim();
+      
+      const existingUser = await storage.getUserByEmail(trimmedEmail);
       
       // If user exists and is inactive, reactivate with new details
       if (existingUser && !existingUser.isActive) {
         const reactivatedUser = await storage.upsertUser({
           id: existingUser.id,
-          email,
+          email: trimmedEmail,
           password: await hashPassword(password),
-          firstName,
-          lastName,
+          firstName: trimmedFirstName,
+          lastName: trimmedLastName,
           role,
-          facultyId,
+          facultyId: trimmedFacultyId || null,
           gender: gender || "male",
-          department: department || "Information Technology",
+          department: department?.trim() || "Information Technology",
           isActive: true
         });
         
@@ -98,16 +115,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Email already exists" });
       }
 
+      // Check for duplicate facultyId if provided
+      if (trimmedFacultyId) {
+        const users = await storage.getAllUsers();
+        const duplicateFacultyId = users.find(u => u.facultyId === trimmedFacultyId && u.isActive);
+        if (duplicateFacultyId) {
+          return res.status(400).json({ message: "Faculty ID already exists" });
+        }
+      }
+
       // Create new user
       const user = await storage.createUser({
-        email,
+        email: trimmedEmail,
         password: await hashPassword(password),
-        firstName,
-        lastName,
+        firstName: trimmedFirstName,
+        lastName: trimmedLastName,
         role,
-        facultyId,
+        facultyId: trimmedFacultyId || null,
         gender: gender || "male",
-        department: department || "Information Technology"
+        department: department?.trim() || "Information Technology"
       });
 
       // Remove password from response
@@ -116,6 +142,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating user:", error);
       res.status(400).json({ message: "Failed to create user" });
+    }
+  });
+
+  app.put('/api/users/:id', requireAdmin, async (req, res) => {
+    try {
+      const userId = req.params.id;
+      
+      // Validate request body with Zod
+      const validationResult = updateUserSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: validationResult.error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+        });
+      }
+
+      const updateData = validationResult.data;
+
+      // Get existing user
+      const existingUser = await storage.getUser(userId);
+      if (!existingUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Trim string inputs
+      if (updateData.email) updateData.email = updateData.email.trim().toLowerCase();
+      if (updateData.firstName) updateData.firstName = updateData.firstName.trim();
+      if (updateData.lastName) updateData.lastName = updateData.lastName.trim();
+      if (updateData.facultyId) updateData.facultyId = updateData.facultyId.trim();
+      if (updateData.department) updateData.department = updateData.department.trim();
+
+      // Check for duplicate email if email is being changed
+      if (updateData.email && updateData.email !== existingUser.email) {
+        const emailExists = await storage.getUserByEmail(updateData.email);
+        if (emailExists && emailExists.id !== userId) {
+          return res.status(400).json({ message: "Email already exists" });
+        }
+      }
+
+      // Check for duplicate facultyId if being changed
+      if (updateData.facultyId && updateData.facultyId !== existingUser.facultyId) {
+        const users = await storage.getAllUsers();
+        const duplicateFacultyId = users.find(u => u.facultyId === updateData.facultyId && u.id !== userId && u.isActive);
+        if (duplicateFacultyId) {
+          return res.status(400).json({ message: "Faculty ID already exists" });
+        }
+      }
+
+      // Hash password if provided
+      if (updateData.password) {
+        updateData.password = await hashPassword(updateData.password);
+      }
+
+      // Prepare update payload
+      const updatePayload = {
+        id: userId,
+        email: updateData.email || existingUser.email,
+        password: updateData.password || existingUser.password,
+        firstName: updateData.firstName || existingUser.firstName,
+        lastName: updateData.lastName || existingUser.lastName,
+        role: updateData.role || existingUser.role,
+        facultyId: updateData.facultyId !== undefined ? updateData.facultyId : existingUser.facultyId,
+        department: updateData.department || existingUser.department,
+        gender: updateData.gender || existingUser.gender,
+        isActive: updateData.isActive !== undefined ? updateData.isActive : existingUser.isActive,
+      };
+
+      // Update user
+      const updatedUser = await storage.upsertUser(updatePayload);
+
+      // Remove password from response
+      const { password: _, ...safeUser } = updatedUser;
+      res.json(safeUser);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(400).json({ message: "Failed to update user" });
     }
   });
 
@@ -354,7 +456,42 @@ Central Luzon State University
 
   app.post('/api/students', requireAdmin, async (req, res) => {
     try {
-      const studentData = insertStudentSchema.parse(req.body);
+      // Validate with Zod schema
+      const validationResult = insertStudentSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: validationResult.error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+        });
+      }
+
+      const studentData = validationResult.data;
+
+      // Trim string inputs
+      if (studentData.studentId) studentData.studentId = studentData.studentId.trim();
+      if (studentData.firstName) studentData.firstName = studentData.firstName.trim();
+      if (studentData.lastName) studentData.lastName = studentData.lastName.trim();
+      if (studentData.email) studentData.email = studentData.email.trim().toLowerCase();
+      if (studentData.section) studentData.section = studentData.section.trim();
+      if (studentData.rfidCardId) studentData.rfidCardId = studentData.rfidCardId.trim();
+      if (studentData.parentEmail) studentData.parentEmail = studentData.parentEmail.trim().toLowerCase();
+      if (studentData.parentName) studentData.parentName = studentData.parentName.trim();
+
+      // Check for duplicate student ID
+      const allStudents = await storage.getStudents();
+      const duplicateStudentId = allStudents.find(s => s.studentId === studentData.studentId && s.isActive);
+      if (duplicateStudentId) {
+        return res.status(400).json({ message: "Student ID already exists" });
+      }
+
+      // Check for duplicate RFID card if provided
+      if (studentData.rfidCardId) {
+        const duplicateRfid = allStudents.find(s => s.rfidCardId === studentData.rfidCardId && s.isActive);
+        if (duplicateRfid) {
+          return res.status(400).json({ message: "RFID card is already assigned to another student" });
+        }
+      }
+
       const student = await storage.createStudent(studentData);
       res.status(201).json(student);
     } catch (error) {
@@ -367,22 +504,64 @@ Central Luzon State University
     try {
       const id = parseInt(req.params.id);
       
-      // Handle the update more flexibly - remove empty/null values
-      const rawData = req.body;
+      // Validate with Zod schema
+      const validationResult = updateStudentSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: validationResult.error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+        });
+      }
+
+      const updateData = validationResult.data;
+
+      // Get existing student
+      const existingStudent = await storage.getStudent(id);
+      if (!existingStudent) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+
+      // Trim string inputs
+      if (updateData.studentId) updateData.studentId = updateData.studentId.trim();
+      if (updateData.firstName) updateData.firstName = updateData.firstName.trim();
+      if (updateData.lastName) updateData.lastName = updateData.lastName.trim();
+      if (updateData.email) updateData.email = updateData.email.trim().toLowerCase();
+      if (updateData.section) updateData.section = updateData.section.trim();
+      if (updateData.rfidCardId) updateData.rfidCardId = updateData.rfidCardId.trim();
+      if (updateData.parentEmail) updateData.parentEmail = updateData.parentEmail.trim().toLowerCase();
+      if (updateData.parentName) updateData.parentName = updateData.parentName.trim();
+
+      const allStudents = await storage.getStudents();
+
+      // Check for duplicate student ID if being changed
+      if (updateData.studentId && updateData.studentId !== existingStudent.studentId) {
+        const duplicateStudentId = allStudents.find(s => s.studentId === updateData.studentId && s.id !== id && s.isActive);
+        if (duplicateStudentId) {
+          return res.status(400).json({ message: "Student ID already exists" });
+        }
+      }
+
+      // Check for duplicate RFID card if being changed
+      if (updateData.rfidCardId && updateData.rfidCardId !== existingStudent.rfidCardId) {
+        const duplicateRfid = allStudents.find(s => s.rfidCardId === updateData.rfidCardId && s.id !== id && s.isActive);
+        if (duplicateRfid) {
+          return res.status(400).json({ message: "RFID card is already assigned to another student" });
+        }
+      }
+
+      // Build clean update object with only provided fields
       const cleanData: any = {};
-      
-      // Only include fields that have actual values
-      if (rawData.firstName && rawData.firstName.trim()) cleanData.firstName = rawData.firstName.trim();
-      if (rawData.lastName && rawData.lastName.trim()) cleanData.lastName = rawData.lastName.trim();
-      if (rawData.studentId && rawData.studentId.trim()) cleanData.studentId = rawData.studentId.trim();
-      if (rawData.email && rawData.email.trim()) cleanData.email = rawData.email.trim();
-      if (rawData.parentEmail && rawData.parentEmail.trim()) cleanData.parentEmail = rawData.parentEmail.trim();
-      if (rawData.parentName && rawData.parentName.trim()) cleanData.parentName = rawData.parentName.trim();
-      if (rawData.section && rawData.section.trim()) cleanData.section = rawData.section.trim();
-      if (rawData.rfidCardId && rawData.rfidCardId.trim()) cleanData.rfidCardId = rawData.rfidCardId.trim();
-      if (rawData.year && parseInt(rawData.year)) cleanData.year = parseInt(rawData.year);
-      
-      console.log('Updating student with clean data:', cleanData);
+      if (updateData.studentId !== undefined) cleanData.studentId = updateData.studentId;
+      if (updateData.firstName !== undefined) cleanData.firstName = updateData.firstName;
+      if (updateData.lastName !== undefined) cleanData.lastName = updateData.lastName;
+      if (updateData.email !== undefined) cleanData.email = updateData.email;
+      if (updateData.gender !== undefined) cleanData.gender = updateData.gender;
+      if (updateData.year !== undefined) cleanData.year = updateData.year;
+      if (updateData.section !== undefined) cleanData.section = updateData.section;
+      if (updateData.rfidCardId !== undefined) cleanData.rfidCardId = updateData.rfidCardId;
+      if (updateData.parentEmail !== undefined) cleanData.parentEmail = updateData.parentEmail;
+      if (updateData.parentName !== undefined) cleanData.parentName = updateData.parentName;
+      if (updateData.isActive !== undefined) cleanData.isActive = updateData.isActive;
       
       const student = await storage.updateStudent(id, cleanData);
       res.json(student);

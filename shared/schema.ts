@@ -347,10 +347,76 @@ export const insertEnrollmentSchema = createInsertSchema(enrollments).omit({
   updatedAt: true,
 });
 
+// Update schemas - all fields optional for partial updates
+export const updateUserSchema = z.object({
+  email: z.string().email().optional(),
+  password: z.string().min(6).optional(),
+  firstName: z.string().min(1).optional(),
+  lastName: z.string().min(1).optional(),
+  role: z.enum(["admin", "faculty"]).optional(),
+  facultyId: z.string().nullable().optional(),
+  department: z.string().optional(),
+  gender: z.enum(["male", "female"]).optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const updateStudentSchema = z.object({
+  studentId: z.string().optional(),
+  firstName: z.string().min(1).optional(),
+  lastName: z.string().min(1).optional(),
+  email: z.string().email().nullable().optional(),
+  gender: z.enum(["male", "female"]).optional(),
+  year: z.number().int().min(1).max(5).optional(),
+  section: z.string().optional(),
+  rfidCardId: z.string().nullable().optional(),
+  parentEmail: z.string().email().optional(),
+  parentName: z.string().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const updateClassroomSchema = z.object({
+  name: z.string().optional(),
+  location: z.string().nullable().optional(),
+  type: z.enum(["lecture", "laboratory"]).optional(),
+  capacity: z.number().int().positive().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const updateSubjectSchema = z.object({
+  code: z.string().optional(),
+  name: z.string().optional(),
+  description: z.string().nullable().optional(),
+  professorId: z.string().nullable().optional(),
+});
+
+export const updateScheduleSchema = z.object({
+  subjectId: z.number().int().optional(),
+  classroomId: z.number().int().optional(),
+  professorId: z.string().optional(),
+  dayOfWeek: z.number().int().min(1).max(7).optional(),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
+  semester: z.string().nullable().optional(),
+  academicYear: z.string().nullable().optional(),
+  autoStart: z.boolean().optional(),
+  autoPopulate: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const updateComputerSchema = z.object({
+  name: z.string().optional(),
+  classroomId: z.number().int().optional(),
+  status: z.enum(["available", "occupied", "maintenance"]).optional(),
+  assignedStudentId: z.number().int().nullable().optional(),
+  isActive: z.boolean().optional(),
+});
+
 // Types
 export type UpsertUser = z.infer<typeof insertUserSchema>;
+export type UpdateUser = z.infer<typeof updateUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertStudent = z.infer<typeof insertStudentSchema>;
+export type UpdateStudent = z.infer<typeof updateStudentSchema>;
 export type Student = typeof students.$inferSelect;
 export type InsertClassroom = z.infer<typeof insertClassroomSchema>;
 export type Classroom = typeof classrooms.$inferSelect;
