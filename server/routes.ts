@@ -6,7 +6,6 @@ import { setupAuth, requireAuth, requireAdmin, requireAdminOrFaculty } from "./a
 import { 
   insertStudentSchema,
   updateStudentSchema,
-  updateUserSchema,
   updateClassroomSchema,
   updateSubjectSchema,
   updateScheduleSchema,
@@ -142,82 +141,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating user:", error);
       res.status(400).json({ message: "Failed to create user" });
-    }
-  });
-
-  app.put('/api/users/:id', requireAdmin, async (req, res) => {
-    try {
-      const userId = req.params.id;
-      
-      // Validate request body with Zod
-      const validationResult = updateUserSchema.safeParse(req.body);
-      if (!validationResult.success) {
-        return res.status(400).json({ 
-          message: "Validation failed", 
-          errors: validationResult.error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
-        });
-      }
-
-      const updateData = validationResult.data;
-
-      // Get existing user
-      const existingUser = await storage.getUser(userId);
-      if (!existingUser) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      // Trim string inputs
-      if (updateData.email) updateData.email = updateData.email.trim().toLowerCase();
-      if (updateData.firstName) updateData.firstName = updateData.firstName.trim();
-      if (updateData.lastName) updateData.lastName = updateData.lastName.trim();
-      if (updateData.facultyId) updateData.facultyId = updateData.facultyId.trim();
-      if (updateData.department) updateData.department = updateData.department.trim();
-
-      // Check for duplicate email if email is being changed
-      if (updateData.email && updateData.email !== existingUser.email) {
-        const emailExists = await storage.getUserByEmail(updateData.email);
-        if (emailExists && emailExists.id !== userId) {
-          return res.status(400).json({ message: "Email already exists" });
-        }
-      }
-
-      // Check for duplicate facultyId if being changed
-      if (updateData.facultyId && updateData.facultyId !== existingUser.facultyId) {
-        const users = await storage.getAllUsers();
-        const duplicateFacultyId = users.find(u => u.facultyId === updateData.facultyId && u.id !== userId && u.isActive);
-        if (duplicateFacultyId) {
-          return res.status(400).json({ message: "Faculty ID already exists" });
-        }
-      }
-
-      // Hash password if provided
-      if (updateData.password) {
-        updateData.password = await hashPassword(updateData.password);
-      }
-
-      // Prepare update payload
-      const updatePayload = {
-        id: userId,
-        email: updateData.email || existingUser.email,
-        password: updateData.password || existingUser.password,
-        firstName: updateData.firstName || existingUser.firstName,
-        lastName: updateData.lastName || existingUser.lastName,
-        role: updateData.role || existingUser.role,
-        facultyId: updateData.facultyId !== undefined ? updateData.facultyId : existingUser.facultyId,
-        department: updateData.department || existingUser.department,
-        gender: updateData.gender || existingUser.gender,
-        isActive: updateData.isActive !== undefined ? updateData.isActive : existingUser.isActive,
-      };
-
-      // Update user
-      const updatedUser = await storage.upsertUser(updatePayload);
-
-      // Remove password from response
-      const { password: _, ...safeUser } = updatedUser;
-      res.json(safeUser);
-    } catch (error) {
-      console.error("Error updating user:", error);
-      res.status(400).json({ message: "Failed to update user" });
     }
   });
 
@@ -595,7 +518,27 @@ Central Luzon State University
 
   app.post('/api/classrooms', requireAdmin, async (req, res) => {
     try {
-      const classroomData = insertClassroomSchema.parse(req.body);
+      const validationResult = insertClassroomSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: validationResult.error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+        });
+      }
+
+      const classroomData = validationResult.data;
+
+      // Trim inputs
+      if (classroomData.name) classroomData.name = classroomData.name.trim();
+      if (classroomData.location) classroomData.location = classroomData.location.trim();
+
+      // Check for duplicate classroom name
+      const allClassrooms = await storage.getClassrooms();
+      const duplicateName = allClassrooms.find(c => c.name.toLowerCase() === classroomData.name.toLowerCase() && c.isActive);
+      if (duplicateName) {
+        return res.status(400).json({ message: "Classroom name already exists" });
+      }
+
       const classroom = await storage.createClassroom(classroomData);
       res.status(201).json(classroom);
     } catch (error) {
@@ -607,8 +550,37 @@ Central Luzon State University
   app.put('/api/classrooms/:id', requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const classroomData = insertClassroomSchema.partial().parse(req.body);
-      const classroom = await storage.updateClassroom(id, classroomData);
+      
+      const validationResult = updateClassroomSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: validationResult.error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+        });
+      }
+
+      const updateData = validationResult.data;
+
+      // Get existing classroom
+      const existingClassroom = await storage.getClassroom(id);
+      if (!existingClassroom) {
+        return res.status(404).json({ message: "Classroom not found" });
+      }
+
+      // Trim inputs
+      if (updateData.name) updateData.name = updateData.name.trim();
+      if (updateData.location) updateData.location = updateData.location.trim();
+
+      // Check for duplicate name if being changed
+      if (updateData.name && updateData.name.toLowerCase() !== existingClassroom.name.toLowerCase()) {
+        const allClassrooms = await storage.getClassrooms();
+        const duplicateName = allClassrooms.find(c => c.name.toLowerCase() === updateData.name!.toLowerCase() && c.id !== id && c.isActive);
+        if (duplicateName) {
+          return res.status(400).json({ message: "Classroom name already exists" });
+        }
+      }
+
+      const classroom = await storage.updateClassroom(id, updateData);
       res.json(classroom);
     } catch (error) {
       console.error("Error updating classroom:", error);
