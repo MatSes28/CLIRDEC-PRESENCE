@@ -671,7 +671,35 @@ Central Luzon State University
 
   app.post('/api/enrollments', requireAdminOrFaculty, async (req: any, res) => {
     try {
-      const enrollmentData = insertEnrollmentSchema.parse(req.body);
+      const validationResult = insertEnrollmentSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: validationResult.error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+        });
+      }
+
+      const enrollmentData = validationResult.data;
+
+      // Validate foreign keys
+      const student = await storage.getStudent(enrollmentData.studentId);
+      if (!student) {
+        return res.status(400).json({ message: "Student not found" });
+      }
+
+      const allSubjects = await storage.getSubjects();
+      const subject = allSubjects.find(s => s.id === enrollmentData.subjectId);
+      if (!subject) {
+        return res.status(400).json({ message: "Subject not found" });
+      }
+
+      // Check for duplicate enrollment
+      const existingEnrollments = await storage.getEnrollmentsByStudent(enrollmentData.studentId);
+      const duplicate = existingEnrollments.find(e => e.subjectId === enrollmentData.subjectId && e.isActive);
+      if (duplicate) {
+        return res.status(400).json({ message: "Student is already enrolled in this subject" });
+      }
+
       const enrollment = await storage.createEnrollment(enrollmentData);
       res.status(201).json(enrollment);
     } catch (error) {
