@@ -31,6 +31,8 @@ import { generateAttendanceTrendData, generateStudentPerformanceData } from "./s
 import { iotDeviceManager } from "./services/iotService";
 import { attendanceValidationService } from "./services/attendanceValidationService";
 import { auditService } from "./services/auditService";
+import { consentService } from "./services/consentService";
+import { dataRetentionService } from "./services/dataRetentionService";
 
 // Helper function to calculate duration between two times
 function calculateDuration(checkIn: string, checkOut: string): string {
@@ -2695,6 +2697,225 @@ Central Luzon State University
     } catch (error) {
       console.error("Error generating setup guide:", error);
       res.status(500).json({ message: "Failed to generate setup guide" });
+    }
+  });
+
+  // Privacy Consent Management - ISO 27701 Compliance
+  app.post('/api/consent', async (req: any, res) => {
+    try {
+      const { userEmail, consentType, consentGiven, studentId, userType = "parent" } = req.body;
+      
+      if (!userEmail || !consentType || consentGiven === undefined) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      const consent = await consentService.logConsent({
+        userType,
+        userEmail: userEmail.toLowerCase().trim(),
+        studentId,
+        consentType,
+        consentGiven,
+        ipAddress: req.ip || req.headers['x-forwarded-for'] || 'unknown',
+        userAgent: req.headers['user-agent'] || 'unknown',
+      });
+
+      res.status(201).json(consent);
+    } catch (error) {
+      console.error("Error logging consent:", error);
+      res.status(500).json({ message: "Failed to log consent" });
+    }
+  });
+
+  app.get('/api/consent/:email', async (req, res) => {
+    try {
+      const userEmail = req.params.email.toLowerCase().trim();
+      const consents = await consentService.getUserConsents(userEmail);
+      res.json(consents);
+    } catch (error) {
+      console.error("Error fetching consents:", error);
+      res.status(500).json({ message: "Failed to fetch consents" });
+    }
+  });
+
+  app.get('/api/consent/:email/:type', async (req, res) => {
+    try {
+      const userEmail = req.params.email.toLowerCase().trim();
+      const consentType = req.params.type;
+      const consent = await consentService.getLatestConsent(userEmail, consentType);
+      res.json(consent || { consentGiven: false });
+    } catch (error) {
+      console.error("Error checking consent:", error);
+      res.status(500).json({ message: "Failed to check consent" });
+    }
+  });
+
+  // Data Retention Policies - ISO 27701 Compliance
+  app.get('/api/retention-policies', requireAdmin, async (req, res) => {
+    try {
+      const policies = await dataRetentionService.getPolicies();
+      res.json(policies);
+    } catch (error) {
+      console.error("Error fetching retention policies:", error);
+      res.status(500).json({ message: "Failed to fetch retention policies" });
+    }
+  });
+
+  app.post('/api/retention-policies', requireAdmin, async (req, res) => {
+    try {
+      const policy = await dataRetentionService.createPolicy(req.body);
+      res.status(201).json(policy);
+    } catch (error) {
+      console.error("Error creating retention policy:", error);
+      res.status(400).json({ message: "Failed to create retention policy" });
+    }
+  });
+
+  app.put('/api/retention-policies/:id', requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const policy = await dataRetentionService.updatePolicy(id, req.body);
+      res.json(policy);
+    } catch (error) {
+      console.error("Error updating retention policy:", error);
+      res.status(400).json({ message: "Failed to update retention policy" });
+    }
+  });
+
+  app.delete('/api/retention-policies/:id', requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await dataRetentionService.deletePolicy(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting retention policy:", error);
+      res.status(400).json({ message: "Failed to delete retention policy" });
+    }
+  });
+
+  app.post('/api/retention-policies/cleanup', requireAdmin, async (req: any, res) => {
+    try {
+      const results = await dataRetentionService.cleanupOldData();
+      
+      // Audit log
+      await auditService.logAction({
+        userId: req.user.id,
+        action: "CLEANUP",
+        entityType: "data_retention",
+        entityId: "bulk",
+        ipAddress: req.ip || 'unknown',
+        userAgent: req.headers['user-agent'] || 'unknown',
+        status: "success",
+      });
+
+      res.json({ 
+        success: true, 
+        message: "Data cleanup completed",
+        results 
+      });
+    } catch (error) {
+      console.error("Error cleaning up old data:", error);
+      res.status(500).json({ message: "Failed to cleanup old data" });
+    }
+  });
+
+  // Data Export API - GDPR-style data portability
+  app.get('/api/export/student/:id', requireAdminOrFaculty, async (req, res) => {
+    try {
+      const studentId = parseInt(req.params.id);
+      
+      // Get student data
+      const student = await storage.getStudent(studentId);
+      if (!student) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+
+      // Get attendance records
+      const attendanceRecords = await storage.getAttendanceByStudent(studentId);
+
+      // Get enrollments
+      const enrollments = await storage.getEnrollmentsByStudent(studentId);
+
+      // Get consent logs
+      const consents = await consentService.getUserConsents(student.email || student.parentEmail);
+
+      const exportData = {
+        exportDate: new Date().toISOString(),
+        student: {
+          id: student.id,
+          studentId: student.studentId,
+          firstName: student.firstName,
+          lastName: student.lastName,
+          email: student.email,
+          gender: student.gender,
+          year: student.year,
+          section: student.section,
+          parentEmail: student.parentEmail,
+          parentName: student.parentName,
+        },
+        attendance: attendanceRecords,
+        enrollments,
+        consents,
+      };
+
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename=student_${student.studentId}_data_export.json`);
+      res.json(exportData);
+    } catch (error) {
+      console.error("Error exporting student data:", error);
+      res.status(500).json({ message: "Failed to export student data" });
+    }
+  });
+
+  app.get('/api/export/parent/:email', async (req, res) => {
+    try {
+      const parentEmail = req.params.email.toLowerCase().trim();
+      
+      // Get all students for this parent
+      const allStudents = await storage.getStudents();
+      const parentStudents = allStudents.filter(s => 
+        s.parentEmail?.toLowerCase() === parentEmail && s.isActive
+      );
+
+      if (parentStudents.length === 0) {
+        return res.status(404).json({ message: "No students found for this parent email" });
+      }
+
+      const exportData: any = {
+        exportDate: new Date().toISOString(),
+        parentEmail,
+        students: [],
+        consents: []
+      };
+
+      for (const student of parentStudents) {
+        const attendanceRecords = await storage.getAttendanceByStudent(student.id);
+        const enrollments = await storage.getEnrollmentsByStudent(student.id);
+        
+        exportData.students.push({
+          student: {
+            id: student.id,
+            studentId: student.studentId,
+            firstName: student.firstName,
+            lastName: student.lastName,
+            email: student.email,
+            year: student.year,
+            section: student.section,
+          },
+          attendance: attendanceRecords,
+          enrollments,
+        });
+      }
+
+      // Get consent logs
+      const consents = await consentService.getUserConsents(parentEmail);
+      exportData.consents = consents;
+
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename=parent_${parentEmail}_data_export.json`);
+      res.json(exportData);
+    } catch (error) {
+      console.error("Error exporting parent data:", error);
+      res.status(500).json({ message: "Failed to export parent data" });
     }
   });
   
