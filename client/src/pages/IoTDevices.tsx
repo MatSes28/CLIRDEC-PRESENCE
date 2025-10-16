@@ -40,12 +40,43 @@ interface IoTDevice {
   wifiSignal?: number;
   firmwareVersion: string;
   ipAddress: string;
+  macAddress?: string;
+  uptime?: number;
+  responseTime?: number;
+  reconnectionCount?: number;
 }
 
 interface DeviceStats {
   total: number;
   online: number;
   offline: number;
+}
+
+interface ConnectionEvent {
+  id: string;
+  deviceId: string;
+  event: 'connected' | 'disconnected' | 'registered' | 'heartbeat' | 'error';
+  timestamp: string;
+  message: string;
+}
+
+interface SetupGuide {
+  hardwareRequirements?: string[];
+  wiring?: {
+    'RFID RC522'?: Record<string, string>;
+    'PIR HC-SR501'?: Record<string, string>;
+  };
+  steps?: string[];
+  configuration?: {
+    serverHost?: string;
+  };
+}
+
+interface DevicesResponse {
+  devices?: IoTDevice[];
+  total?: number;
+  online?: number;
+  offline?: number;
 }
 
 export default function IoTDevicesPage() {
@@ -55,12 +86,12 @@ export default function IoTDevicesPage() {
   const [configMessage, setConfigMessage] = useState("");
   
   // Fetch IoT devices
-  const { data: deviceData, isLoading } = useQuery({
+  const { data: deviceData, isLoading } = useQuery<IoTDevice[] | DevicesResponse>({
     queryKey: ['/api/iot/devices'],
     refetchInterval: 5000 // Refresh every 5 seconds
   });
 
-  const devices: IoTDevice[] = Array.isArray(deviceData) ? deviceData : deviceData?.devices || [];
+  const devices: IoTDevice[] = Array.isArray(deviceData) ? deviceData : (deviceData as DevicesResponse)?.devices || [];
   const stats: DeviceStats = deviceData && typeof deviceData === 'object' && 'total' in deviceData
     ? deviceData as DeviceStats
     : { total: devices.length, online: devices.filter(d => d.status === 'online').length, offline: devices.filter(d => d.status === 'offline').length };
@@ -114,8 +145,14 @@ export default function IoTDevicesPage() {
   });
 
   // Setup guide query
-  const { data: setupGuide } = useQuery({
+  const { data: setupGuide } = useQuery<SetupGuide>({
     queryKey: ['/api/iot/setup-guide']
+  });
+
+  // Connection events query  
+  const { data: connectionEvents = [] } = useQuery<ConnectionEvent[]>({
+    queryKey: ['/api/iot/connection-events'],
+    refetchInterval: 3000 // Refresh every 3 seconds
   });
 
   const handleConfigUpdate = (deviceId: string) => {
@@ -239,6 +276,7 @@ export default function IoTDevicesPage() {
       <Tabs defaultValue="devices" className="space-y-6">
         <TabsList>
           <TabsTrigger value="devices">Connected Devices</TabsTrigger>
+          <TabsTrigger value="events">Connection Events</TabsTrigger>
           <TabsTrigger value="setup">Hardware Setup</TabsTrigger>
           <TabsTrigger value="testing">Device Testing</TabsTrigger>
         </TabsList>
@@ -254,9 +292,17 @@ export default function IoTDevicesPage() {
                       <Smartphone className="w-5 h-5" />
                       <span>{device.deviceId}</span>
                     </CardTitle>
-                    <Badge className={`${getStatusColor(device.status)} text-white`}>
-                      {device.status}
-                    </Badge>
+                    <div className="flex items-center space-x-2">
+                      {device.status === 'online' && (
+                        <div className="relative flex h-3 w-3">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                        </div>
+                      )}
+                      <Badge className={`${getStatusColor(device.status)} text-white`}>
+                        {device.status}
+                      </Badge>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -411,6 +457,141 @@ export default function IoTDevicesPage() {
                 <Zap className="w-4 h-4 mr-2" />
                 {broadcastMutation.isPending ? "Broadcasting..." : "Broadcast Message"}
               </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="events" className="space-y-6">
+          {/* Real-time Connection Events Log */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center space-x-2">
+                  <Activity className="w-5 h-5 text-blue-600" />
+                  <span>Real-Time Connection Events</span>
+                </CardTitle>
+                <Badge variant="secondary" className="animate-pulse">
+                  Live Updates
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Alert className="mb-4">
+                <Activity className="h-4 w-4" />
+                <AlertDescription>
+                  Monitor device connections, disconnections, and communication events in real-time. Events auto-refresh every 3 seconds.
+                </AlertDescription>
+              </Alert>
+
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {connectionEvents.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Activity className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>No connection events yet</p>
+                    <p className="text-sm">Events will appear here when devices connect or communicate</p>
+                  </div>
+                ) : (
+                  connectionEvents.map((event) => (
+                    <div
+                      key={event.id}
+                      className={`p-3 rounded-lg border transition-colors ${
+                        event.event === 'connected' || event.event === 'registered'
+                          ? 'bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800'
+                          : event.event === 'disconnected'
+                          ? 'bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800'
+                          : event.event === 'error'
+                          ? 'bg-orange-50 border-orange-200 dark:bg-orange-950 dark:border-orange-800'
+                          : 'bg-gray-50 border-gray-200 dark:bg-gray-900 dark:border-gray-700'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start space-x-3 flex-1">
+                          <div className={`p-1 rounded-full ${
+                            event.event === 'connected' || event.event === 'registered'
+                              ? 'bg-green-500'
+                              : event.event === 'disconnected'
+                              ? 'bg-red-500'
+                              : event.event === 'error'
+                              ? 'bg-orange-500'
+                              : 'bg-blue-500'
+                          }`}>
+                            {event.event === 'connected' || event.event === 'registered' ? (
+                              <CheckCircle className="w-3 h-3 text-white" />
+                            ) : event.event === 'disconnected' ? (
+                              <WifiOff className="w-3 h-3 text-white" />
+                            ) : event.event === 'error' ? (
+                              <AlertCircle className="w-3 h-3 text-white" />
+                            ) : (
+                              <Activity className="w-3 h-3 text-white" />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2">
+                              <span className="font-mono text-sm font-medium">{event.deviceId}</span>
+                              <Badge variant="outline" className="text-xs capitalize">
+                                {event.event.replace('_', ' ')}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">{event.message}</p>
+                          </div>
+                        </div>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
+                          {new Date(event.timestamp).toLocaleTimeString()}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Connection Health Guide */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Wrench className="w-5 h-5" />
+                <span>Connection Troubleshooting Guide</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="border-l-4 border-green-500 pl-4">
+                  <h4 className="font-medium text-green-700 dark:text-green-400">✓ Device Successfully Connected</h4>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Your ESP32 is online and communicating. Look for the green pulse indicator and "online" badge.
+                  </p>
+                </div>
+
+                <div className="border-l-4 border-orange-500 pl-4">
+                  <h4 className="font-medium text-orange-700 dark:text-orange-400">⚠ Device Shows Offline</h4>
+                  <ul className="text-sm text-muted-foreground mt-1 space-y-1 list-disc list-inside">
+                    <li>Check WiFi connection - ensure ESP32 is connected to your network</li>
+                    <li>Verify server URL in ESP32 code matches your deployment URL</li>
+                    <li>Check if WebSocket path is set to "/iot"</li>
+                    <li>Ensure firewall/security settings allow WebSocket connections</li>
+                  </ul>
+                </div>
+
+                <div className="border-l-4 border-red-500 pl-4">
+                  <h4 className="font-medium text-red-700 dark:text-red-400">✗ Device Not Appearing</h4>
+                  <ul className="text-sm text-muted-foreground mt-1 space-y-1 list-disc list-inside">
+                    <li>Verify ESP32 firmware is uploaded and running</li>
+                    <li>Check serial monitor for connection errors</li>
+                    <li>Ensure WiFi credentials in code are correct</li>
+                    <li>Try power cycling the ESP32 device</li>
+                  </ul>
+                </div>
+
+                <div className="border-l-4 border-blue-500 pl-4">
+                  <h4 className="font-medium text-blue-700 dark:text-blue-400">📡 Connection Health Indicators</h4>
+                  <ul className="text-sm text-muted-foreground mt-1 space-y-1 list-disc list-inside">
+                    <li><strong>Green Pulse:</strong> Device is actively connected and sending heartbeats</li>
+                    <li><strong>WiFi Signal:</strong> Excellent (-50dBm), Good (-60dBm), Fair (-70dBm), Poor (&lt;-70dBm)</li>
+                    <li><strong>Last Seen:</strong> Shows when device last communicated (should update every 30 seconds)</li>
+                  </ul>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
