@@ -28,6 +28,7 @@ const SystemHealthPage = lazy(() => import("@/pages/SystemHealth"));
 const SystemTestingPage = lazy(() => import("@/pages/SystemTesting"));
 const DiscrepancyDashboard = lazy(() => import("@/pages/DiscrepancyDashboard"));
 const Compliance = lazy(() => import("@/pages/Compliance"));
+const HelpCenter = lazy(() => import("@/pages/HelpCenter"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 const LoadingFallback = () => (
@@ -91,6 +92,7 @@ function Router() {
                     <Route path="/health" component={SystemHealthPage} />
                     <Route path="/testing" component={SystemTestingPage} />
                     <Route path="/compliance" component={Compliance} />
+                    <Route path="/help" component={HelpCenter} />
                     <Route path="/settings" component={Settings} />
                     <Route component={NotFound} />
                   </Switch>
@@ -119,6 +121,7 @@ function Router() {
                   <Route path="/health" component={SystemHealthPage} />
                   <Route path="/testing" component={SystemTestingPage} />
                   <Route path="/compliance" component={Compliance} />
+                  <Route path="/help" component={HelpCenter} />
                   <Route path="/settings" component={Settings} />
                   <Route component={NotFound} />
                 </Switch>

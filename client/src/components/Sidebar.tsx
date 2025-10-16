@@ -28,7 +28,8 @@ import {
   Smartphone,
   TestTube,
   BookOpen,
-  FileCheck
+  FileCheck,
+  HelpCircle
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -109,6 +110,12 @@ export default function Sidebar() {
       description: "ISO 27001/27701"
     },
     { 
+      path: "/help", 
+      icon: HelpCircle, 
+      label: "Help Center",
+      description: "Guides & FAQs"
+    },
+    { 
       path: "/settings", 
       icon: Settings, 
       label: "Settings",
@@ -119,18 +126,19 @@ export default function Sidebar() {
   // Filter navigation items based on user role
   const filteredNavigationItems = user?.role === 'admin' 
     ? [
-        ...navigationItems.slice(0, -2), // All items except compliance and settings
+        ...navigationItems.slice(0, -3), // All items except compliance, help, and settings
         { 
           path: "/users", 
           icon: Users, 
           label: "User Management",
           description: "Faculty & admin accounts"
         },
-        navigationItems[navigationItems.length - 2], // Compliance
+        navigationItems[navigationItems.length - 3], // Compliance
+        navigationItems[navigationItems.length - 2], // Help
         navigationItems[navigationItems.length - 1] // Settings last
       ]
     : navigationItems.filter(item => 
-        item.path !== "/monitoring" && item.path !== "/compliance" // Faculty can't access monitoring or compliance
+        item.path !== "/monitoring" && item.path !== "/compliance" // Faculty can't access monitoring or compliance (but can access Help)
       );
 
   const isActive = (path: string) => {
