@@ -72,6 +72,13 @@ UI Style: Modern glass effects, gradient backgrounds, professional typography, a
   - **Foreign Key Validation**: Validates references before creating enrollments, schedules, and related entities
   - **Standardized Errors**: Consistent error messages with field-level validation feedback
   - **Partial Updates**: All update endpoints support partial data - only provided fields are updated
+- **ISO 27001/27701 Compliance Features (Oct 16, 2025)**: Implemented enterprise-grade security and privacy controls:
+  - **Audit Logging System**: Comprehensive activity tracking (login, logout, create, delete, hard delete) with user ID, IP address, user agent, timestamp, and status logging via dedicated `audit_logs` table
+  - **Rate Limiting**: Brute force protection with 5 failed login attempts per 15-minute window triggering account lockout, tracked in `login_attempts` table
+  - **Password Policy**: Strong password enforcement requiring 8+ characters with uppercase, lowercase, number, and special character validation via Zod schema
+  - **GDPR Hard Delete**: "Right to be Forgotten" compliance with permanent deletion endpoints (`/api/users/:id/permanent`, `/api/students/:id/permanent`) requiring explicit confirmation token 'PERMANENTLY_DELETE'
+  - **Privacy-First Design**: Admins cannot edit user accounts (only create/delete) to protect faculty passwords and personal information
+  - **Deletion Tracking**: Dedicated `deletion_requests` table for managing and auditing data removal requests
 
 ### Previous Changes (January 2025)
 - **Email Integration**: Migrated from SendGrid to Brevo for email delivery using verified sender address (matt.feria@clsu2.edu.ph).
