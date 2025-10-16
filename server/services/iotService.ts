@@ -12,11 +12,21 @@ interface DeviceInfo {
   classroomId?: string;
 }
 
+interface ConnectionEvent {
+  id: string;
+  deviceId: string;
+  event: 'connected' | 'disconnected' | 'registered' | 'heartbeat' | 'error';
+  timestamp: Date;
+  message: string;
+}
+
 // IoT Device Management Service for ESP32 Integration
 export class IoTDeviceManager {
   private connectedDevices = new Map<string, WebSocket>();
   private deviceInfo = new Map<string, DeviceInfo>();
   private iotWss: WebSocketServer | null = null;
+  private connectionEvents: ConnectionEvent[] = [];
+  private maxEvents = 100; // Keep last 100 events
 
   // Initialize IoT WebSocket server for ESP32 devices
   init(httpServer: any): void {
@@ -26,7 +36,12 @@ export class IoTDeviceManager {
     });
 
     this.iotWss.on('connection', (ws: WebSocket, req) => {
-      console.log('📱 New IoT device attempting connection');
+      const tempId = `temp-${Date.now()}`;
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📱 New IoT device attempting connection');
+      }
+      
+      this.logConnectionEvent(tempId, 'connected', 'New device connection established');
       
       // Send immediate welcome message to test connection
       ws.send(JSON.stringify({
@@ -54,7 +69,10 @@ export class IoTDeviceManager {
         // Find and remove disconnected device
         this.connectedDevices.forEach((socket, deviceId) => {
           if (socket === ws) {
-            console.log(`📱 IoT device ${deviceId} disconnected`);
+            if (process.env.NODE_ENV === 'development') {
+              console.log(`📱 IoT device ${deviceId} disconnected`);
+            }
+            this.logConnectionEvent(deviceId, 'disconnected', 'Device connection closed');
             this.connectedDevices.delete(deviceId);
             this.deviceInfo.delete(deviceId);
           }
@@ -174,7 +192,16 @@ export class IoTDeviceManager {
       };
 
       ws.send(JSON.stringify(registrationResponse));
-      console.log(`✅ IoT device registered: ${deviceId} (${data.currentMode || 'wifi'} mode) in ${classroomName}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`✅ IoT device registered: ${deviceId} (${data.currentMode || 'wifi'} mode) in ${classroomName}`);
+      }
+
+      // Log connection event
+      this.logConnectionEvent(
+        deviceId, 
+        'registered', 
+        `Device registered successfully - ${data.deviceType || 'esp32'} in ${classroomName}`
+      );
 
       // Notify web clients about new device
       this.broadcastToWebClients({
@@ -222,8 +249,9 @@ export class IoTDeviceManager {
       }
 
       // Check for active class session in the device's classroom
-      const activeSession = await storage.getActiveSession();
-      const classroomSession = activeSession && activeSession.scheduleId ? activeSession : null;
+      const activeSessions = await storage.getActiveClassSessions();
+      // Get the first active session (for now, we'll enhance this to match classroom later)
+      const classroomSession = activeSessions.length > 0 ? activeSessions[0] : null;
 
       if (!classroomSession) {
         console.log(`⚠️ No active session`);
@@ -392,6 +420,36 @@ export class IoTDeviceManager {
       online,
       offline: devices.length - online
     };
+  }
+
+  // Log connection event
+  private logConnectionEvent(deviceId: string, event: ConnectionEvent['event'], message: string): void {
+    const connectionEvent: ConnectionEvent = {
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      deviceId,
+      event,
+      timestamp: new Date(),
+      message
+    };
+
+    this.connectionEvents.unshift(connectionEvent);
+    
+    // Keep only last maxEvents
+    if (this.connectionEvents.length > this.maxEvents) {
+      this.connectionEvents = this.connectionEvents.slice(0, this.maxEvents);
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`📝 Connection Event: [${event}] ${deviceId} - ${message}`);
+    }
+  }
+
+  // Get connection events
+  public getConnectionEvents(): ConnectionEvent[] {
+    return this.connectionEvents.map(event => ({
+      ...event,
+      timestamp: event.timestamp.toISOString() as any
+    }));
   }
 }
 
