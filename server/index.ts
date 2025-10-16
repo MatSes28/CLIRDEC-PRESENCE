@@ -62,6 +62,15 @@ app.use((req, res, next) => {
     console.log("Database already seeded or error occurred:", error);
   }
 
+  // Initialize default data retention policies
+  try {
+    const { dataRetentionService } = await import('./services/dataRetentionService');
+    await dataRetentionService.initializeDefaultPolicies();
+    console.log("✅ Data retention policies initialized");
+  } catch (error) {
+    console.log("Data retention policies already initialized or error occurred:", error);
+  }
+
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
