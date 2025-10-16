@@ -27,6 +27,7 @@ const IoTDevicesPage = lazy(() => import("@/pages/IoTDevices"));
 const SystemHealthPage = lazy(() => import("@/pages/SystemHealth"));
 const SystemTestingPage = lazy(() => import("@/pages/SystemTesting"));
 const DiscrepancyDashboard = lazy(() => import("@/pages/DiscrepancyDashboard"));
+const Compliance = lazy(() => import("@/pages/Compliance"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 const LoadingFallback = () => (
@@ -89,6 +90,7 @@ function Router() {
                     <Route path="/discrepancies" component={DiscrepancyDashboard} />
                     <Route path="/health" component={SystemHealthPage} />
                     <Route path="/testing" component={SystemTestingPage} />
+                    <Route path="/compliance" component={Compliance} />
                     <Route path="/settings" component={Settings} />
                     <Route component={NotFound} />
                   </Switch>
@@ -116,6 +118,7 @@ function Router() {
                   <Route path="/discrepancies" component={DiscrepancyDashboard} />
                   <Route path="/health" component={SystemHealthPage} />
                   <Route path="/testing" component={SystemTestingPage} />
+                  <Route path="/compliance" component={Compliance} />
                   <Route path="/settings" component={Settings} />
                   <Route component={NotFound} />
                 </Switch>

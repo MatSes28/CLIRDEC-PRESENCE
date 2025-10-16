@@ -27,7 +27,8 @@ import {
   ArrowRight,
   Smartphone,
   TestTube,
-  BookOpen
+  BookOpen,
+  FileCheck
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -102,6 +103,12 @@ export default function Sidebar() {
       description: "Data insights"
     },
     { 
+      path: "/compliance", 
+      icon: FileCheck, 
+      label: "Compliance",
+      description: "ISO 27001/27701"
+    },
+    { 
       path: "/settings", 
       icon: Settings, 
       label: "Settings",
@@ -112,17 +119,18 @@ export default function Sidebar() {
   // Filter navigation items based on user role
   const filteredNavigationItems = user?.role === 'admin' 
     ? [
-        ...navigationItems.slice(0, -1), // All items except settings
+        ...navigationItems.slice(0, -2), // All items except compliance and settings
         { 
           path: "/users", 
           icon: Users, 
           label: "User Management",
           description: "Faculty & admin accounts"
         },
+        navigationItems[navigationItems.length - 2], // Compliance
         navigationItems[navigationItems.length - 1] // Settings last
       ]
     : navigationItems.filter(item => 
-        item.path !== "/monitoring" // Faculty can't access monitoring
+        item.path !== "/monitoring" && item.path !== "/compliance" // Faculty can't access monitoring or compliance
       );
 
   const isActive = (path: string) => {

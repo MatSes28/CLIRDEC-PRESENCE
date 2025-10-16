@@ -2818,6 +2818,17 @@ Central Luzon State University
     }
   });
 
+  // Audit logs API - for compliance dashboard
+  app.get('/api/audit-logs', requireAdmin, async (req, res) => {
+    try {
+      const logs = await auditService.getRecentLogs(100); // Get last 100 logs
+      res.json(logs);
+    } catch (error) {
+      console.error("Error fetching audit logs:", error);
+      res.status(500).json({ message: "Failed to fetch audit logs" });
+    }
+  });
+
   // Data Export API - GDPR-style data portability
   app.get('/api/export/student/:id', requireAdminOrFaculty, async (req, res) => {
     try {

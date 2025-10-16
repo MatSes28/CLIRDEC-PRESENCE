@@ -100,6 +100,24 @@ class AuditService {
       return [];
     }
   }
+
+  /**
+   * Get recent audit logs (for compliance dashboard)
+   */
+  async getRecentLogs(limit: number = 100) {
+    try {
+      if (!db) return [];
+
+      return await db
+        .select()
+        .from(auditLogs)
+        .orderBy(sql`timestamp DESC`)
+        .limit(limit);
+    } catch (error) {
+      console.error("Failed to get recent logs:", error);
+      return [];
+    }
+  }
 }
 
 export const auditService = new AuditService();
