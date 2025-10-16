@@ -12,11 +12,14 @@ import {
   Mail,
   Edit,
   Eye,
-  AlertTriangle
+  AlertTriangle,
+  GraduationCap
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { GenderAvatar } from "@/components/GenderAvatar";
+import { EmptyState } from "@/components/EmptyState";
+import { LoadingState } from "@/components/LoadingState";
 import AddStudentModal from "@/components/AddStudentModal";
 import EditStudentModal from "@/components/EditStudentModal";
 import ViewStudentModal from "@/components/ViewStudentModal";
@@ -112,13 +115,17 @@ export default function Students() {
   if (isLoading) {
     return (
       <div className="p-3 sm:p-6">
-        <div className="animate-pulse space-y-4 sm:space-y-6">
-          <div className="h-6 sm:h-8 bg-gray-200 rounded w-1/2 sm:w-1/3"></div>
-          <div className="h-48 sm:h-64 bg-gray-200 rounded"></div>
-        </div>
+        <LoadingState 
+          message="Loading students..." 
+          subMessage="Please wait while we fetch student records"
+        />
       </div>
     );
   }
+
+  // Show empty state if no students exist
+  const hasNoStudents = studentsData.length === 0;
+  const hasNoFilteredResults = filteredStudents.length === 0 && !hasNoStudents;
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -181,9 +188,46 @@ export default function Students() {
         </CardContent>
       </Card>
 
+      {/* Empty State - No Students */}
+      {hasNoStudents && (
+        <Card>
+          <CardContent className="py-12">
+            <EmptyState
+              icon={GraduationCap}
+              title="No Students Yet"
+              description="Get started by adding your first student. You'll be able to track their attendance, manage RFID cards, and contact parents all in one place."
+              actionLabel="Add Your First Student"
+              onAction={() => setAddModalOpen(true)}
+              secondaryActionLabel="View Help Guide"
+              onSecondaryAction={() => window.location.href = '/help'}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Empty State - No Filtered Results */}
+      {hasNoFilteredResults && (
+        <Card>
+          <CardContent className="py-12">
+            <EmptyState
+              icon={Search}
+              title="No Students Found"
+              description={`No students match your search criteria${searchTerm ? ` for "${searchTerm}"` : ''}. Try adjusting your filters or search term.`}
+              actionLabel="Clear Filters"
+              onAction={() => {
+                setSearchTerm('');
+                setSelectedYear('all');
+                setSelectedSection('all');
+              }}
+            />
+          </CardContent>
+        </Card>
+      )}
+
       {/* Students Table - Mobile Cards */}
-      <div className="block sm:hidden space-y-3">
-        {filteredStudents.map((student) => (
+      {!hasNoStudents && !hasNoFilteredResults && (
+        <div className="block sm:hidden space-y-3">
+          {filteredStudents.map((student) => (
           <Card key={student.id}>
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
@@ -212,11 +256,13 @@ export default function Students() {
               </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Students Table - Desktop */}
-      <Card className="hidden sm:block">
+      {!hasNoStudents && !hasNoFilteredResults && (
+        <Card className="hidden sm:block">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <div className="min-w-full">
@@ -301,14 +347,9 @@ export default function Students() {
               </div>
             </div>
           </div>
-          
-          {filteredStudents.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">No students found matching your criteria</p>
-            </div>
-          )}
         </CardContent>
-      </Card>
+        </Card>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
