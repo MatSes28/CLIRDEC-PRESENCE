@@ -103,17 +103,18 @@ export default function LiveAttendance() {
       {/* RFID Scanner Status */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Live Attendance Monitoring</CardTitle>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 bg-secondary/10 px-3 py-2 rounded-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <CardTitle className="text-lg sm:text-xl">Live Attendance Monitoring</CardTitle>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 bg-secondary/10 px-3 py-1.5 rounded-lg">
                 <div className="w-2 h-2 bg-secondary rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium text-secondary">RFID Scanner Active</span>
+                <span className="text-xs sm:text-sm font-medium text-secondary">RFID Scanner Active</span>
               </div>
               <Button 
                 onClick={() => refreshMutation.mutate()}
                 disabled={refreshMutation.isPending}
                 size="sm"
+                className="shrink-0"
               >
                 <RefreshCw className={`mr-2 h-4 w-4 ${refreshMutation.isPending ? 'animate-spin' : ''}`} />
                 Refresh

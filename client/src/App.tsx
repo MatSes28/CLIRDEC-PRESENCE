@@ -96,7 +96,7 @@ function Router() {
           {/* Mobile Layout */}
           <div className="lg:hidden min-h-screen">
             <TopBar />
-            <main className="p-3 sm:p-4 space-y-3 sm:space-y-4 pb-6">
+            <main className="p-4 sm:p-6 space-y-4 sm:space-y-6 pb-8">
               <Suspense fallback={<LoadingFallback />}>
                 <Switch>
                   <Route path="/" component={EnhancedDashboard} />

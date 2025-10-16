@@ -11,6 +11,17 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { 
   LayoutDashboard,
   Users,
@@ -231,16 +242,40 @@ export default function TopBar() {
 
               {/* Footer */}
               <div className="p-4 border-t">
-                <Button 
-                  onClick={logout}
-                  disabled={isLoggingOut}
-                  variant="outline" 
-                  className="w-full justify-start"
-                  data-testid="button-mobile-logout"
-                >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  {isLoggingOut ? "Logging out..." : "Logout"}
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      disabled={isLoggingOut}
+                      variant="outline" 
+                      className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors"
+                      data-testid="button-mobile-logout"
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      {isLoggingOut ? "Signing Out..." : "Sign Out"}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="border-0 max-w-sm bg-card shadow-xl">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="text-xl font-bold">
+                        Confirm Sign Out
+                      </AlertDialogTitle>
+                      <AlertDialogDescription className="text-muted-foreground leading-relaxed">
+                        Are you sure you want to sign out? You'll need to authenticate again to access the attendance system.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="gap-3 sm:gap-2">
+                      <AlertDialogCancel>
+                        Stay Logged In
+                      </AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={logout}
+                        className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                      >
+                        Yes, Sign Out
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </div>
           </SheetContent>
