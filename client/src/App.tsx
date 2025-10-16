@@ -10,6 +10,7 @@ import TopBar from "@/components/TopBar";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { WebSocketProvider } from "@/components/WebSocketProvider";
 import TourProvider from "@/components/TourProvider";
+import SessionTimeout from "@/components/SessionTimeout";
 
 const AuthPage = lazy(() => import("@/pages/AuthPage"));
 const EnhancedDashboard = lazy(() => import("@/pages/EnhancedDashboard"));
@@ -64,6 +65,9 @@ function Router() {
         </Suspense>
       ) : (
         <>
+          {/* Session Timeout Monitor */}
+          <SessionTimeout />
+          
           {/* Desktop Layout */}
           <div className="hidden lg:flex min-h-screen">
             <Sidebar />
