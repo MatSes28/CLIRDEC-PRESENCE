@@ -70,13 +70,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/users', requireAdmin, async (req, res) => {
     try {
-      const { email, password, firstName, lastName, role, facultyId, department } = req.body;
+      const { email, password, firstName, lastName, role, facultyId, department, gender } = req.body;
       
       const existingUser = await storage.getUserByEmail(email);
-      if (existingUser) {
+      
+      // If user exists and is inactive, reactivate with new details
+      if (existingUser && !existingUser.isActive) {
+        const reactivatedUser = await storage.upsertUser({
+          id: existingUser.id,
+          email,
+          password: await hashPassword(password),
+          firstName,
+          lastName,
+          role,
+          facultyId,
+          gender: gender || "male",
+          department: department || "Information Technology",
+          isActive: true
+        });
+        
+        const { password: _, ...safeUser } = reactivatedUser;
+        return res.status(201).json(safeUser);
+      }
+      
+      // If user exists and is active, return error
+      if (existingUser && existingUser.isActive) {
         return res.status(400).json({ message: "Email already exists" });
       }
 
+      // Create new user
       const user = await storage.createUser({
         email,
         password: await hashPassword(password),
@@ -84,6 +106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastName,
         role,
         facultyId,
+        gender: gender || "male",
         department: department || "Information Technology"
       });
 
