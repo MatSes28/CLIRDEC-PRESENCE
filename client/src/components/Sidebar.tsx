@@ -256,9 +256,9 @@ export default function Sidebar() {
               </span>
             </Button>
           </AlertDialogTrigger>
-          <AlertDialogContent className="card-elevated border-0 sm:max-w-md">
+          <AlertDialogContent className="border-0 sm:max-w-md bg-card shadow-xl">
             <AlertDialogHeader>
-              <AlertDialogTitle className="text-gradient text-xl font-bold">
+              <AlertDialogTitle className="text-xl font-bold">
                 Confirm Sign Out
               </AlertDialogTitle>
               <AlertDialogDescription className="text-muted-foreground leading-relaxed">
@@ -266,12 +266,12 @@ export default function Sidebar() {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="gap-3 sm:gap-2">
-              <AlertDialogCancel className="btn-modern bg-muted hover:bg-muted/80">
+              <AlertDialogCancel>
                 Stay Logged In
               </AlertDialogCancel>
               <AlertDialogAction 
                 onClick={logout}
-                className="btn-modern bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
               >
                 Yes, Sign Out
               </AlertDialogAction>
