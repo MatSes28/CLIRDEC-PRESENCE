@@ -63,6 +63,15 @@ UI Style: Modern glass effects, gradient backgrounds, professional typography, a
 - **Railway Deployment Ready (Oct 14, 2025)**: Port configuration now uses `process.env.PORT` for Railway compatibility. GitHub Actions CI/CD workflows configured for automated deployment. Complete deployment guides created (RAILWAY_DEPLOY.md, DEPLOYMENT_CHECKLIST.md) with VS Code integration instructions.
 - **Session Security Enhancements (Oct 16, 2025)**: Implemented automatic session timeout after 10 minutes of inactivity with 30-second warning dialog. Added logout confirmation dialogs for both desktop and mobile interfaces. Activity tracking monitors mouse, keyboard, scroll, and touch events for seamless user experience.
 - **SEO & International Discoverability (Oct 16, 2025)**: Comprehensive SEO optimization for global search engine visibility. Added 40+ meta tags including Open Graph, Twitter Cards, structured data (JSON-LD), geo-targeting tags for Philippines, canonical URLs, and hreflang tags. Created robots.txt for search engine crawling and sitemap.xml for better indexing across Google, Bing, Yahoo, Baidu, Yandex, and DuckDuckGo. Optimized for international discovery with multi-language support.
+- **CRUD & Data Integrity Improvements (Oct 16, 2025)**: Comprehensive data handling enhancements across all entities:
+  - **Privacy Protection**: Removed user edit endpoint - admins can only CREATE and DELETE user accounts, cannot edit faculty passwords or personal information for privacy
+  - **Soft Delete Reactivation**: System now reactivates soft-deleted accounts when recreating with same email/ID instead of blocking creation
+  - **Comprehensive Validation**: Added Zod validation schemas for all create/update operations with detailed error reporting
+  - **Duplicate Prevention**: Duplicate checks for student IDs, RFID cards, faculty IDs, classroom names, email addresses
+  - **Input Sanitization**: Automatic trimming and case normalization for all string inputs (emails lowercase, names trimmed)
+  - **Foreign Key Validation**: Validates references before creating enrollments, schedules, and related entities
+  - **Standardized Errors**: Consistent error messages with field-level validation feedback
+  - **Partial Updates**: All update endpoints support partial data - only provided fields are updated
 
 ### Previous Changes (January 2025)
 - **Email Integration**: Migrated from SendGrid to Brevo for email delivery using verified sender address (matt.feria@clsu2.edu.ph).
