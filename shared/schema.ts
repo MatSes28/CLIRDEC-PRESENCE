@@ -1,19 +1,17 @@
-import { 
-  pgTable, 
-  text, 
-  serial, 
-  varchar, 
-  timestamp, 
-  jsonb, 
-  index,
+import { relations, sql } from "drizzle-orm";
+import {
   boolean,
+  index,
   integer,
+  jsonb,
+  pgTable,
+  serial,
+  text,
   time,
-  decimal
+  timestamp,
+  varchar,
 } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
-import { relations } from "drizzle-orm";
 import { z } from "zod";
 
 // Session storage table - required for Replit Auth
@@ -24,12 +22,15 @@ export const sessions = pgTable(
     sess: jsonb("sess").notNull(),
     expire: timestamp("expire").notNull(),
   },
-  (table) => [index("IDX_session_expire").on(table.expire)],
+  (table) => [index("IDX_session_expire").on(table.expire)]
 );
 
 // User/Professor storage table
 export const users = pgTable("users", {
-  id: varchar("id").primaryKey().notNull().default(sql`gen_random_uuid()`),
+  id: varchar("id")
+    .primaryKey()
+    .notNull()
+    .default(sql`gen_random_uuid()`),
   email: varchar("email").unique().notNull(),
   password: varchar("password").notNull(),
   firstName: varchar("first_name").notNull(),
@@ -115,30 +116,52 @@ export const sessions_class = pgTable("class_sessions", {
 });
 
 // Attendance records table
-export const attendance = pgTable("attendance", {
-  id: serial("id").primaryKey(),
-  sessionId: integer("session_id").references(() => sessions_class.id),
-  studentId: integer("student_id").references(() => students.id),
-  checkInTime: timestamp("check_in_time"),
-  checkOutTime: timestamp("check_out_time"),
-  status: varchar("status").default("absent"), // present, late, absent
-  proximityValidated: boolean("proximity_validated").default(false),
-  entryValidated: boolean("entry_validated").default(false),
-  exitValidated: boolean("exit_validated").default(false),
-  rfidTapTime: timestamp("rfid_tap_time"),
-  sensorDetectionTime: timestamp("sensor_detection_time"),
-  validationTimeout: boolean("validation_timeout").default(false),
-  discrepancyFlag: varchar("discrepancy_flag"), // ghost_tap, missed_tap, sensor_only, normal
-  computerId: integer("computer_id"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+export const attendance = pgTable(
+  "attendance",
+  {
+    id: serial("id").primaryKey(),
+    sessionId: integer("session_id").references(() => sessions_class.id, {
+      onDelete: "cascade",
+    }),
+    studentId: integer("student_id").references(() => students.id, {
+      onDelete: "cascade",
+    }),
+    checkInTime: timestamp("check_in_time"),
+    checkOutTime: timestamp("check_out_time"),
+    status: varchar("status").default("absent"), // present, late, absent
+    proximityValidated: boolean("proximity_validated").default(false),
+    entryValidated: boolean("entry_validated").default(false),
+    exitValidated: boolean("exit_validated").default(false),
+    rfidTapTime: timestamp("rfid_tap_time"),
+    sensorDetectionTime: timestamp("sensor_detection_time"),
+    validationTimeout: boolean("validation_timeout").default(false),
+    discrepancyFlag: varchar("discrepancy_flag"), // ghost_tap, missed_tap, sensor_only, normal
+    computerId: integer("computer_id").references(() => computers.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => [
+    index("idx_attendance_session_student").on(
+      table.sessionId,
+      table.studentId
+    ),
+    index("idx_attendance_status").on(table.status),
+    index("idx_attendance_check_in").on(table.checkInTime),
+    index("idx_attendance_created_at").on(table.createdAt),
+  ]
+);
 
 // Student enrollments table - tracks which students are enrolled in which subjects
 export const enrollments = pgTable("enrollments", {
   id: serial("id").primaryKey(),
-  studentId: integer("student_id").references(() => students.id).notNull(),
-  subjectId: integer("subject_id").references(() => subjects.id).notNull(),
+  studentId: integer("student_id")
+    .references(() => students.id)
+    .notNull(),
+  subjectId: integer("subject_id")
+    .references(() => subjects.id)
+    .notNull(),
   academicYear: varchar("academic_year").notNull(), // e.g., "2024-2025"
   semester: varchar("semester").notNull(), // e.g., "1st", "2nd", "Summer"
   status: varchar("status").default("active"), // active, dropped, completed
@@ -150,17 +173,30 @@ export const enrollments = pgTable("enrollments", {
 });
 
 // Laboratory computers table
-export const computers = pgTable("computers", {
-  id: serial("id").primaryKey(),
-  name: varchar("name").notNull(),
-  classroomId: integer("classroom_id").references(() => classrooms.id),
-  ipAddress: varchar("ip_address"),
-  status: varchar("status").default("available"), // available, occupied, maintenance
-  assignedStudentId: integer("assigned_student_id").references(() => students.id),
-  professorId: varchar("professor_id").notNull(), // Track which faculty created this computer
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+export const computers = pgTable(
+  "computers",
+  {
+    id: serial("id").primaryKey(),
+    name: varchar("name").notNull(),
+    classroomId: integer("classroom_id").references(() => classrooms.id, {
+      onDelete: "cascade",
+    }),
+    ipAddress: varchar("ip_address"),
+    status: varchar("status").default("available"), // available, occupied, maintenance
+    assignedStudentId: integer("assigned_student_id").references(
+      () => students.id,
+      { onDelete: "set null" }
+    ),
+    professorId: varchar("professor_id").notNull(), // Track which faculty created this computer
+    isActive: boolean("is_active").default(true),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    index("idx_computers_classroom").on(table.classroomId),
+    index("idx_computers_status").on(table.status),
+    index("idx_computers_professor").on(table.professorId),
+  ]
+);
 
 // Email notifications log
 export const emailNotifications = pgTable("email_notifications", {
@@ -229,7 +265,9 @@ export const deletionRequests = pgTable("deletion_requests", {
 // Password reset tokens - Secure password reset flow (ISO 27001 compliant)
 export const passwordResetTokens = pgTable("password_reset_tokens", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull().references(() => users.id),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => users.id),
   token: varchar("token").notNull().unique(), // Secure random token
   expiresAt: timestamp("expires_at").notNull(), // Token expires after 1 hour
   used: boolean("used").default(false), // One-time use only
@@ -275,17 +313,20 @@ export const schedulesRelations = relations(schedules, ({ one, many }) => ({
   classSessions: many(sessions_class),
 }));
 
-export const classSessionsRelations = relations(sessions_class, ({ one, many }) => ({
-  schedule: one(schedules, {
-    fields: [sessions_class.scheduleId],
-    references: [schedules.id],
-  }),
-  professor: one(users, {
-    fields: [sessions_class.professorId],
-    references: [users.id],
-  }),
-  attendance: many(attendance),
-}));
+export const classSessionsRelations = relations(
+  sessions_class,
+  ({ one, many }) => ({
+    schedule: one(schedules, {
+      fields: [sessions_class.scheduleId],
+      references: [schedules.id],
+    }),
+    professor: one(users, {
+      fields: [sessions_class.professorId],
+      references: [users.id],
+    }),
+    attendance: many(attendance),
+  })
+);
 
 export const attendanceRelations = relations(attendance, ({ one }) => ({
   session: one(sessions_class, {
@@ -323,12 +364,15 @@ export const computersRelations = relations(computers, ({ one, many }) => ({
   attendance: many(attendance),
 }));
 
-export const emailNotificationsRelations = relations(emailNotifications, ({ one }) => ({
-  student: one(students, {
-    fields: [emailNotifications.studentId],
-    references: [students.id],
-  }),
-}));
+export const emailNotificationsRelations = relations(
+  emailNotifications,
+  ({ one }) => ({
+    student: one(students, {
+      fields: [emailNotifications.studentId],
+      references: [students.id],
+    }),
+  })
+);
 
 export const enrollmentsRelations = relations(enrollments, ({ one }) => ({
   student: one(students, {
@@ -368,10 +412,12 @@ export const insertScheduleSchema = createInsertSchema(schedules).omit({
   createdAt: true,
 });
 
-export const insertClassSessionSchema = createInsertSchema(sessions_class).omit({
-  id: true,
-  createdAt: true,
-});
+export const insertClassSessionSchema = createInsertSchema(sessions_class).omit(
+  {
+    id: true,
+    createdAt: true,
+  }
+);
 
 export const insertAttendanceSchema = createInsertSchema(attendance).omit({
   id: true,
@@ -384,7 +430,9 @@ export const insertComputerSchema = createInsertSchema(computers).omit({
   createdAt: true,
 });
 
-export const insertEmailNotificationSchema = createInsertSchema(emailNotifications).omit({
+export const insertEmailNotificationSchema = createInsertSchema(
+  emailNotifications
+).omit({
   id: true,
   createdAt: true,
 });
@@ -405,18 +453,24 @@ export const insertLoginAttemptSchema = createInsertSchema(loginAttempts).omit({
   timestamp: true,
 });
 
-export const insertDeletionRequestSchema = createInsertSchema(deletionRequests).omit({
+export const insertDeletionRequestSchema = createInsertSchema(
+  deletionRequests
+).omit({
   id: true,
   createdAt: true,
 });
 
 // Password validation schema - ISO 27001 compliant
-export const strongPasswordSchema = z.string()
+export const strongPasswordSchema = z
+  .string()
   .min(8, "Password must be at least 8 characters")
   .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
   .regex(/[a-z]/, "Password must contain at least one lowercase letter")
   .regex(/[0-9]/, "Password must contain at least one number")
-  .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character");
+  .regex(
+    /[^A-Za-z0-9]/,
+    "Password must contain at least one special character"
+  );
 
 // Update schemas - all fields optional for partial updates
 export const updateUserSchema = z.object({
@@ -514,7 +568,9 @@ export const insertConsentLogSchema = createInsertSchema(consentLogs).omit({
   consentedAt: true,
 });
 
-export const insertDataRetentionPolicySchema = createInsertSchema(dataRetentionPolicies).omit({
+export const insertDataRetentionPolicySchema = createInsertSchema(
+  dataRetentionPolicies
+).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -539,7 +595,9 @@ export type InsertAttendance = z.infer<typeof insertAttendanceSchema>;
 export type Attendance = typeof attendance.$inferSelect;
 export type InsertComputer = z.infer<typeof insertComputerSchema>;
 export type Computer = typeof computers.$inferSelect;
-export type InsertEmailNotification = z.infer<typeof insertEmailNotificationSchema>;
+export type InsertEmailNotification = z.infer<
+  typeof insertEmailNotificationSchema
+>;
 export type EmailNotification = typeof emailNotifications.$inferSelect;
 export type InsertEnrollment = z.infer<typeof insertEnrollmentSchema>;
 export type Enrollment = typeof enrollments.$inferSelect;
@@ -552,5 +610,7 @@ export type InsertDeletionRequest = z.infer<typeof insertDeletionRequestSchema>;
 export type DeletionRequest = typeof deletionRequests.$inferSelect;
 export type InsertConsentLog = z.infer<typeof insertConsentLogSchema>;
 export type ConsentLog = typeof consentLogs.$inferSelect;
-export type InsertDataRetentionPolicy = z.infer<typeof insertDataRetentionPolicySchema>;
+export type InsertDataRetentionPolicy = z.infer<
+  typeof insertDataRetentionPolicySchema
+>;
 export type DataRetentionPolicy = typeof dataRetentionPolicies.$inferSelect;
