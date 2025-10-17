@@ -29,6 +29,16 @@ app.get("/health", (req, res) => {
   });
 });
 
+// Root endpoint for Railway healthcheck
+app.get("/", (req, res) => {
+  res.status(200).json({
+    message: "CLIRDEC: PRESENCE IoT Attendance System",
+    status: "running",
+    version: "1.0.0",
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // Environment variable validation at startup
 const requiredEnvVars = ["DATABASE_URL", "SESSION_SECRET"];
 const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
