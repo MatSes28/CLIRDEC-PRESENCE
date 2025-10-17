@@ -1,4 +1,5 @@
 import express, { NextFunction, type Request, Response } from "express";
+import path from "path";
 import { initializeDatabase } from "./initDatabase";
 import { registerRoutes } from "./routes";
 import { seedDatabase } from "./seedData";
@@ -29,14 +30,22 @@ app.get("/health", (req, res) => {
   });
 });
 
-// Root endpoint for Railway healthcheck
+// Root endpoint - serve the React app in production, API info in development
 app.get("/", (req, res) => {
-  res.status(200).json({
-    message: "CLIRDEC: PRESENCE IoT Attendance System",
-    status: "running",
-    version: "1.0.0",
-    timestamp: new Date().toISOString(),
-  });
+  if (process.env.NODE_ENV === "production") {
+    // In production, let the static file serving handle the React app
+    return res.sendFile(
+      path.resolve(import.meta.dirname, "public", "index.html")
+    );
+  } else {
+    // In development, return API info
+    res.status(200).json({
+      message: "CLIRDEC: PRESENCE IoT Attendance System",
+      status: "running",
+      version: "1.0.0",
+      timestamp: new Date().toISOString(),
+    });
+  }
 });
 
 // Environment variable validation at startup
