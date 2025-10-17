@@ -6,22 +6,8 @@
   },
   "deploy": {
     "startCommand": "node dist/index.js",
-<<<<<<< HEAD
-    "healthcheckPath": "/health",
-    "healthcheckTimeout": 300,
-    "restartPolicyType": "on_failure",
-    "healthcheckInterval": 30,
-    "sleepApplication": false,
-    "watchPatterns": [
-      {
-        "pattern": "dist/**/*",
-        "restart": true
-      }
-    ]
-=======
     "healthcheckPath": "/",
     "healthcheckTimeout": 100,
     "restartPolicyType": "on_failure"
->>>>>>> parent of 5f84896 (lap udpate 8)
   }
 }
