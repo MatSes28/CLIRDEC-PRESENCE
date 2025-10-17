@@ -158,9 +158,7 @@ function App() {
   console.log("App component rendering");
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-background text-foreground">
-        <Router />
-      </div>
+      <div>AuthProvider not found - check import</div>
     </QueryClientProvider>
   );
 }
