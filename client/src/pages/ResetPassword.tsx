@@ -15,6 +15,10 @@ export default function ResetPassword() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  
+  // Password match validation
+  const passwordsMatch = confirmPassword.length > 0 && newPassword === confirmPassword;
+  const passwordsDontMatch = confirmPassword.length > 0 && newPassword !== confirmPassword;
 
   useEffect(() => {
     // Get token from URL
@@ -123,16 +127,35 @@ export default function ResetPassword() {
               autoComplete="new-password"
             />
 
-            <PasswordInput
-              id="confirmPassword"
-              label="Confirm Password"
-              value={confirmPassword}
-              onChange={setConfirmPassword}
-              placeholder="Confirm new password"
-              showRequirements={false}
-              testId="input-confirm-password"
-              autoComplete="new-password"
-            />
+            <div className="space-y-2">
+              <PasswordInput
+                id="confirmPassword"
+                label="Confirm Password"
+                value={confirmPassword}
+                onChange={setConfirmPassword}
+                placeholder="Confirm new password"
+                showRequirements={false}
+                testId="input-confirm-password"
+                autoComplete="new-password"
+              />
+              
+              {/* Password Match Indicator */}
+              {confirmPassword.length > 0 && (
+                <div className="flex items-center gap-2 text-sm">
+                  {passwordsMatch ? (
+                    <div className="flex items-center gap-1 text-green-600">
+                      <CheckCircle className="h-4 w-4" />
+                      <span>Passwords match</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1 text-red-600">
+                      <XCircle className="h-4 w-4" />
+                      <span>Passwords do not match</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             <Button
               type="submit"
