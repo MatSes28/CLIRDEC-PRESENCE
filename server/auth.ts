@@ -55,10 +55,10 @@ export async function setupAuth(app: Express) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: sessionTtl,
-      sameSite: process.env.NODE_ENV === "production" ? "lax" : "strict", // Use 'lax' in production for Railway compatibility
+      sameSite: "strict", // Prevent CSRF attacks
       domain:
         process.env.NODE_ENV === "production"
-          ? ".up.railway.app" // Set domain for Railway
+          ? process.env.COOKIE_DOMAIN
           : undefined,
     },
   };
@@ -187,9 +187,7 @@ export async function setupAuth(app: Express) {
 
         req.login(user, (loginErr: any) => {
           if (loginErr) return next(loginErr);
-          // Return user data without password and ensure session is saved
-          const { password, ...safeUser } = user;
-          res.status(200).json(safeUser);
+          res.status(200).json(req.user);
         });
       })(req, res, next);
     } catch (error) {
@@ -224,17 +222,7 @@ export async function setupAuth(app: Express) {
         if (destroyErr) {
           console.error("Session destroy error:", destroyErr);
         }
-        // Clear all session cookies
-        res.clearCookie("connect.sid", {
-          path: "/",
-          domain:
-            process.env.NODE_ENV === "production"
-              ? ".up.railway.app"
-              : undefined,
-          secure: process.env.NODE_ENV === "production",
-          httpOnly: true,
-          sameSite: process.env.NODE_ENV === "production" ? "lax" : "strict",
-        });
+        res.clearCookie("connect.sid");
         res.sendStatus(200);
       });
     });
@@ -247,9 +235,7 @@ export async function setupAuth(app: Express) {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "Not authenticated" });
     }
-    // Return user data without password
-    const { password, ...safeUser } = req.user;
-    res.json(safeUser);
+    res.json(req.user);
   });
 }
 
