@@ -19,16 +19,6 @@ const app = express();
 app.use(express.json({ limit: "10mb" })); // Increase limit for large payloads
 app.use(express.urlencoded({ extended: false, limit: "10mb" }));
 
-// Health check endpoint for Railway
-app.get("/health", (req, res) => {
-  res.status(200).json({
-    status: "healthy",
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV || "development",
-  });
-});
-
 // Environment variable validation at startup
 const requiredEnvVars = ["DATABASE_URL", "SESSION_SECRET"];
 const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
