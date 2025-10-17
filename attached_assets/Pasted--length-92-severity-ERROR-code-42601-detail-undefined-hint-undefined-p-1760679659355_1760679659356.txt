@@ -1,0 +1,118 @@
+  length: 92,
+  severity: 'ERROR',
+  code: '42601',
+  detail: undefined,
+  hint: undefined,
+  position: '54',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'scan.l',
+  line: '1244',
+  routine: 'scanner_yyerror'
+}
+Failed to log login attempt: error: relation "login_attempts" does not exist
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async AuditService.logLoginAttempt (file:///app/dist/index.js:2647:7)
+    at async file:///app/dist/index.js:2829:9 {
+  length: 113,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '13',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1449',
+  routine: 'parserOpenTable'
+}
+Failed to create audit log: error: relation "audit_logs" does not exist
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async AuditService.logAction (file:///app/dist/index.js:2630:7)
+    at async file:///app/dist/index.js:2838:9 {
+  length: 109,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '13',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1449',
+  routine: 'parserOpenTable'
+}
+5:39:17 AM [express] POST /api/login 200 in 274ms :: {"id":"1fc2efad-2c9e-4a14-a065-2432646e97b8","e…
+5:39:17 AM [express] GET /api/user 304 in 18ms :: {"id":"1fc2efad-2c9e-4a14-a065-2432646e97b8","emai…
+5:39:18 AM [express] GET /api/attendance/behavior-analysis 400 in 9ms :: {"message":"Invalid session…
+5:39:18 AM [express] GET /api/dashboard/stats 304 in 10ms :: {"todayClasses":0,"presentStudents":0,"…
+5:39:18 AM [express] GET /api/subjects 304 in 6ms :: []
+5:39:18 AM [express] GET /api/classrooms 304 in 6ms :: [{"id":1,"name":"Lab 204","location":"CLIRDEC…
+5:39:18 AM [express] GET /api/schedules 304 in 7ms :: []
+5:39:18 AM [express] GET /api/students 304 in 7ms :: [{"id":1,"studentId":"22-1083","firstName":"Mat…
+5:39:18 AM [express] GET /api/enrollments 304 in 8ms :: []
+5:39:20 AM [express] GET /api/attendance/alerts 400 in 6ms :: {"message":"Invalid session ID"}
+5:39:20 AM [express] GET /api/attendance/behavior-analysis 400 in 6ms :: {"message":"Invalid session…
+5:39:20 AM [express] GET /api/settings/attendance-monitoring 200 in 8ms
+5:39:21 AM [express] GET /api/sessions/active 200 in 5ms
+5:39:22 AM [express] GET /api/reports/generate 304 in 5ms :: {"records":[],"summary":{"total":0,"pre…
+5:39:22 AM [express] GET /api/users 304 in 7ms :: [{"id":"1fc2efad-2c9e-4a14-a065-2432646e97b8","ema…
+5:39:28 AM [express] GET /api/sessions/active 200 in 4ms
+5:39:29 AM [express] GET /api/attendance/behavior-analysis 400 in 6ms :: {"message":"Invalid session…
+5:39:29 AM [express] GET /api/attendance/alerts 400 in 4ms :: {"message":"Invalid session ID"}
+5:39:29 AM [express] GET /api/settings/attendance-monitoring 200 in 5ms
+5:39:31 AM [express] POST /api/logout 200 in 5ms
+Failed to create audit log: error: relation "audit_logs" does not exist
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async AuditService.logAction (file:///app/dist/index.js:2630:7) {
+  length: 109,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '13',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1449',
+  routine: 'parserOpenTable'
+}
+5:39:31 AM [express] GET /api/user 401 in 1ms :: {"message":"Not authenticated"}
+[FORGOT_PASSWORD] Processing request for email: matt.feria@clsu2.edu.ph
+[FORGOT_PASSWORD] User found: yes
+[FORGOT_PASSWORD] Generated reset token
+[FORGOT_PASSWORD] Inserting token into database
+[FORGOT_PASSWORD] Token inserted successfully
+[FORGOT_PASSWORD] Using FRONTEND_URL: https://clirdec-presence-production.up.railway.app
+Failed to send password reset email: Error: Invalid sender email address: clirdecpresence@gmail.com
+    at sendEmail (file:///app/dist/index.js:1615:11)
+    at file:///app/dist/index.js:4079:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+5:39:34 AM [express] POST /api/forgot-password 200 in 6ms :: {"success":true,"message":"If an accoun…
