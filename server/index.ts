@@ -86,7 +86,12 @@ app.use((req, res, next) => {
 
 (async () => {
   // Initialize database tables before starting server
-  await initializeDatabase();
+  try {
+    await initializeDatabase();
+  } catch (error) {
+    console.error("❌ Database initialization failed:", error);
+    console.log("⚠️  Continuing with in-memory storage");
+  }
 
   const server = await registerRoutes(app);
 
@@ -113,6 +118,10 @@ app.use((req, res, next) => {
         error
       );
     }
+  } else {
+    console.log(
+      "⚠️  Production environment - skipping data retention initialization"
+    );
   }
 
   // Centralized error handling middleware
@@ -162,53 +171,59 @@ app.use((req, res, next) => {
       log(`   📱 IoT devices: ws://0.0.0.0:${port}/iot`);
       log(`   💻 Web clients: ws://0.0.0.0:${port}/ws`);
 
-      // Initialize emergency memory optimization
-      setTimeout(async () => {
-        try {
-          const { EmergencyMemoryOptimizer } = await import(
-            "./utils/emergencyMemoryOptimizer"
-          );
-          await EmergencyMemoryOptimizer.forceEmergencyCleanup();
-          EmergencyMemoryOptimizer.startEmergencyMonitoring();
-        } catch (error) {
-          console.error("Failed to start emergency memory optimizer:", error);
-        }
-      }, 1000);
+      // Initialize emergency memory optimization (only in development)
+      if (process.env.NODE_ENV !== "production") {
+        setTimeout(async () => {
+          try {
+            const { EmergencyMemoryOptimizer } = await import(
+              "./utils/emergencyMemoryOptimizer"
+            );
+            await EmergencyMemoryOptimizer.forceEmergencyCleanup();
+            EmergencyMemoryOptimizer.startEmergencyMonitoring();
+          } catch (error) {
+            console.error("Failed to start emergency memory optimizer:", error);
+          }
+        }, 1000);
 
-      if (global.gc) {
-        global.gc();
-        console.log("Initial memory cleanup completed");
-      }
-
-      // Start automated attendance monitoring with memory optimization
-      setTimeout(async () => {
-        try {
-          const { startAttendanceMonitoring } = await import(
-            "./services/attendanceMonitor"
-          );
-          await startAttendanceMonitoring();
-        } catch (error) {
-          console.error("Failed to start attendance monitoring:", error);
-        }
-      }, 5000); // Reduced delay
-
-      // Emergency memory cleanup - every 2 minutes during high usage
-      setInterval(() => {
-        const memUsage = process.memoryUsage();
-        const memMB = Math.round(memUsage.rss / 1024 / 1024);
-
-        if (memMB > 150 && global.gc) {
-          // More aggressive threshold at 150MB
+        if (global.gc) {
           global.gc();
-          const afterGC = process.memoryUsage();
-          const afterMB = Math.round(afterGC.rss / 1024 / 1024);
-          console.log(
-            `MEMORY OPTIMIZATION: ${memMB}MB → ${afterMB}MB (freed ${
-              memMB - afterMB
-            }MB)`
-          );
+          console.log("Initial memory cleanup completed");
         }
-      }, 2 * 60 * 1000); // Every 2 minutes for more aggressive cleanup
+
+        // Start automated attendance monitoring with memory optimization
+        setTimeout(async () => {
+          try {
+            const { startAttendanceMonitoring } = await import(
+              "./services/attendanceMonitor"
+            );
+            await startAttendanceMonitoring();
+          } catch (error) {
+            console.error("Failed to start attendance monitoring:", error);
+          }
+        }, 5000); // Reduced delay
+
+        // Emergency memory cleanup - every 2 minutes during high usage
+        setInterval(() => {
+          const memUsage = process.memoryUsage();
+          const memMB = Math.round(memUsage.rss / 1024 / 1024);
+
+          if (memMB > 150 && global.gc) {
+            // More aggressive threshold at 150MB
+            global.gc();
+            const afterGC = process.memoryUsage();
+            const afterMB = Math.round(afterGC.rss / 1024 / 1024);
+            console.log(
+              `MEMORY OPTIMIZATION: ${memMB}MB → ${afterMB}MB (freed ${
+                memMB - afterMB
+              }MB)`
+            );
+          }
+        }, 2 * 60 * 1000); // Every 2 minutes for more aggressive cleanup
+      } else {
+        console.log(
+          "⚠️  Production environment - skipping memory optimization"
+        );
+      }
     }
   );
 })();
