@@ -56,8 +56,8 @@
 #define ECHO_PIN_2 21
 
 // WiFi credentials (update these)
-const char* ssid = "YOUR_WIFI_SSID";
-const char* password = "YOUR_WIFI_PASSWORD";
+const char* ssid = "Kupal kaba boss?";
+const char* password = "MatMir@12030908";
 
 // Server configuration (update with your Replit URL)
 const char* websocket_server = "80c100b5-06da-459f-a3df-355da67989d9-00-311s6g7ren528.sisko.replit.dev";
