@@ -8,6 +8,13 @@ export class AuditRetentionService {
    */
   static async initializeDefaultPolicies() {
     try {
+      if (!db) {
+        console.log(
+          "⚠️ Database not available, skipping policy initialization"
+        );
+        return;
+      }
+
       // Check if policies already exist
       const existingPolicies = await db.select().from(dataRetentionPolicies);
       if (existingPolicies.length > 0) {
@@ -64,6 +71,10 @@ export class AuditRetentionService {
    */
   static async cleanupAuditLogs() {
     try {
+      if (!db) {
+        return { deleted: 0, message: "Database not available" };
+      }
+
       const auditPolicy = await db
         .select()
         .from(dataRetentionPolicies)
@@ -122,6 +133,10 @@ export class AuditRetentionService {
    */
   static async cleanupLoginAttempts() {
     try {
+      if (!db) {
+        return { deleted: 0, message: "Database not available" };
+      }
+
       const loginPolicy = await db
         .select()
         .from(dataRetentionPolicies)
@@ -167,6 +182,10 @@ export class AuditRetentionService {
    */
   static async getAuditStats() {
     try {
+      if (!db) {
+        return { error: "Database not available" };
+      }
+
       const totalLogs = await db.$count(auditLogs);
 
       // Get logs by action type
@@ -208,6 +227,10 @@ export class AuditRetentionService {
    */
   private static async getLastCleanupDate() {
     try {
+      if (!db) {
+        return null;
+      }
+
       const policy = await db
         .select({ lastCleanupAt: dataRetentionPolicies.lastCleanupAt })
         .from(dataRetentionPolicies)

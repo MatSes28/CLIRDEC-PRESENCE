@@ -139,14 +139,14 @@ export function setupReportRoutes(app: Express) {
               id: attendance.id,
               studentName: `${student.firstName} ${student.lastName}`,
               studentId: student.studentId,
-              checkIn: attendance.checkInTime || "N/A",
-              checkOut: attendance.checkOutTime || "N/A",
+              checkIn: attendance.checkInTime?.toISOString() || "N/A",
+              checkOut: attendance.checkOutTime?.toISOString() || "N/A",
               status: attendance.status,
               duration:
                 attendance.checkInTime && attendance.checkOutTime
                   ? calculateDuration(
-                      attendance.checkInTime,
-                      attendance.checkOutTime
+                      attendance.checkInTime.toISOString(),
+                      attendance.checkOutTime.toISOString()
                     )
                   : "N/A",
             });
@@ -232,13 +232,13 @@ export function setupReportRoutes(app: Express) {
               : null;
             if (!student) continue;
 
-            const checkIn = attendance.checkInTime || "N/A";
-            const checkOut = attendance.checkOutTime || "N/A";
+            const checkIn = attendance.checkInTime?.toISOString() || "N/A";
+            const checkOut = attendance.checkOutTime?.toISOString() || "N/A";
             const duration =
               attendance.checkInTime && attendance.checkOutTime
                 ? calculateDuration(
-                    attendance.checkInTime,
-                    attendance.checkOutTime
+                    attendance.checkInTime.toISOString(),
+                    attendance.checkOutTime.toISOString()
                   )
                 : "N/A";
 
