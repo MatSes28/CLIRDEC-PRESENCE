@@ -226,6 +226,16 @@ export const deletionRequests = pgTable("deletion_requests", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Password reset tokens - Secure password reset flow (ISO 27001 compliant)
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  token: varchar("token").notNull().unique(), // Secure random token
+  expiresAt: timestamp("expires_at").notNull(), // Token expires after 1 hour
+  used: boolean("used").default(false), // One-time use only
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   subjects: many(subjects),
