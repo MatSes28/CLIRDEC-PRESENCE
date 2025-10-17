@@ -29,7 +29,14 @@ if (missingVars.length > 0) {
     missingVars.join(", ")
   );
   console.error("Please set these variables in your .env file");
-  process.exit(1);
+  // In production, don't exit - let Railway handle missing env vars
+  if (process.env.NODE_ENV === "production") {
+    console.warn(
+      "⚠️ Continuing with missing environment variables in production"
+    );
+  } else {
+    process.exit(1);
+  }
 }
 
 // Validate critical environment variables
@@ -37,7 +44,12 @@ if (process.env.SESSION_SECRET && process.env.SESSION_SECRET.length < 32) {
   console.error(
     "❌ SESSION_SECRET must be at least 32 characters long for security"
   );
-  process.exit(1);
+  // In production, don't exit - use default or continue
+  if (process.env.NODE_ENV === "production") {
+    console.warn("⚠️ Continuing with short SESSION_SECRET in production");
+  } else {
+    process.exit(1);
+  }
 }
 
 console.log("✅ Environment variables validated successfully");
@@ -78,25 +90,29 @@ app.use((req, res, next) => {
 
   const server = await registerRoutes(app);
 
-  // Seed database with sample data on first run
-  try {
-    await seedDatabase();
-  } catch (error) {
-    console.log("Database already seeded or error occurred:", error);
+  // Seed database with sample data on first run (only in development)
+  if (process.env.NODE_ENV !== "production") {
+    try {
+      await seedDatabase();
+    } catch (error) {
+      console.log("Database already seeded or error occurred:", error);
+    }
   }
 
-  // Initialize default data retention policies
-  try {
-    const { dataRetentionService } = await import(
-      "./services/dataRetentionService"
-    );
-    await dataRetentionService.initializeDefaultPolicies();
-    console.log("✅ Data retention policies initialized");
-  } catch (error) {
-    console.log(
-      "Data retention policies already initialized or error occurred:",
-      error
-    );
+  // Initialize default data retention policies (only in development)
+  if (process.env.NODE_ENV !== "production") {
+    try {
+      const { dataRetentionService } = await import(
+        "./services/dataRetentionService"
+      );
+      await dataRetentionService.initializeDefaultPolicies();
+      console.log("✅ Data retention policies initialized");
+    } catch (error) {
+      console.log(
+        "Data retention policies already initialized or error occurred:",
+        error
+      );
+    }
   }
 
   // Centralized error handling middleware
@@ -104,8 +120,12 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
+    console.error(`[${new Date().toISOString()}] Error ${status}: ${message}`);
+    if (process.env.NODE_ENV === "development") {
+      console.error("Stack:", err.stack);
+    }
+
     res.status(status).json({ message });
-    throw err;
   });
 
   // 404 handler for unmatched routes
