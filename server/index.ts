@@ -1,4 +1,4 @@
-import express from "express";
+import express, { NextFunction, type Request, Response } from "express";
 import { initializeDatabase } from "./initDatabase";
 import { registerRoutes } from "./routes";
 import { seedDatabase } from "./seedData";
@@ -100,10 +100,22 @@ app.use((req, res, next) => {
   }
 
   // Centralized error handling middleware
-  app.use(errorHandler);
+  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    const status = err.status || err.statusCode || 500;
+    const message = err.message || "Internal Server Error";
+
+    res.status(status).json({ message });
+    throw err;
+  });
 
   // 404 handler for unmatched routes
-  app.use(notFoundHandler);
+  app.use((req: Request, res: Response) => {
+    res.status(404).json({
+      message: "Route not found",
+      path: req.path,
+      method: req.method,
+    });
+  });
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
