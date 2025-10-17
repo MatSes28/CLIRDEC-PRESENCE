@@ -240,33 +240,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Email is required" });
       }
 
+      console.log(`[FORGOT_PASSWORD] Processing request for email: ${email}`);
+
       // Check if user exists (but don't reveal this in response for security)
       const user = await storage.getUserByEmail(email);
+      console.log(`[FORGOT_PASSWORD] User found: ${user ? 'yes' : 'no'}`);
       
       if (user) {
         // Generate secure random token
         const crypto = await import('crypto');
         const resetToken = crypto.randomBytes(32).toString('hex');
+        console.log(`[FORGOT_PASSWORD] Generated reset token`);
         
         // Token expires in 1 hour
         const expiresAt = new Date();
         expiresAt.setHours(expiresAt.getHours() + 1);
         
         // Store token in database
-        if (!db) throw new Error("Database not available");
+        if (!db) {
+          console.error('[FORGOT_PASSWORD] Database not available');
+          throw new Error("Database not available");
+        }
         const { passwordResetTokens } = await import('@shared/schema');
         
+        console.log(`[FORGOT_PASSWORD] Inserting token into database`);
         await db.insert(passwordResetTokens).values({
           userId: user.id,
           token: resetToken,
           expiresAt,
           used: false
         });
+        console.log(`[FORGOT_PASSWORD] Token inserted successfully`);
         
-        // Get reset link
-        const FRONTEND_URL = process.env.REPLIT_DOMAINS?.split(',')[0] 
-          ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
-          : 'http://localhost:5000';
+        // Get reset link - works for both Replit and Railway
+        let FRONTEND_URL = 'http://localhost:5000'; // default
+        
+        if (process.env.REPLIT_DOMAINS) {
+          // Replit environment
+          FRONTEND_URL = `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`;
+        } else if (process.env.RAILWAY_PUBLIC_DOMAIN) {
+          // Railway environment
+          FRONTEND_URL = `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`;
+        } else if (req.headers.host) {
+          // Fallback: use the host from the request
+          const protocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
+          FRONTEND_URL = `${protocol}://${req.headers.host}`;
+        }
+        
+        console.log(`[FORGOT_PASSWORD] Using FRONTEND_URL: ${FRONTEND_URL}`);
         const resetLink = `${FRONTEND_URL}/reset-password?token=${resetToken}`;
         
         const FROM_EMAIL = process.env.FROM_EMAIL || "matt.feria@clsu2.edu.ph";
@@ -347,7 +368,8 @@ Central Luzon State University
         message: "If an account exists with this email, you will receive password reset instructions shortly." 
       });
     } catch (error) {
-      console.error("Error processing forgot password request:", error);
+      console.error("[FORGOT_PASSWORD] Error processing forgot password request:", error);
+      console.error("[FORGOT_PASSWORD] Error stack:", error instanceof Error ? error.stack : 'No stack trace');
       res.status(500).json({ message: "Failed to process password reset request" });
     }
   });
