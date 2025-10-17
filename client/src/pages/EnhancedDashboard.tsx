@@ -1,35 +1,41 @@
-import EnhancedRFIDSimulator from "@/components/EnhancedRFIDSimulator";
-import PerformanceMonitor from "@/components/PerformanceMonitor";
-import SecurityAlerts from "@/components/SecurityAlerts";
-import StartSessionModal from "@/components/StartSessionModal";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
+import { 
+  Users, 
+  UserCheck, 
+  UserX, 
+  TrendingUp, 
+  Play, 
+  Download, 
+  Mail,
+  Plus,
+  UserPlus,
+  LogIn,
+  AlertTriangle,
+  LogOut,
+  Clock,
   Activity,
-  ArrowDownRight,
-  ArrowUpRight,
+  Zap,
   BarChart3,
   Calendar,
-  Cpu,
-  Download,
-  LogOut,
-  Mail,
   Monitor,
-  Play,
-  Plus,
-  Shield,
+  ArrowUpRight,
+  ArrowDownRight,
   Target,
-  TrendingUp,
-  UserCheck,
-  UserPlus,
-  UserX,
-  Zap
+  Star,
+  Sparkles,
+  Shield,
+  Cpu
 } from "lucide-react";
-import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import StartSessionModal from "@/components/StartSessionModal";
+import EnhancedRFIDSimulator from "@/components/EnhancedRFIDSimulator";
+import SecurityAlerts from "@/components/SecurityAlerts";
+import PerformanceMonitor from "@/components/PerformanceMonitor";
 
 interface StatCard {
   title: string;
@@ -155,24 +161,10 @@ export default function EnhancedDashboard() {
   if (isLoading) {
     return (
       <div className="space-y-3 sm:space-y-6">
-        {/* Loading Header */}
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <div className="h-6 sm:h-8 bg-muted rounded w-48 animate-pulse"></div>
-            <div className="h-4 bg-muted rounded w-64 animate-pulse"></div>
-          </div>
-          <div className="h-10 bg-muted rounded w-32 animate-pulse"></div>
-        </div>
-
-        {/* Loading Statistics Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
           {[...Array(4)].map((_, i) => (
             <Card key={i} className="animate-pulse">
               <CardContent className="p-4 sm:p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="h-10 w-10 bg-muted rounded-xl"></div>
-                  <div className="h-4 w-12 bg-muted rounded"></div>
-                </div>
                 <div className="space-y-2 sm:space-y-3">
                   <div className="h-3 sm:h-4 bg-muted rounded w-3/4"></div>
                   <div className="h-6 sm:h-8 bg-muted rounded w-1/2"></div>
@@ -181,39 +173,6 @@ export default function EnhancedDashboard() {
               </CardContent>
             </Card>
           ))}
-        </div>
-
-        {/* Loading Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6">
-          <Card className="lg:col-span-2 animate-pulse">
-            <CardContent className="p-4 sm:p-6">
-              <div className="space-y-4">
-                <div className="h-6 bg-muted rounded w-1/3"></div>
-                <div className="h-32 bg-muted rounded"></div>
-                <div className="grid grid-cols-3 gap-4">
-                  {[...Array(3)].map((_, i) => (
-                    <div key={i} className="text-center space-y-2">
-                      <div className="h-8 bg-muted rounded w-full"></div>
-                      <div className="h-3 bg-muted rounded w-2/3 mx-auto"></div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="animate-pulse">
-            <CardContent className="p-4 sm:p-6">
-              <div className="space-y-4">
-                <div className="h-6 bg-muted rounded w-1/2"></div>
-                <div className="space-y-3">
-                  {[...Array(4)].map((_, i) => (
-                    <div key={i} className="h-10 bg-muted rounded"></div>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
     );

@@ -1,27 +1,29 @@
-import AddStudentModal from "@/components/AddStudentModal";
-import ContactStudentModal from "@/components/ContactStudentModal";
-import EditStudentModal from "@/components/EditStudentModal";
-import { EmptyState } from "@/components/EmptyState";
-import { GenderAvatar } from "@/components/GenderAvatar";
-import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import ViewStudentModal from "@/components/ViewStudentModal";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
+import { 
+  UserPlus, 
+  FolderInput, 
+  Search,
+  Mail,
   Edit,
   Eye,
-  FolderInput,
-  GraduationCap,
-  Mail,
-  Search,
-  UserPlus
+  AlertTriangle,
+  GraduationCap
 } from "lucide-react";
-import { useState } from "react";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { GenderAvatar } from "@/components/GenderAvatar";
+import { EmptyState } from "@/components/EmptyState";
+import { LoadingState } from "@/components/LoadingState";
+import AddStudentModal from "@/components/AddStudentModal";
+import EditStudentModal from "@/components/EditStudentModal";
+import ViewStudentModal from "@/components/ViewStudentModal";
+import ContactStudentModal from "@/components/ContactStudentModal";
 
 export default function Students() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -112,97 +114,11 @@ export default function Students() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4 sm:space-y-6">
-        {/* Loading Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
-          <div className="space-y-2">
-            <div className="h-6 sm:h-8 bg-muted rounded w-48 animate-pulse"></div>
-            <div className="h-4 bg-muted rounded w-64 animate-pulse"></div>
-          </div>
-          <div className="flex gap-2 sm:gap-3">
-            <div className="h-9 bg-muted rounded w-24 animate-pulse"></div>
-            <div className="h-9 bg-muted rounded w-28 animate-pulse"></div>
-          </div>
-        </div>
-
-        {/* Loading Search and Filters */}
-        <div className="bg-card rounded-lg border p-3 sm:p-6">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
-            <div className="flex-1 h-10 bg-muted rounded animate-pulse"></div>
-            <div className="h-10 bg-muted rounded w-full sm:w-32 animate-pulse"></div>
-            <div className="h-10 bg-muted rounded w-full sm:w-32 animate-pulse"></div>
-          </div>
-        </div>
-
-        {/* Loading Student Cards - Mobile */}
-        <div className="block sm:hidden space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-card rounded-lg border p-4 animate-pulse">
-              <div className="flex items-start gap-3">
-                <div className="h-10 w-10 bg-muted rounded-full"></div>
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-muted rounded w-3/4"></div>
-                  <div className="h-3 bg-muted rounded w-1/2"></div>
-                  <div className="h-3 bg-muted rounded w-2/3"></div>
-                  <div className="h-5 bg-muted rounded w-20"></div>
-                  <div className="flex gap-1 mt-3">
-                    <div className="h-8 bg-muted rounded flex-1"></div>
-                    <div className="h-8 bg-muted rounded flex-1"></div>
-                    <div className="h-8 bg-muted rounded flex-1"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Loading Table - Desktop */}
-        <div className="hidden sm:block bg-card rounded-lg border animate-pulse">
-          <div className="p-6">
-            <div className="space-y-4">
-              <div className="grid grid-cols-6 gap-4">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="h-4 bg-muted rounded"></div>
-                ))}
-              </div>
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="grid grid-cols-6 gap-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="h-10 w-10 bg-muted rounded-full"></div>
-                    <div className="space-y-1">
-                      <div className="h-4 bg-muted rounded w-24"></div>
-                      <div className="h-3 bg-muted rounded w-20"></div>
-                    </div>
-                  </div>
-                  <div className="h-4 bg-muted rounded w-16"></div>
-                  <div className="h-5 bg-muted rounded w-20"></div>
-                  <div className="h-4 bg-muted rounded w-32"></div>
-                  <div className="flex items-center space-x-2">
-                    <div className="h-2 bg-muted rounded w-16"></div>
-                    <div className="h-4 bg-muted rounded w-8"></div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <div className="h-8 bg-muted rounded w-16"></div>
-                    <div className="h-8 bg-muted rounded w-20"></div>
-                    <div className="h-8 bg-muted rounded w-16"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Loading Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-card rounded-lg border p-6 animate-pulse">
-              <div className="text-center space-y-2">
-                <div className="h-8 bg-muted rounded w-12 mx-auto"></div>
-                <div className="h-4 bg-muted rounded w-24 mx-auto"></div>
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className="p-3 sm:p-6">
+        <LoadingState 
+          message="Loading students..." 
+          subMessage="Please wait while we fetch student records"
+        />
       </div>
     );
   }

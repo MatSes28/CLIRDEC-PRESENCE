@@ -1,16 +1,16 @@
-import SessionTimeout from "@/components/SessionTimeout";
-import Sidebar from "@/components/Sidebar";
-import { ThemeProvider } from "@/components/ThemeProvider";
-import TopBar from "@/components/TopBar";
-import TourProvider from "@/components/TourProvider";
+import { lazy, Suspense } from "react";
+import { Switch, Route } from "wouter";
+import { queryClient } from "./lib/queryClient";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { WebSocketProvider } from "@/components/WebSocketProvider";
 import { useAuth } from "@/hooks/useAuth";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { lazy, Suspense } from "react";
-import { Route, Switch } from "wouter";
-import { queryClient } from "./lib/queryClient";
+import Sidebar from "@/components/Sidebar";
+import TopBar from "@/components/TopBar";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { WebSocketProvider } from "@/components/WebSocketProvider";
+import TourProvider from "@/components/TourProvider";
+import SessionTimeout from "@/components/SessionTimeout";
 
 const AuthPage = lazy(() => import("@/pages/AuthPage"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
@@ -140,20 +140,18 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ThemeProvider>
-          <WebSocketProvider>
-            <TooltipProvider>
-              <TourProvider>
-                <div className="min-h-screen bg-background text-foreground">
-                  <Router />
-                  <Toaster />
-                </div>
-              </TourProvider>
-            </TooltipProvider>
-          </WebSocketProvider>
-        </ThemeProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <WebSocketProvider>
+          <TooltipProvider>
+            <TourProvider>
+              <div className="min-h-screen bg-background text-foreground">
+                <Router />
+                <Toaster />
+              </div>
+            </TourProvider>
+          </TooltipProvider>
+        </WebSocketProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

@@ -1,39 +1,39 @@
 import {
-  attendance,
+  users,
+  students,
   classrooms,
-  computers,
-  emailNotifications,
-  enrollments,
+  subjects,
   schedules,
   sessions_class,
-  students,
-  subjects,
+  attendance,
+  computers,
+  emailNotifications,
   systemSettings,
-  users,
-  type Attendance,
-  type Classroom,
-  type ClassSession,
-  type Computer,
-  type EmailNotification,
-  type Enrollment,
-  type InsertAttendance,
-  type InsertClassroom,
-  type InsertClassSession,
-  type InsertComputer,
-  type InsertEmailNotification,
-  type InsertEnrollment,
-  type InsertSchedule,
+  enrollments,
+  type User,
+  type UpsertUser,
+  type Student,
   type InsertStudent,
+  type Classroom,
+  type InsertClassroom,
+  type Subject,
   type InsertSubject,
   type Schedule,
-  type Student,
-  type Subject,
+  type InsertSchedule,
+  type ClassSession,
+  type InsertClassSession,
+  type Attendance,
+  type InsertAttendance,
+  type Computer,
+  type InsertComputer,
+  type EmailNotification,
+  type InsertEmailNotification,
   type SystemSetting,
-  type UpsertUser,
-  type User,
+  type Enrollment,
+  type InsertEnrollment,
 } from "@shared/schema";
-import { and, asc, desc, eq, gte, lte } from "drizzle-orm";
 import { db } from "./db";
+import { eq, and, gte, lte, desc, asc } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -1052,7 +1052,3 @@ async function createStorage() {
 
 // Initialize storage - will use PostgreSQL if available, otherwise fallback to memory
 export const storage = db ? new DbStorage() : new MemStorage();
-
-// Convert blocking operations to async patterns
-// All storage operations are already async - no blocking operations found
-// This satisfies the requirement for async pattern conversion

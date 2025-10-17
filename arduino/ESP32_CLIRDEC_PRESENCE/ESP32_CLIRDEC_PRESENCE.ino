@@ -41,8 +41,8 @@
 MFRC522 rfid(SS_PIN, RST_PIN);
 
 // WiFi credentials (replace with your network)
-const char* ssid = "Kupal kaba boss?";
-const char* password = "MatMir@12030908";
+const char* ssid = "YOUR_WIFI_SSID";
+const char* password = "YOUR_WIFI_PASSWORD";
 
 // Server configuration (replace with your Replit URL)
 const char* serverHost = "ddb04528-3a36-4cd1-a417-be2a44f8f2c2-00-1vovm4u17nbsh.sisko.replit.dev";
@@ -65,22 +65,6 @@ bool serverConnected = false;
 bool pirState = false;
 unsigned long lastHeartbeat = 0;
 unsigned long lastPirCheck = 0;
-
-// HC-SR501 PIR Sensor variables with interference handling
-bool motionDetected = false;
-unsigned long lastMotionTime = 0;
-const unsigned long MOTION_TIMEOUT = 5000; // 5 seconds timeout
-
-// Interference detection and filtering
-unsigned long lastValidMotion = 0;
-int consecutiveInterferenceCount = 0;
-const int MAX_CONSECUTIVE_INTERFERENCE = 3;
-const unsigned long INTERFERENCE_WINDOW_MS = 1000; // 1 second window for interference detection
-const unsigned long MIN_MOTION_INTERVAL_MS = 2000; // Minimum 2 seconds between valid motions
-
-// Ultrasonic sensor interference detection (if ultrasonic sensor is added later)
-bool ultrasonicInterference = false;
-unsigned long lastUltrasonicReading = 0;
 unsigned long lastStatusUpdate = 0;
 String lastRfidCard = "";
 unsigned long lastRfidTime = 0;
@@ -89,9 +73,7 @@ unsigned long lastRfidTime = 0;
 const unsigned long HEARTBEAT_INTERVAL = 60000;  // 1 minute
 const unsigned long PIR_CHECK_INTERVAL = 1000;   // 1 second
 const unsigned long STATUS_UPDATE_INTERVAL = 300000; // 5 minutes
-unsigned long RFID_DEBOUNCE_MS = 2000;  // Configurable debounce time
-unsigned long lastRFIDRead = 0;
-String lastRFIDTag = "";
+const unsigned long RFID_DEBOUNCE_TIME = 2000;   // 2 seconds
 
 void setup() {
   Serial.begin(115200);
@@ -184,22 +166,9 @@ void connectToWiFi() {
   WiFi.begin(ssid, password);
   
   int attempts = 0;
-  int maxAttempts = 20;
-  int baseDelay = 1000; // Start with 1 second
-
-  while (WiFi.status() != WL_CONNECTED && attempts < maxAttempts) {
-    // Exponential backoff with jitter
-    int delayTime = baseDelay * (1 << min(attempts, 4)); // Cap at 2^4 = 16x base delay
-    delayTime += random(0, 200); // Add jitter to prevent thundering herd
-
-    delay(delayTime);
+  while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+    delay(1000);
     Serial.print(".");
-
-    // Print connection status occasionally
-    if (attempts % 5 == 0) {
-      Serial.printf(" (attempt %d/%d)", attempts + 1, maxAttempts);
-    }
-
     digitalWrite(LED_PIN, !digitalRead(LED_PIN));  // Blink during connection
     attempts++;
   }
