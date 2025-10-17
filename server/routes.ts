@@ -231,7 +231,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Forgot password route - sends password reset request to IT support
+  // Forgot password route - generates secure token and sends reset link to user (ISO 27001 compliant)
   app.post('/api/forgot-password', async (req, res) => {
     try {
       const { email } = req.body;
@@ -244,9 +244,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUserByEmail(email);
       
       if (user) {
-        // Send email to IT support to handle password reset manually
+        // Generate secure random token
+        const crypto = await import('crypto');
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        
+        // Token expires in 1 hour
+        const expiresAt = new Date();
+        expiresAt.setHours(expiresAt.getHours() + 1);
+        
+        // Store token in database
+        if (!db) throw new Error("Database not available");
+        const { passwordResetTokens } = await import('@/shared/schema');
+        
+        await db.insert(passwordResetTokens).values({
+          userId: user.id,
+          token: resetToken,
+          expiresAt,
+          used: false
+        });
+        
+        // Get reset link
+        const FRONTEND_URL = process.env.REPLIT_DOMAINS?.split(',')[0] 
+          ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
+          : 'http://localhost:5000';
+        const resetLink = `${FRONTEND_URL}/reset-password?token=${resetToken}`;
+        
         const FROM_EMAIL = process.env.FROM_EMAIL || "matt.feria@clsu2.edu.ph";
-        const SUPPORT_EMAIL = "support@clsu.edu.ph";
         
         const resetEmailHtml = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -255,49 +278,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
               <p>Password Reset Request</p>
             </div>
             <div style="padding: 20px; background-color: #f9f9f9;">
-              <h2 style="color: #2596be;">Password Reset Request</h2>
-              <p>A password reset has been requested for the following account:</p>
-              <div style="background-color: white; padding: 15px; border-left: 4px solid #2596be; margin: 20px 0;">
-                <p><strong>Email:</strong> ${email}</p>
-                <p><strong>Name:</strong> ${user.firstName} ${user.lastName}</p>
-                <p><strong>Role:</strong> ${user.role}</p>
-                <p><strong>Request Time:</strong> ${new Date().toLocaleString()}</p>
+              <h2 style="color: #2596be;">Reset Your Password</h2>
+              <p>Hello ${user.firstName},</p>
+              <p>We received a request to reset your password for your CLIRDEC: PRESENCE account.</p>
+              <div style="background-color: white; padding: 20px; text-align: center; margin: 20px 0;">
+                <a href="${resetLink}" style="background-color: #2596be; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">Reset Password</a>
               </div>
-              <p>Please contact the user to verify their identity and manually reset their password in the admin panel.</p>
-              <p><strong>Next Steps:</strong></p>
-              <ol>
-                <li>Verify the user's identity through official channels</li>
-                <li>Login to the CLIRDEC admin panel</li>
-                <li>Navigate to User Management</li>
-                <li>Update the user's password</li>
-                <li>Inform the user of their new temporary password</li>
-              </ol>
-              <p>If you did not expect this request, please ignore this email or contact the system administrator.</p>
+              <p>Or copy and paste this link into your browser:</p>
+              <p style="background-color: #f0f0f0; padding: 10px; word-break: break-all; font-family: monospace; font-size: 12px;">${resetLink}</p>
+              <p><strong>⏰ This link will expire in 1 hour for security reasons.</strong></p>
+              <p>If you didn't request this password reset, please ignore this email or contact IT support if you're concerned about your account security.</p>
               <p>Best regards,<br>CLIRDEC: PRESENCE System<br>Department of Information Technology<br>Central Luzon State University</p>
             </div>
           </div>
         `;
 
         const resetEmailText = `
-CLIRDEC: PRESENCE - Password Reset Request
+CLIRDEC: PRESENCE - Password Reset
 
-A password reset has been requested for the following account:
+Hello ${user.firstName},
 
-Email: ${email}
-Name: ${user.firstName} ${user.lastName}
-Role: ${user.role}
-Request Time: ${new Date().toLocaleString()}
+We received a request to reset your password for your CLIRDEC: PRESENCE account.
 
-Please contact the user to verify their identity and manually reset their password in the admin panel.
+To reset your password, click the link below or copy it into your browser:
+${resetLink}
 
-Next Steps:
-1. Verify the user's identity through official channels
-2. Login to the CLIRDEC admin panel
-3. Navigate to User Management
-4. Update the user's password
-5. Inform the user of their new temporary password
+⏰ This link will expire in 1 hour for security reasons.
 
-If you did not expect this request, please ignore this email or contact the system administrator.
+If you didn't request this password reset, please ignore this email or contact IT support if you're concerned about your account security.
 
 Best regards,
 CLIRDEC: PRESENCE System
@@ -305,17 +313,28 @@ Department of Information Technology
 Central Luzon State University
         `;
 
-        // Send email to IT support
+        // Send email to user
         const { sendEmail } = await import('./services/emailService');
         try {
           await sendEmail({
-            to: SUPPORT_EMAIL,
+            to: email,
             from: FROM_EMAIL,
-            subject: `Password Reset Request - ${email}`,
+            subject: 'Reset Your Password - CLIRDEC: PRESENCE',
             html: resetEmailHtml,
             text: resetEmailText
           });
-          console.log(`Password reset request sent to IT support for ${email}`);
+          console.log(`Password reset email sent to ${email}`);
+          
+          // Audit log
+          await auditService.logAction({
+            userId: user.id,
+            action: "PASSWORD_RESET_REQUESTED",
+            entityType: "users",
+            entityId: user.id,
+            ipAddress: req.ip || 'unknown',
+            userAgent: req.headers['user-agent'] || 'unknown',
+            status: "success",
+          });
         } catch (emailError) {
           console.error("Failed to send password reset email:", emailError);
           // Don't reveal the error to the user
@@ -325,7 +344,7 @@ Central Luzon State University
       // Always return success for security (don't reveal if email exists)
       res.json({ 
         success: true, 
-        message: "If an account exists with this email, a password reset request has been sent to IT support. You will be contacted shortly." 
+        message: "If an account exists with this email, you will receive password reset instructions shortly." 
       });
     } catch (error) {
       console.error("Error processing forgot password request:", error);
@@ -333,7 +352,91 @@ Central Luzon State University
     }
   });
 
+  // Reset password route - validates token and updates password
+  app.post('/api/reset-password', async (req, res) => {
+    try {
+      const { token, newPassword } = req.body;
+      
+      if (!token || !newPassword) {
+        return res.status(400).json({ message: "Token and new password are required" });
+      }
 
+      // Validate password strength
+      if (newPassword.length < 8) {
+        return res.status(400).json({ message: "Password must be at least 8 characters long" });
+      }
+      
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
+      if (!passwordRegex.test(newPassword)) {
+        return res.status(400).json({ 
+          message: "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character" 
+        });
+      }
+
+      if (!db) throw new Error("Database not available");
+      const { passwordResetTokens, users } = await import('@/shared/schema');
+      const { eq, and } = await import('drizzle-orm');
+      
+      // Find token in database
+      const tokenRecord = await db.select().from(passwordResetTokens)
+        .where(and(
+          eq(passwordResetTokens.token, token),
+          eq(passwordResetTokens.used, false)
+        ))
+        .limit(1);
+      
+      if (!tokenRecord || tokenRecord.length === 0) {
+        return res.status(400).json({ message: "Invalid or expired reset token" });
+      }
+      
+      const resetToken = tokenRecord[0];
+      
+      // Check if token has expired
+      if (new Date() > new Date(resetToken.expiresAt)) {
+        return res.status(400).json({ message: "Reset token has expired. Please request a new one." });
+      }
+      
+      // Hash new password
+      const bcrypt = await import('bcrypt');
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      
+      // Update user's password
+      await db.update(users)
+        .set({ password: hashedPassword, updatedAt: new Date() })
+        .where(eq(users.id, resetToken.userId));
+      
+      // Mark token as used
+      await db.update(passwordResetTokens)
+        .set({ used: true })
+        .where(eq(passwordResetTokens.id, resetToken.id));
+      
+      // Get user for audit log
+      const user = await db.select().from(users)
+        .where(eq(users.id, resetToken.userId))
+        .limit(1);
+      
+      // Audit log
+      await auditService.logAction({
+        userId: resetToken.userId,
+        action: "PASSWORD_RESET_COMPLETED",
+        entityType: "users",
+        entityId: resetToken.userId,
+        ipAddress: req.ip || 'unknown',
+        userAgent: req.headers['user-agent'] || 'unknown',
+        status: "success",
+      });
+      
+      console.log(`Password successfully reset for user ${resetToken.userId}`);
+      
+      res.json({ 
+        success: true, 
+        message: "Password has been reset successfully. You can now log in with your new password." 
+      });
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      res.status(500).json({ message: "Failed to reset password. Please try again." });
+    }
+  });
 
   // Role-based dashboard statistics
   app.get('/api/dashboard/stats', requireAdminOrFaculty, async (req: any, res) => {
