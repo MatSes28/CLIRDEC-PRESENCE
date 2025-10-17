@@ -29,14 +29,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuth = async () => {
     try {
+      console.log("Checking authentication...");
       const response = await fetch("/api/user", {
         credentials: "include",
       });
 
+      console.log("Auth check response:", response.status, response.ok);
+
       if (response.ok) {
         const userData = await response.json();
+        console.log("User data received:", userData);
         setUser(userData);
       } else {
+        console.log("Auth check failed with status:", response.status);
         setUser(null);
       }
     } catch (error) {
@@ -49,6 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
+      console.log("Attempting login for:", email);
       const response = await fetch("/api/login", {
         method: "POST",
         headers: {
@@ -58,12 +64,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ email, password }),
       });
 
+      console.log("Login response status:", response.status);
       const data = await response.json();
+      console.log("Login response data:", data);
 
       if (response.ok) {
         setUser(data); // data is already the user object
+        console.log("Login successful, user set:", data);
         return { success: true };
       } else {
+        console.log("Login failed with message:", data.message);
         return { success: false, message: data.message || "Login failed" };
       }
     } catch (error) {
