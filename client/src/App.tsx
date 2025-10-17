@@ -13,6 +13,7 @@ import TourProvider from "@/components/TourProvider";
 import SessionTimeout from "@/components/SessionTimeout";
 
 const AuthPage = lazy(() => import("@/pages/AuthPage"));
+const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const EnhancedDashboard = lazy(() => import("@/pages/EnhancedDashboard"));
 const LiveAttendance = lazy(() => import("@/pages/LiveAttendance"));
 const Schedule = lazy(() => import("@/pages/Schedule"));
@@ -63,6 +64,8 @@ function Router() {
       {!isAuthenticated ? (
         <Suspense fallback={<LoadingFallback />}>
           <Route path="/" component={AuthPage} />
+          <Route path="/login" component={AuthPage} />
+          <Route path="/reset-password" component={ResetPassword} />
           <Route component={AuthPage} />
         </Suspense>
       ) : (

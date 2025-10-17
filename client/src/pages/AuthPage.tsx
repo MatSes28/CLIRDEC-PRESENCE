@@ -65,8 +65,8 @@ export default function AuthPage() {
     },
     onSuccess: () => {
       toast({
-        title: "Password Reset Email Sent",
-        description: "If an account exists with this email, you will receive password reset instructions.",
+        title: "Check Your Email",
+        description: "If an account exists with this email, you will receive a password reset link shortly. Please check your inbox.",
       });
       setShowForgotPassword(false);
       setResetEmail("");
