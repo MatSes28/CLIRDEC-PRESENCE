@@ -148,6 +148,11 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
   };
 
   useEffect(() => {
+    // Don't connect WebSocket on login page or if not on relevant pages
+    if (window.location.pathname === '/' || window.location.pathname === '/login' || window.location.pathname === '/reset-password') {
+      return;
+    }
+    
     const ws = connectWebSocket();
     
     return () => {

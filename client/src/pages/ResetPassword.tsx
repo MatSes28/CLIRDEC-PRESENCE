@@ -38,8 +38,17 @@ export default function ResetPassword() {
         setLocation("/login");
       }, 3000);
     },
-    onError: (error: Error) => {
-      setError(error.message || "Failed to reset password. Please try again.");
+    onError: (error: any) => {
+      // Handle specific error cases
+      const errorMessage = error.message || "Failed to reset password. Please try again.";
+      
+      if (errorMessage.includes("expired")) {
+        setError("This reset link has expired. Please request a new password reset.");
+      } else if (errorMessage.includes("Invalid or expired")) {
+        setError("Invalid or expired reset link. Please request a new password reset.");
+      } else {
+        setError(errorMessage);
+      }
     },
   });
 
@@ -103,27 +112,27 @@ export default function ResetPassword() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">New Password</label>
-              <PasswordInput
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter new password"
-                showStrengthIndicator={true}
-                required
-              />
-            </div>
+            <PasswordInput
+              id="newPassword"
+              label="New Password"
+              value={newPassword}
+              onChange={setNewPassword}
+              placeholder="Enter new password"
+              showRequirements={true}
+              testId="input-new-password"
+              autoComplete="new-password"
+            />
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Confirm Password</label>
-              <PasswordInput
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm new password"
-                compareWith={newPassword}
-                required
-              />
-            </div>
+            <PasswordInput
+              id="confirmPassword"
+              label="Confirm Password"
+              value={confirmPassword}
+              onChange={setConfirmPassword}
+              placeholder="Confirm new password"
+              showRequirements={false}
+              testId="input-confirm-password"
+              autoComplete="new-password"
+            />
 
             <Button
               type="submit"
