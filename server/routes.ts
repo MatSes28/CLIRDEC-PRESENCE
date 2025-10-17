@@ -254,7 +254,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Store token in database
         if (!db) throw new Error("Database not available");
-        const { passwordResetTokens } = await import('@/shared/schema');
+        const { passwordResetTokens } = await import('@shared/schema');
         
         await db.insert(passwordResetTokens).values({
           userId: user.id,
@@ -374,7 +374,7 @@ Central Luzon State University
       }
 
       if (!db) throw new Error("Database not available");
-      const { passwordResetTokens, users } = await import('@/shared/schema');
+      const { passwordResetTokens, users } = await import('@shared/schema');
       const { eq, and } = await import('drizzle-orm');
       
       // Find token in database
