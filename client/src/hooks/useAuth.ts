@@ -1,19 +1,17 @@
-import { User } from "@/../../shared/schema";
-import { apiRequest, getQueryFn } from "@/lib/queryClient";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getQueryFn, apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
+import { User } from "@/../../shared/schema";
 
 export function useAuth() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
-
+  
   const { data: user, isLoading } = useQuery<User | null>({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     retry: false,
   });
-
-  console.log("useAuth: user =", user, "isLoading =", isLoading);
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
@@ -32,7 +30,7 @@ export function useAuth() {
       queryClient.clear();
       queryClient.setQueryData(["/api/user"], null);
       window.location.href = "/";
-    },
+    }
   });
 
   return {

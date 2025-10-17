@@ -1,16 +1,16 @@
-import SessionTimeout from "@/components/SessionTimeout";
-import Sidebar from "@/components/Sidebar";
-import { ThemeProvider } from "@/components/ThemeProvider";
-import TopBar from "@/components/TopBar";
-import TourProvider from "@/components/TourProvider";
+import { lazy, Suspense } from "react";
+import { Switch, Route } from "wouter";
+import { queryClient } from "./lib/queryClient";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { WebSocketProvider } from "@/components/WebSocketProvider";
 import { useAuth } from "@/hooks/useAuth";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { lazy, Suspense } from "react";
-import { Route, Switch } from "wouter";
-import { queryClient } from "./lib/queryClient";
+import Sidebar from "@/components/Sidebar";
+import TopBar from "@/components/TopBar";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { WebSocketProvider } from "@/components/WebSocketProvider";
+import TourProvider from "@/components/TourProvider";
+import SessionTimeout from "@/components/SessionTimeout";
 
 const AuthPage = lazy(() => import("@/pages/AuthPage"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
@@ -46,24 +46,14 @@ const LoadingFallback = () => (
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
-  console.log(
-    "Router: isAuthenticated =",
-    isAuthenticated,
-    "isLoading =",
-    isLoading
-  );
-
   if (isLoading) {
-    console.log("Router: Still loading authentication state");
     return (
       <div className="min-h-screen flex items-center justify-center gradient-primary">
         <div className="text-center">
           <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center animate-pulse">
             <div className="w-6 h-6 bg-white/80 rounded-full"></div>
           </div>
-          <div className="text-white/80 font-medium">
-            Loading CLIRDEC Presence...
-          </div>
+          <div className="text-white/80 font-medium">Loading CLIRDEC Presence...</div>
         </div>
       </div>
     );
@@ -77,7 +67,7 @@ function Router() {
           <ResetPassword />
         </Suspense>
       </Route>
-
+      
       {!isAuthenticated ? (
         <Suspense fallback={<LoadingFallback />}>
           <Route path="/" component={AuthPage} />
@@ -88,7 +78,7 @@ function Router() {
         <>
           {/* Session Timeout Monitor */}
           <SessionTimeout />
-
+          
           {/* Desktop Layout */}
           <div className="hidden lg:flex min-h-screen">
             <Sidebar />
@@ -105,15 +95,9 @@ function Router() {
                     <Route path="/computers" component={Computers} />
                     <Route path="/reports" component={Reports} />
                     <Route path="/users" component={UserManagement} />
-                    <Route
-                      path="/monitoring"
-                      component={AttendanceMonitoring}
-                    />
+                    <Route path="/monitoring" component={AttendanceMonitoring} />
                     <Route path="/iot" component={IoTDevicesPage} />
-                    <Route
-                      path="/discrepancies"
-                      component={DiscrepancyDashboard}
-                    />
+                    <Route path="/discrepancies" component={DiscrepancyDashboard} />
                     <Route path="/health" component={SystemHealthPage} />
                     <Route path="/testing" component={SystemTestingPage} />
                     <Route path="/compliance" component={Compliance} />
@@ -142,10 +126,7 @@ function Router() {
                   <Route path="/users" component={UserManagement} />
                   <Route path="/monitoring" component={AttendanceMonitoring} />
                   <Route path="/iot" component={IoTDevicesPage} />
-                  <Route
-                    path="/discrepancies"
-                    component={DiscrepancyDashboard}
-                  />
+                  <Route path="/discrepancies" component={DiscrepancyDashboard} />
                   <Route path="/health" component={SystemHealthPage} />
                   <Route path="/testing" component={SystemTestingPage} />
                   <Route path="/compliance" component={Compliance} />
@@ -164,22 +145,20 @@ function Router() {
 
 function App() {
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <WebSocketProvider>
-            <TooltipProvider>
-              <TourProvider>
-                <div className="min-h-screen bg-background text-foreground">
-                  <Router />
-                  <Toaster />
-                </div>
-              </TourProvider>
-            </TooltipProvider>
-          </WebSocketProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <WebSocketProvider>
+          <TooltipProvider>
+            <TourProvider>
+              <div className="min-h-screen bg-background text-foreground">
+                <Router />
+                <Toaster />
+              </div>
+            </TourProvider>
+          </TooltipProvider>
+        </WebSocketProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 
