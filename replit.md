@@ -87,9 +87,39 @@ UI Style: Modern glass effects, gradient backgrounds, professional typography, a
 - **Lucide**: Icon library.
 - **Driver.js**: Interactive onboarding tour library.
 
-## Recent Enhancements (October 16, 2025)
+## Recent Enhancements (October 17, 2025)
 
-### User-Friendly System Improvements
+### Secure Password Reset System (ISO 27001 Compliant)
+The password reset flow has been redesigned for better security and user experience:
+
+**Old Design**: IT support received password reset requests via email and manually reset passwords
+**New Design**: Secure token-based self-service password reset with direct user emails
+
+1. **Token-Based Security**:
+   - Cryptographically secure 32-byte random tokens
+   - 1-hour expiration for security compliance
+   - Single-use tokens that expire after password reset
+   - Stored in dedicated `passwordResetTokens` table
+
+2. **User Experience**:
+   - Faculty receive password reset link directly via email (no IT support needed)
+   - Dedicated reset password page (`/reset-password`) with real-time validation
+   - Clear success/error messaging with automatic redirect to login
+   - Password strength validation matching system security policy
+
+3. **Email Communications**:
+   - Professional branded email template with reset link
+   - Clear 1-hour expiration notice
+   - Security guidance for unauthorized requests
+   - Sent to user's registered email address
+
+4. **Compliance & Audit**:
+   - ISO 27001 compliant with comprehensive audit logging
+   - Password reset requests and completions tracked in audit logs
+   - Strong password policy enforced (8+ chars, uppercase, lowercase, number, special char)
+   - Token validation prevents replay attacks
+
+### User-Friendly System Improvements (October 16, 2025)
 The system has been enhanced to be accessible to non-technical faculty members with the following additions:
 
 1. **Reusable UX Components**:
