@@ -33,10 +33,15 @@ app.get("/health", (req, res) => {
 // Root endpoint - serve the React app in production, API info in development
 app.get("/", (req, res) => {
   if (process.env.NODE_ENV === "production") {
-    // In production, let the static file serving handle the React app
-    return res.sendFile(
-      path.resolve(import.meta.dirname, "public", "index.html")
-    );
+    // In production, serve the built React app
+    const indexPath = path.resolve(import.meta.dirname, "public", "index.html");
+    console.log("Serving index.html from:", indexPath);
+    return res.sendFile(indexPath, (err) => {
+      if (err) {
+        console.error("Error serving index.html:", err);
+        res.status(500).send("Internal Server Error");
+      }
+    });
   } else {
     // In development, return API info
     res.status(200).json({
