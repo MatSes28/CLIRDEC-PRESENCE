@@ -87,6 +87,20 @@ UI Style: Modern glass effects, gradient backgrounds, professional typography, a
 - **Lucide**: Icon library.
 - **Driver.js**: Interactive onboarding tour library.
 
+## Recent Updates
+
+### Project Cleanup (October 17, 2025)
+Removed all unnecessary files and folders to optimize project size:
+- Removed entire `python_backend/` directory (unused - using Node.js/Express instead)
+- Removed `attached_assets/` folder (50+ temporary development files)
+- Removed 40+ duplicate Arduino .ino files from root (kept organized `arduino/` folder)
+- Removed 30+ documentation .md files (deployment guides, setup instructions, troubleshooting)
+- Removed all test and debug files (.py, .js, .bat)
+- Removed unused configuration files (pyproject.toml, uv.lock, cookies.txt)
+- Removed unused React pages (Dashboard.tsx, Landing.tsx)
+
+**Result**: Clean, production-ready codebase with only essential files
+
 ## Recent Enhancements (October 17, 2025)
 
 ### Secure Password Reset System (ISO 27001 Compliant)
