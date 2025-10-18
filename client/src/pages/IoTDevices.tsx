@@ -1,38 +1,38 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  Smartphone, 
-  Wifi, 
-  WifiOff, 
-  Activity, 
-  Settings, 
-  Code, 
-  Download,
-  CheckCircle,
-  AlertCircle,
-  Zap,
-  Thermometer,
-  Battery,
-  MapPin,
-  Clock,
-  Wrench
-} from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Activity,
+  AlertCircle,
+  Battery,
+  CheckCircle,
+  Clock,
+  Code,
+  Download,
+  MapPin,
+  Settings,
+  Smartphone,
+  Thermometer,
+  Wifi,
+  WifiOff,
+  Wrench,
+  Zap,
+} from "lucide-react";
+import { useState } from "react";
 
 interface IoTDevice {
   deviceId: string;
   deviceType: string;
   location: string;
-  status: 'online' | 'offline';
+  status: "online" | "offline";
   lastSeen: string;
   capabilities: string[];
   batteryLevel?: number;
@@ -55,7 +55,7 @@ interface DeviceStats {
 interface ConnectionEvent {
   id: string;
   deviceId: string;
-  event: 'connected' | 'disconnected' | 'registered' | 'heartbeat' | 'error';
+  event: "connected" | "disconnected" | "registered" | "heartbeat" | "error";
   timestamp: string;
   message: string;
 }
@@ -63,8 +63,8 @@ interface ConnectionEvent {
 interface SetupGuide {
   hardwareRequirements?: string[];
   wiring?: {
-    'RFID RC522'?: Record<string, string>;
-    'PIR HC-SR501'?: Record<string, string>;
+    "RFID RC522"?: Record<string, string>;
+    "PIR HC-SR501"?: Record<string, string>;
   };
   steps?: string[];
   configuration?: {
@@ -84,56 +84,79 @@ export default function IoTDevicesPage() {
   const queryClient = useQueryClient();
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
   const [configMessage, setConfigMessage] = useState("");
-  
+
   // Fetch IoT devices
-  const { data: deviceData, isLoading } = useQuery<IoTDevice[] | DevicesResponse>({
-    queryKey: ['/api/iot/devices'],
-    refetchInterval: 5000 // Refresh every 5 seconds
+  const { data: deviceData, isLoading } = useQuery<
+    IoTDevice[] | DevicesResponse
+  >({
+    queryKey: ["/api/iot/devices"],
+    refetchInterval: 5023, // Refresh every 5 seconds
   });
 
-  const devices: IoTDevice[] = Array.isArray(deviceData) ? deviceData : (deviceData as DevicesResponse)?.devices || [];
-  const stats: DeviceStats = deviceData && typeof deviceData === 'object' && 'total' in deviceData
-    ? deviceData as DeviceStats
-    : { total: devices.length, online: devices.filter(d => d.status === 'online').length, offline: devices.filter(d => d.status === 'offline').length };
+  const devices: IoTDevice[] = Array.isArray(deviceData)
+    ? deviceData
+    : (deviceData as DevicesResponse)?.devices || [];
+  const stats: DeviceStats =
+    deviceData && typeof deviceData === "object" && "total" in deviceData
+      ? (deviceData as DeviceStats)
+      : {
+          total: devices.length,
+          online: devices.filter((d) => d.status === "online").length,
+          offline: devices.filter((d) => d.status === "offline").length,
+        };
 
   // Device configuration mutation
   const configMutation = useMutation({
-    mutationFn: async ({ deviceId, config }: { deviceId: string; config: any }) => {
-      return await apiRequest('POST', `/api/iot/devices/${deviceId}/config`, config);
+    mutationFn: async ({
+      deviceId,
+      config,
+    }: {
+      deviceId: string;
+      config: any;
+    }) => {
+      return await apiRequest(
+        "POST",
+        `/api/iot/devices/${deviceId}/config`,
+        config
+      );
     },
     onSuccess: () => {
       toast({
         title: "Configuration Updated",
         description: "Device configuration has been sent successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/iot/devices'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/iot/devices"] });
     },
     onError: (error: any) => {
       toast({
         title: "Configuration Failed",
         description: error.message || "Failed to update device configuration",
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
   });
 
   // Request diagnostics mutation
   const diagnosticsMutation = useMutation({
     mutationFn: async (deviceId: string) => {
-      return await apiRequest('POST', `/api/iot/devices/${deviceId}/diagnostics`, {});
+      return await apiRequest(
+        "POST",
+        `/api/iot/devices/${deviceId}/diagnostics`,
+        {}
+      );
     },
     onSuccess: () => {
       toast({
         title: "Diagnostics Requested",
         description: "Device diagnostics request has been sent",
       });
-    }
+    },
   });
 
   // Broadcast message mutation
   const broadcastMutation = useMutation({
     mutationFn: async (message: any) => {
-      return await apiRequest('POST', '/api/iot/broadcast', message);
+      return await apiRequest("POST", "/api/iot/broadcast", message);
     },
     onSuccess: () => {
       toast({
@@ -141,18 +164,18 @@ export default function IoTDevicesPage() {
         description: "Message has been sent to all connected devices",
       });
       setConfigMessage("");
-    }
+    },
   });
 
   // Setup guide query
   const { data: setupGuide } = useQuery<SetupGuide>({
-    queryKey: ['/api/iot/setup-guide']
+    queryKey: ["/api/iot/setup-guide"],
   });
 
-  // Connection events query  
+  // Connection events query
   const { data: connectionEvents = [] } = useQuery<ConnectionEvent[]>({
-    queryKey: ['/api/iot/connection-events'],
-    refetchInterval: 3000 // Refresh every 3 seconds
+    queryKey: ["/api/iot/connection-events"],
+    refetchInterval: 3000, // Refresh every 3 seconds
   });
 
   const handleConfigUpdate = (deviceId: string) => {
@@ -163,7 +186,7 @@ export default function IoTDevicesPage() {
       toast({
         title: "Invalid JSON",
         description: "Please enter valid JSON configuration",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -176,25 +199,28 @@ export default function IoTDevicesPage() {
       toast({
         title: "Invalid JSON",
         description: "Please enter valid JSON message",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'online': return 'bg-green-500';
-      case 'offline': return 'bg-red-500';
-      default: return 'bg-gray-500';
+      case "online":
+        return "bg-green-500";
+      case "offline":
+        return "bg-red-500";
+      default:
+        return "bg-gray-500";
     }
   };
 
   const getSignalStrength = (rssi?: number) => {
-    if (!rssi) return 'Unknown';
-    if (rssi > -50) return 'Excellent';
-    if (rssi > -60) return 'Good';
-    if (rssi > -70) return 'Fair';
-    return 'Poor';
+    if (!rssi) return "Unknown";
+    if (rssi > -50) return "Excellent";
+    if (rssi > -60) return "Good";
+    if (rssi > -70) return "Fair";
+    return "Poor";
   };
 
   if (isLoading) {
@@ -251,7 +277,9 @@ export default function IoTDevicesPage() {
                 <Wifi className="w-6 h-6 text-green-600" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-green-600">{stats.online}</div>
+                <div className="text-2xl font-bold text-green-600">
+                  {stats.online}
+                </div>
                 <div className="text-sm text-gray-600">Online</div>
               </div>
             </div>
@@ -265,7 +293,9 @@ export default function IoTDevicesPage() {
                 <WifiOff className="w-6 h-6 text-red-600" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-red-600">{stats.offline}</div>
+                <div className="text-2xl font-bold text-red-600">
+                  {stats.offline}
+                </div>
                 <div className="text-sm text-gray-600">Offline</div>
               </div>
             </div>
@@ -285,7 +315,10 @@ export default function IoTDevicesPage() {
           {/* Device List */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {devices.map((device) => (
-              <Card key={device.deviceId} className="border-2 hover:border-blue-200 transition-colors">
+              <Card
+                key={device.deviceId}
+                className="border-2 hover:border-blue-200 transition-colors"
+              >
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg flex items-center space-x-2">
@@ -293,13 +326,17 @@ export default function IoTDevicesPage() {
                       <span>{device.deviceId}</span>
                     </CardTitle>
                     <div className="flex items-center space-x-2">
-                      {device.status === 'online' && (
+                      {device.status === "online" && (
                         <div className="relative flex h-3 w-3">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                           <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
                         </div>
                       )}
-                      <Badge className={`${getStatusColor(device.status)} text-white`}>
+                      <Badge
+                        className={`${getStatusColor(
+                          device.status
+                        )} text-white`}
+                      >
                         {device.status}
                       </Badge>
                     </div>
@@ -317,7 +354,10 @@ export default function IoTDevicesPage() {
                     </div>
                     <div className="flex items-center space-x-2">
                       <Wifi className="w-4 h-4 text-gray-500" />
-                      <span>{getSignalStrength(device.wifiSignal)} ({device.wifiSignal}dBm)</span>
+                      <span>
+                        {getSignalStrength(device.wifiSignal)} (
+                        {device.wifiSignal}dBm)
+                      </span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Clock className="w-4 h-4 text-gray-500" />
@@ -341,8 +381,12 @@ export default function IoTDevicesPage() {
                     <Label className="text-sm font-medium">Capabilities:</Label>
                     <div className="flex flex-wrap gap-2">
                       {device.capabilities.map((capability) => (
-                        <Badge key={capability} variant="secondary" className="text-xs">
-                          {capability.replace('_', ' ')}
+                        <Badge
+                          key={capability}
+                          variant="secondary"
+                          className="text-xs"
+                        >
+                          {capability.replace("_", " ")}
                         </Badge>
                       ))}
                     </div>
@@ -352,8 +396,13 @@ export default function IoTDevicesPage() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => diagnosticsMutation.mutate(device.deviceId)}
-                      disabled={device.status === 'offline' || diagnosticsMutation.isPending}
+                      onClick={() =>
+                        diagnosticsMutation.mutate(device.deviceId)
+                      }
+                      disabled={
+                        device.status === "offline" ||
+                        diagnosticsMutation.isPending
+                      }
                     >
                       <Wrench className="w-4 h-4 mr-2" />
                       Diagnostics
@@ -362,7 +411,7 @@ export default function IoTDevicesPage() {
                       size="sm"
                       variant="outline"
                       onClick={() => setSelectedDevice(device.deviceId)}
-                      disabled={device.status === 'offline'}
+                      disabled={device.status === "offline"}
                     >
                       <Settings className="w-4 h-4 mr-2" />
                       Configure
@@ -377,7 +426,9 @@ export default function IoTDevicesPage() {
             <Card>
               <CardContent className="p-12 text-center">
                 <Smartphone className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">No Devices Connected</h3>
+                <h3 className="text-lg font-medium mb-2">
+                  No Devices Connected
+                </h3>
                 <p className="text-gray-600 mb-4">
                   Connect your ESP32 devices to start monitoring attendance
                 </p>
@@ -400,12 +451,16 @@ export default function IoTDevicesPage() {
                   <Label htmlFor="config">Configuration (JSON)</Label>
                   <Textarea
                     id="config"
-                    placeholder={JSON.stringify({
-                      pirEnabled: true,
-                      rfidEnabled: true,
-                      location: "Lab 204",
-                      scanInterval: 1000
-                    }, null, 2)}
+                    placeholder={JSON.stringify(
+                      {
+                        pirEnabled: true,
+                        rfidEnabled: true,
+                        location: "Lab 204",
+                        scanInterval: 1000,
+                      },
+                      null,
+                      2
+                    )}
                     value={configMessage}
                     onChange={(e) => setConfigMessage(e.target.value)}
                     rows={8}
@@ -417,7 +472,9 @@ export default function IoTDevicesPage() {
                     onClick={() => handleConfigUpdate(selectedDevice)}
                     disabled={configMutation.isPending}
                   >
-                    {configMutation.isPending ? "Sending..." : "Send Configuration"}
+                    {configMutation.isPending
+                      ? "Sending..."
+                      : "Send Configuration"}
                   </Button>
                   <Button
                     variant="outline"
@@ -440,10 +497,14 @@ export default function IoTDevicesPage() {
                 <Label htmlFor="broadcast">Message (JSON)</Label>
                 <Textarea
                   id="broadcast"
-                  placeholder={JSON.stringify({
-                    type: "announcement",
-                    message: "System maintenance in 5 minutes"
-                  }, null, 2)}
+                  placeholder={JSON.stringify(
+                    {
+                      type: "announcement",
+                      message: "System maintenance in 5 minutes",
+                    },
+                    null,
+                    2
+                  )}
                   value={configMessage}
                   onChange={(e) => setConfigMessage(e.target.value)}
                   rows={4}
@@ -455,7 +516,9 @@ export default function IoTDevicesPage() {
                 disabled={broadcastMutation.isPending}
               >
                 <Zap className="w-4 h-4 mr-2" />
-                {broadcastMutation.isPending ? "Broadcasting..." : "Broadcast Message"}
+                {broadcastMutation.isPending
+                  ? "Broadcasting..."
+                  : "Broadcast Message"}
               </Button>
             </CardContent>
           </Card>
@@ -479,7 +542,8 @@ export default function IoTDevicesPage() {
               <Alert className="mb-4">
                 <Activity className="h-4 w-4" />
                 <AlertDescription>
-                  Monitor device connections, disconnections, and communication events in real-time. Events auto-refresh every 3 seconds.
+                  Monitor device connections, disconnections, and communication
+                  events in real-time. Events auto-refresh every 3 seconds.
                 </AlertDescription>
               </Alert>
 
@@ -488,38 +552,46 @@ export default function IoTDevicesPage() {
                   <div className="text-center py-8 text-muted-foreground">
                     <Activity className="w-12 h-12 mx-auto mb-3 opacity-50" />
                     <p>No connection events yet</p>
-                    <p className="text-sm">Events will appear here when devices connect or communicate</p>
+                    <p className="text-sm">
+                      Events will appear here when devices connect or
+                      communicate
+                    </p>
                   </div>
                 ) : (
                   connectionEvents.map((event) => (
                     <div
                       key={event.id}
                       className={`p-3 rounded-lg border transition-colors ${
-                        event.event === 'connected' || event.event === 'registered'
-                          ? 'bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800'
-                          : event.event === 'disconnected'
-                          ? 'bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800'
-                          : event.event === 'error'
-                          ? 'bg-orange-50 border-orange-200 dark:bg-orange-950 dark:border-orange-800'
-                          : 'bg-gray-50 border-gray-200 dark:bg-gray-900 dark:border-gray-700'
+                        event.event === "connected" ||
+                        event.event === "registered"
+                          ? "bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800"
+                          : event.event === "disconnected"
+                          ? "bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800"
+                          : event.event === "error"
+                          ? "bg-orange-50 border-orange-200 dark:bg-orange-950 dark:border-orange-800"
+                          : "bg-gray-50 border-gray-200 dark:bg-gray-900 dark:border-gray-700"
                       }`}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex items-start space-x-3 flex-1">
-                          <div className={`p-1 rounded-full ${
-                            event.event === 'connected' || event.event === 'registered'
-                              ? 'bg-green-500'
-                              : event.event === 'disconnected'
-                              ? 'bg-red-500'
-                              : event.event === 'error'
-                              ? 'bg-orange-500'
-                              : 'bg-blue-500'
-                          }`}>
-                            {event.event === 'connected' || event.event === 'registered' ? (
+                          <div
+                            className={`p-1 rounded-full ${
+                              event.event === "connected" ||
+                              event.event === "registered"
+                                ? "bg-green-500"
+                                : event.event === "disconnected"
+                                ? "bg-red-500"
+                                : event.event === "error"
+                                ? "bg-orange-500"
+                                : "bg-blue-500"
+                            }`}
+                          >
+                            {event.event === "connected" ||
+                            event.event === "registered" ? (
                               <CheckCircle className="w-3 h-3 text-white" />
-                            ) : event.event === 'disconnected' ? (
+                            ) : event.event === "disconnected" ? (
                               <WifiOff className="w-3 h-3 text-white" />
-                            ) : event.event === 'error' ? (
+                            ) : event.event === "error" ? (
                               <AlertCircle className="w-3 h-3 text-white" />
                             ) : (
                               <Activity className="w-3 h-3 text-white" />
@@ -527,12 +599,19 @@ export default function IoTDevicesPage() {
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center space-x-2">
-                              <span className="font-mono text-sm font-medium">{event.deviceId}</span>
-                              <Badge variant="outline" className="text-xs capitalize">
-                                {event.event.replace('_', ' ')}
+                              <span className="font-mono text-sm font-medium">
+                                {event.deviceId}
+                              </span>
+                              <Badge
+                                variant="outline"
+                                className="text-xs capitalize"
+                              >
+                                {event.event.replace("_", " ")}
                               </Badge>
                             </div>
-                            <p className="text-sm text-muted-foreground mt-1">{event.message}</p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {event.message}
+                            </p>
                           </div>
                         </div>
                         <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
@@ -557,24 +636,40 @@ export default function IoTDevicesPage() {
             <CardContent>
               <div className="space-y-4">
                 <div className="border-l-4 border-green-500 pl-4">
-                  <h4 className="font-medium text-green-700 dark:text-green-400">✓ Device Successfully Connected</h4>
+                  <h4 className="font-medium text-green-700 dark:text-green-400">
+                    ✓ Device Successfully Connected
+                  </h4>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Your ESP32 is online and communicating. Look for the green pulse indicator and "online" badge.
+                    Your ESP32 is online and communicating. Look for the green
+                    pulse indicator and "online" badge.
                   </p>
                 </div>
 
                 <div className="border-l-4 border-orange-500 pl-4">
-                  <h4 className="font-medium text-orange-700 dark:text-orange-400">⚠ Device Shows Offline</h4>
+                  <h4 className="font-medium text-orange-700 dark:text-orange-400">
+                    ⚠ Device Shows Offline
+                  </h4>
                   <ul className="text-sm text-muted-foreground mt-1 space-y-1 list-disc list-inside">
-                    <li>Check WiFi connection - ensure ESP32 is connected to your network</li>
-                    <li>Verify server URL in ESP32 code matches your deployment URL</li>
+                    <li>
+                      Check WiFi connection - ensure ESP32 is connected to your
+                      network
+                    </li>
+                    <li>
+                      Verify server URL in ESP32 code matches your deployment
+                      URL
+                    </li>
                     <li>Check if WebSocket path is set to "/iot"</li>
-                    <li>Ensure firewall/security settings allow WebSocket connections</li>
+                    <li>
+                      Ensure firewall/security settings allow WebSocket
+                      connections
+                    </li>
                   </ul>
                 </div>
 
                 <div className="border-l-4 border-red-500 pl-4">
-                  <h4 className="font-medium text-red-700 dark:text-red-400">✗ Device Not Appearing</h4>
+                  <h4 className="font-medium text-red-700 dark:text-red-400">
+                    ✗ Device Not Appearing
+                  </h4>
                   <ul className="text-sm text-muted-foreground mt-1 space-y-1 list-disc list-inside">
                     <li>Verify ESP32 firmware is uploaded and running</li>
                     <li>Check serial monitor for connection errors</li>
@@ -584,11 +679,22 @@ export default function IoTDevicesPage() {
                 </div>
 
                 <div className="border-l-4 border-blue-500 pl-4">
-                  <h4 className="font-medium text-blue-700 dark:text-blue-400">📡 Connection Health Indicators</h4>
+                  <h4 className="font-medium text-blue-700 dark:text-blue-400">
+                    📡 Connection Health Indicators
+                  </h4>
                   <ul className="text-sm text-muted-foreground mt-1 space-y-1 list-disc list-inside">
-                    <li><strong>Green Pulse:</strong> Device is actively connected and sending heartbeats</li>
-                    <li><strong>WiFi Signal:</strong> Excellent (-50dBm), Good (-60dBm), Fair (-70dBm), Poor (&lt;-70dBm)</li>
-                    <li><strong>Last Seen:</strong> Shows when device last communicated (should update every 30 seconds)</li>
+                    <li>
+                      <strong>Green Pulse:</strong> Device is actively connected
+                      and sending heartbeats
+                    </li>
+                    <li>
+                      <strong>WiFi Signal:</strong> Excellent (-50dBm), Good
+                      (-60dBm), Fair (-70dBm), Poor (&lt;-70dBm)
+                    </li>
+                    <li>
+                      <strong>Last Seen:</strong> Shows when device last
+                      communicated (should update every 30 seconds)
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -598,7 +704,7 @@ export default function IoTDevicesPage() {
 
         <TabsContent value="setup" className="space-y-6">
           {/* Hardware Setup Guide */}
-          {setupGuide && typeof setupGuide === 'object' && (
+          {setupGuide && typeof setupGuide === "object" && (
             <div className="space-y-6">
               <Card>
                 <CardHeader>
@@ -609,12 +715,19 @@ export default function IoTDevicesPage() {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2">
-                    {setupGuide?.hardwareRequirements && Array.isArray(setupGuide.hardwareRequirements) && setupGuide.hardwareRequirements.map((item: string, index: number) => (
-                      <li key={index} className="flex items-start space-x-2">
-                        <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm">{item}</span>
-                      </li>
-                    ))}
+                    {setupGuide?.hardwareRequirements &&
+                      Array.isArray(setupGuide.hardwareRequirements) &&
+                      setupGuide.hardwareRequirements.map(
+                        (item: string, index: number) => (
+                          <li
+                            key={index}
+                            className="flex items-start space-x-2"
+                          >
+                            <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                            <span className="text-sm">{item}</span>
+                          </li>
+                        )
+                      )}
                   </ul>
                 </CardContent>
               </Card>
@@ -628,23 +741,29 @@ export default function IoTDevicesPage() {
                     <div>
                       <h4 className="font-medium mb-2">RC522 RFID Module</h4>
                       <div className="bg-gray-50 p-4 rounded-lg font-mono text-sm space-y-1">
-                        {setupGuide?.wiring?.['RFID RC522'] && Object.entries(setupGuide.wiring['RFID RC522']).map(([pin, connection]) => (
-                          <div key={pin} className="flex justify-between">
-                            <span className="text-blue-600">{pin}:</span>
-                            <span>{connection}</span>
-                          </div>
-                        ))}
+                        {setupGuide?.wiring?.["RFID RC522"] &&
+                          Object.entries(setupGuide.wiring["RFID RC522"]).map(
+                            ([pin, connection]) => (
+                              <div key={pin} className="flex justify-between">
+                                <span className="text-blue-600">{pin}:</span>
+                                <span>{connection}</span>
+                              </div>
+                            )
+                          )}
                       </div>
                     </div>
                     <div>
                       <h4 className="font-medium mb-2">PIR Motion Sensor</h4>
                       <div className="bg-gray-50 p-4 rounded-lg font-mono text-sm space-y-1">
-                        {setupGuide?.wiring?.['PIR HC-SR501'] && Object.entries(setupGuide.wiring['PIR HC-SR501']).map(([pin, connection]) => (
-                          <div key={pin} className="flex justify-between">
-                            <span className="text-green-600">{pin}:</span>
-                            <span>{connection}</span>
-                          </div>
-                        ))}
+                        {setupGuide?.wiring?.["PIR HC-SR501"] &&
+                          Object.entries(setupGuide.wiring["PIR HC-SR501"]).map(
+                            ([pin, connection]) => (
+                              <div key={pin} className="flex justify-between">
+                                <span className="text-green-600">{pin}:</span>
+                                <span>{connection}</span>
+                              </div>
+                            )
+                          )}
                       </div>
                     </div>
                   </div>
@@ -657,14 +776,16 @@ export default function IoTDevicesPage() {
                 </CardHeader>
                 <CardContent>
                   <ol className="space-y-3">
-                    {setupGuide?.steps && Array.isArray(setupGuide.steps) && setupGuide.steps.map((step: string, index: number) => (
-                      <li key={index} className="flex items-start space-x-3">
-                        <span className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full text-xs flex items-center justify-center font-medium">
-                          {index + 1}
-                        </span>
-                        <span className="text-sm">{step}</span>
-                      </li>
-                    ))}
+                    {setupGuide?.steps &&
+                      Array.isArray(setupGuide.steps) &&
+                      setupGuide.steps.map((step: string, index: number) => (
+                        <li key={index} className="flex items-start space-x-3">
+                          <span className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full text-xs flex items-center justify-center font-medium">
+                            {index + 1}
+                          </span>
+                          <span className="text-sm">{step}</span>
+                        </li>
+                      ))}
                   </ol>
                 </CardContent>
               </Card>
@@ -672,8 +793,12 @@ export default function IoTDevicesPage() {
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Make sure to update the WiFi credentials and server URL in the Arduino code before uploading to your ESP32 device.
-                  Your server URL is: <code className="bg-gray-100 px-2 py-1 rounded">{setupGuide?.configuration?.serverHost || 'Not configured'}</code>
+                  Make sure to update the WiFi credentials and server URL in the
+                  Arduino code before uploading to your ESP32 device. Your
+                  server URL is:{" "}
+                  <code className="bg-gray-100 px-2 py-1 rounded">
+                    {setupGuide?.configuration?.serverHost || "Not configured"}
+                  </code>
                 </AlertDescription>
               </Alert>
             </div>
@@ -690,7 +815,8 @@ export default function IoTDevicesPage() {
               <Alert>
                 <Activity className="h-4 w-4" />
                 <AlertDescription>
-                  Use this interface to test IoT device communication and simulate various scenarios.
+                  Use this interface to test IoT device communication and
+                  simulate various scenarios.
                 </AlertDescription>
               </Alert>
 

@@ -196,7 +196,7 @@ void setupWebSocket() {
   webSocket.onEvent(webSocketEvent);
   
   // Set reconnect interval
-  webSocket.setReconnectInterval(5000);
+  webSocket.setReconnectInterval(5023);
   
   Serial.println("🔗 WebSocket client initialized");
 }

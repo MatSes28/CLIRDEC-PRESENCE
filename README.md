@@ -16,11 +16,13 @@ A comprehensive IoT-based attendance monitoring system for Central Luzon State U
 ## 🚀 Quick Start
 
 ### For Railway Deployment
+
 ```bash
 # See RAILWAY_SETUP.md for 5-minute deployment guide
 ```
 
 ### For Local Development
+
 ```bash
 # Install dependencies
 npm install
@@ -35,13 +37,14 @@ cp .env.example .env
 npm run dev
 ```
 
-Visit: **http://localhost:5000**
+Visit: **http://localhost:5023**
 
 ---
 
 ## 📋 Features
 
 ### 🎯 Core Functionality
+
 - ✅ **Real-time Attendance Tracking** - RFID + proximity sensor dual validation
 - ✅ **Ghost Attendance Prevention** - Physical presence verification (7-second validation window)
 - ✅ **ESP32 S3 Integration** - HC-SR04 ultrasonic sensors + RC522 RFID reader
@@ -51,6 +54,7 @@ Visit: **http://localhost:5000**
 - ✅ **Comprehensive Reporting** - PDF/CSV export with timestamps
 
 ### 🔧 Technical Features
+
 - ✅ **WebSocket Communication** - Real-time updates (web clients + IoT devices)
 - ✅ **Automatic Schedule Population** - Semester-based class session generation
 - ✅ **Discrepancy Detection** - Flags ghost taps and sensor-only detections
@@ -63,6 +67,7 @@ Visit: **http://localhost:5000**
 ## 🏗️ Tech Stack
 
 ### Frontend
+
 - **React 18** - Modern UI library
 - **TypeScript** - Type-safe development
 - **Vite** - Lightning-fast build tool
@@ -72,6 +77,7 @@ Visit: **http://localhost:5000**
 - **Wouter** - Lightweight routing
 
 ### Backend
+
 - **Node.js + Express** - Server framework
 - **TypeScript** - Type-safe backend
 - **PostgreSQL** - Relational database
@@ -80,6 +86,7 @@ Visit: **http://localhost:5000**
 - **Brevo** - Transactional email service
 
 ### DevOps
+
 - **Railway** - Cloud deployment platform
 - **Drizzle Kit** - Database migrations
 - **ESBuild** - Fast bundling
@@ -127,6 +134,7 @@ clirdec-presence/
 ## 🔑 Environment Variables
 
 ### Required Variables
+
 ```env
 # Database (Auto-configured on Railway)
 DATABASE_URL=postgresql://user:password@host:port/database
@@ -166,11 +174,13 @@ npm run check        # TypeScript type check
 ### Automated Deployment via GitHub (Recommended)
 
 **🚀 GitHub Actions CI/CD included!**
+
 - ✅ Auto-deploy on push to `main`
 - ✅ Type checking on every PR
 - ✅ Build verification before deployment
 
 ### Quick Deploy (5 minutes)
+
 1. Push code to GitHub
 2. Create Railway project from repo
 3. Add PostgreSQL database
@@ -184,6 +194,7 @@ npm run check        # TypeScript type check
 ## 💻 VS Code Setup
 
 ### Recommended Extensions (Auto-suggested)
+
 - Prettier (formatter)
 - ESLint (linting)
 - Tailwind CSS IntelliSense
@@ -198,12 +209,14 @@ npm run check        # TypeScript type check
 ## 🔌 IoT Device Integration
 
 ### ESP32 S3 Hardware
+
 - **RFID Reader**: RC522 (3.3V - CRITICAL!)
 - **Entry Sensor**: HC-SR04 ultrasonic (GPIO 12/13, 5V)
 - **Exit Sensor**: HC-SR04 ultrasonic (GPIO 25/26, 5V)
 - **Connectivity**: WiFi WebSocket (`/iot` endpoint)
 
 ### Modes
+
 1. **USB Registration Mode** - Type RFID UIDs into web forms
 2. **WiFi Attendance Mode** - Real-time monitoring with motion detection
 
@@ -214,6 +227,7 @@ npm run check        # TypeScript type check
 ## 📊 Database Schema
 
 ### Core Entities
+
 - **Users/Professors** - Faculty and admin accounts
 - **Students** - Student records with RFID UIDs
 - **Classrooms** - Lab rooms and facilities
@@ -224,6 +238,7 @@ npm run check        # TypeScript type check
 - **Computers** - Lab computer tracking
 
 ### Key Features
+
 - Automatic schedule population (semester-based)
 - Ghost attendance flagging
 - Dual validation (RFID + proximity sensor)
@@ -245,6 +260,7 @@ npm run check        # TypeScript type check
 ## 📈 System Features
 
 ### For Administrators
+
 - User management (create/delete faculty)
 - System-wide reports and analytics
 - IoT device monitoring
@@ -252,6 +268,7 @@ npm run check        # TypeScript type check
 - System health dashboard
 
 ### For Faculty
+
 - Student management (isolated to their classes)
 - Attendance monitoring and tracking
 - Computer assignment
@@ -260,6 +277,7 @@ npm run check        # TypeScript type check
 - Parent notification system
 
 ### For Students (via RFID)
+
 - Automatic attendance logging
 - Entry/exit tracking
 - Computer assignment
@@ -270,6 +288,7 @@ npm run check        # TypeScript type check
 ## 🧪 Testing
 
 ### Manual Testing Checklist
+
 - [ ] Login/logout flow
 - [ ] Student CRUD operations
 - [ ] RFID attendance logging
@@ -287,6 +306,7 @@ npm run check        # TypeScript type check
 ### Common Issues
 
 #### Build Errors
+
 ```bash
 # Clear cache and rebuild
 rm -rf node_modules dist
@@ -295,6 +315,7 @@ npm run build
 ```
 
 #### Database Connection
+
 ```bash
 # Verify DATABASE_URL in .env
 # Test connection manually
@@ -302,12 +323,14 @@ npm run db:push
 ```
 
 #### Email Not Sending
+
 - Check Brevo API key validity
 - Verify FROM_EMAIL is verified in Brevo
 - Check email queue via API
 
 #### WebSocket Issues
-- Ensure port 5000 is available
+
+- Ensure port 5023 is available
 - Check WebSocket endpoint: `/ws` (web), `/iot` (devices)
 - Verify Railway supports WebSocket (it does!)
 
@@ -326,6 +349,7 @@ npm run db:push
 ## 🤝 Contributing
 
 ### Development Workflow
+
 1. Fork the repository
 2. Create feature branch: `git checkout -b feature/amazing-feature`
 3. Commit changes: `git commit -m 'Add amazing feature'`
@@ -333,6 +357,7 @@ npm run db:push
 5. Open Pull Request
 
 ### Code Standards
+
 - TypeScript strict mode
 - Prettier formatting (auto on save)
 - ESLint compliance

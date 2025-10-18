@@ -1,5 +1,5 @@
-import { WebSocketServer, WebSocket } from 'ws';
-import { storage } from '../storage';
+import { WebSocket, WebSocketServer } from "ws";
+import { storage } from "../storage";
 
 interface DeviceInfo {
   deviceId: string;
@@ -7,7 +7,7 @@ interface DeviceInfo {
   ipAddress: string;
   macAddress: string;
   lastSeen: Date;
-  status: 'online' | 'offline';
+  status: "online" | "offline";
   capabilities: string[];
   classroomId?: string;
 }
@@ -15,7 +15,7 @@ interface DeviceInfo {
 interface ConnectionEvent {
   id: string;
   deviceId: string;
-  event: 'connected' | 'disconnected' | 'registered' | 'heartbeat' | 'error';
+  event: "connected" | "disconnected" | "registered" | "heartbeat" | "error";
   timestamp: Date;
   message: string;
 }
@@ -30,61 +30,78 @@ export class IoTDeviceManager {
 
   // Initialize IoT WebSocket server for ESP32 devices
   init(httpServer: any): void {
-    this.iotWss = new WebSocketServer({ 
-      server: httpServer, 
-      path: '/iot' 
+    this.iotWss = new WebSocketServer({
+      server: httpServer,
+      path: "/iot",
     });
 
-    this.iotWss.on('connection', (ws: WebSocket, req) => {
+    this.iotWss.on("connection", (ws: WebSocket, req) => {
       const tempId = `temp-${Date.now()}`;
-      if (process.env.NODE_ENV === 'development') {
-        console.log('📱 New IoT device attempting connection');
+      if (process.env.NODE_ENV === "development") {
+        console.log("📱 New IoT device attempting connection");
       }
-      
-      this.logConnectionEvent(tempId, 'connected', 'New device connection established');
-      
+
+      this.logConnectionEvent(
+        tempId,
+        "connected",
+        "New device connection established"
+      );
+
       // Send immediate welcome message to test connection
-      ws.send(JSON.stringify({
-        type: 'welcome',
-        message: 'Connected to CLIRDEC server',
-        timestamp: new Date().toISOString()
-      }));
-      
-      ws.on('message', async (message) => {
-        console.log('📨 Raw message received:', message.toString());
+      ws.send(
+        JSON.stringify({
+          type: "welcome",
+          message: "Connected to CLIRDEC server",
+          timestamp: new Date().toISOString(),
+        })
+      );
+
+      ws.on("message", async (message) => {
+        console.log("📨 Raw message received:", message.toString());
         try {
           const data = JSON.parse(message.toString());
-          console.log('📨 IoT message received:', data.type, 'from device:', data.deviceId);
+          console.log(
+            "📨 IoT message received:",
+            data.type,
+            "from device:",
+            data.deviceId
+          );
           await this.handleIoTMessage(ws, data);
         } catch (error) {
-          console.error('❌ Invalid IoT message:', error, message.toString());
-          ws.send(JSON.stringify({ 
-            type: 'error', 
-            message: 'Invalid message format' 
-          }));
+          console.error("❌ Invalid IoT message:", error, message.toString());
+          ws.send(
+            JSON.stringify({
+              type: "error",
+              message: "Invalid message format",
+            })
+          );
         }
       });
 
-      ws.on('close', () => {
+      ws.on("close", () => {
         // Find and remove disconnected device
         this.connectedDevices.forEach((socket, deviceId) => {
           if (socket === ws) {
-            if (process.env.NODE_ENV === 'development') {
+            if (process.env.NODE_ENV === "development") {
               console.log(`📱 IoT device ${deviceId} disconnected`);
             }
-            this.logConnectionEvent(deviceId, 'disconnected', 'Device connection closed');
+            this.logConnectionEvent(
+              deviceId,
+              "disconnected",
+              "Device connection closed"
+            );
             this.connectedDevices.delete(deviceId);
             this.deviceInfo.delete(deviceId);
           }
         });
       });
 
-      ws.on('error', (error) => {
-        console.error('📱 IoT device connection error:', error);
+      ws.on("error", (error) => {
+        console.error("📱 IoT device connection error:", error);
       });
     });
 
-    console.log('🌐 IoT WebSocket server started on /iot path');
+    console.log("🌐 IoT WebSocket server started on /iot path");
   }
 
   // Handle messages from ESP32 devices
@@ -92,57 +109,66 @@ export class IoTDeviceManager {
     try {
       console.log(`📨 Handling IoT message type: ${data.type}`);
       switch (data.type) {
-        case 'device_register':
+        case "device_register":
           await this.handleDeviceRegistration(ws, data);
           break;
-        
-        case 'rfid_scan':
+
+        case "rfid_scan":
           await this.handleRFIDScan(data);
           break;
-        
-        case 'presence_detected':
+
+        case "presence_detected":
           await this.handlePresenceDetection(data);
           break;
-        
-        case 'device_status':
+
+        case "device_status":
           await this.handleDeviceStatus(data);
           break;
-        
-        case 'heartbeat':
+
+        case "heartbeat":
           await this.handleHeartbeat(ws, data);
           break;
-        
+
         default:
           console.log(`⚠️ Unknown message type: ${data.type}`);
-          ws.send(JSON.stringify({
-            type: 'error',
-            message: `Unknown message type: ${data.type}`
-          }));
+          ws.send(
+            JSON.stringify({
+              type: "error",
+              message: `Unknown message type: ${data.type}`,
+            })
+          );
       }
     } catch (error) {
-      console.error('❌ Error handling IoT message:', error);
-      ws.send(JSON.stringify({
-        type: 'error',
-        message: 'Server error processing message'
-      }));
+      console.error("❌ Error handling IoT message:", error);
+      ws.send(
+        JSON.stringify({
+          type: "error",
+          message: "Server error processing message",
+        })
+      );
     }
   }
 
   // Register new ESP32 device
-  private async handleDeviceRegistration(ws: WebSocket, data: any): Promise<void> {
+  private async handleDeviceRegistration(
+    ws: WebSocket,
+    data: any
+  ): Promise<void> {
     try {
-      console.log('📱 Processing device registration:', data);
+      console.log("📱 Processing device registration:", data);
       const deviceId = data.deviceId;
-      
+
       if (!deviceId) {
-        console.error('❌ No device ID provided in registration');
-        ws.send(JSON.stringify({
-          type: 'registration_error',
-          message: 'Device ID is required'
-        }));
+        console.error("❌ No device ID provided in registration");
+        ws.send(
+          JSON.stringify({
+            type: "registration_error",
+            message: "Device ID is required",
+          })
+        );
         return;
       }
-      
+
       // Default to first available classroom if not specified
       let classroomId = data.classroomId;
       if (!classroomId) {
@@ -155,13 +181,13 @@ export class IoTDeviceManager {
       // Store device information
       const deviceInfo: DeviceInfo = {
         deviceId,
-        deviceType: data.deviceType || 'esp32',
-        ipAddress: data.ipAddress || 'unknown',
-        macAddress: data.macAddress || 'unknown',
+        deviceType: data.deviceType || "esp32",
+        ipAddress: data.ipAddress || "unknown",
+        macAddress: data.macAddress || "unknown",
         lastSeen: new Date(),
-        status: 'online',
+        status: "online",
         capabilities: data.capabilities || [],
-        classroomId: classroomId
+        classroomId: classroomId,
       };
 
       // Store device connection
@@ -169,7 +195,7 @@ export class IoTDeviceManager {
       this.deviceInfo.set(deviceId, deviceInfo);
 
       // Get classroom info (optional, don't fail if not found)
-      let classroomName = 'Unassigned';
+      let classroomName = "Unassigned";
       if (classroomId) {
         const classroom = await storage.getClassroom(classroomId);
         if (classroom) {
@@ -179,64 +205,72 @@ export class IoTDeviceManager {
 
       // Send successful registration response
       const registrationResponse = {
-        type: 'registration_success',
+        type: "registration_success",
         deviceId,
         classroomId: classroomId,
         classroomName: classroomName,
         serverTime: new Date().toISOString(),
         settings: {
-          scanTimeout: 5000,
+          scanTimeout: 5023,
           presenceTimeout: 30000,
-          heartbeatInterval: 30000
-        }
+          heartbeatInterval: 30000,
+        },
       };
 
       ws.send(JSON.stringify(registrationResponse));
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`✅ IoT device registered: ${deviceId} (${data.currentMode || 'wifi'} mode) in ${classroomName}`);
+      if (process.env.NODE_ENV === "development") {
+        console.log(
+          `✅ IoT device registered: ${deviceId} (${
+            data.currentMode || "wifi"
+          } mode) in ${classroomName}`
+        );
       }
 
       // Log connection event
       this.logConnectionEvent(
-        deviceId, 
-        'registered', 
-        `Device registered successfully - ${data.deviceType || 'esp32'} in ${classroomName}`
+        deviceId,
+        "registered",
+        `Device registered successfully - ${
+          data.deviceType || "esp32"
+        } in ${classroomName}`
       );
 
       // Notify web clients about new device
       this.broadcastToWebClients({
-        type: 'device_connected',
-        device: deviceInfo
+        type: "device_connected",
+        device: deviceInfo,
       });
-
     } catch (error) {
-      console.error('❌ Error during device registration:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      ws.send(JSON.stringify({
-        type: 'registration_error',
-        message: 'Registration failed: ' + errorMessage
-      }));
+      console.error("❌ Error during device registration:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      ws.send(
+        JSON.stringify({
+          type: "registration_error",
+          message: "Registration failed: " + errorMessage,
+        })
+      );
     }
   }
 
   // Handle RFID card scan from ESP32
   private async handleRFIDScan(data: any): Promise<void> {
     const { deviceId, rfidCardId, timestamp } = data;
-    
+
     console.log(`📱 RFID scan from device ${deviceId}: ${rfidCardId}`);
 
     try {
       // Find student by RFID card
       const students = await storage.getStudents();
-      const student = students.find(s => s.rfidCardId === rfidCardId);
-      
+      const student = students.find((s) => s.rfidCardId === rfidCardId);
+
       if (!student) {
         console.log(`⚠️ Unknown RFID card: ${rfidCardId}`);
         this.sendToDevice(deviceId, {
-          type: 'scan_result',
-          status: 'unknown_card',
+          type: "scan_result",
+          status: "unknown_card",
           cardId: rfidCardId,
-          message: 'Unknown RFID card'
+          message: "Unknown RFID card",
         });
         return;
       }
@@ -251,65 +285,76 @@ export class IoTDeviceManager {
       // Check for active class session in the device's classroom
       const activeSessions = await storage.getActiveClassSessions();
       // Get the first active session (for now, we'll enhance this to match classroom later)
-      const classroomSession = activeSessions.length > 0 ? activeSessions[0] : null;
+      const classroomSession =
+        activeSessions.length > 0 ? activeSessions[0] : null;
 
       if (!classroomSession) {
         console.log(`⚠️ No active session`);
         this.sendToDevice(deviceId, {
-          type: 'scan_result',
-          status: 'no_session',
+          type: "scan_result",
+          status: "no_session",
           cardId: rfidCardId,
           studentName: `${student.firstName} ${student.lastName}`,
-          message: 'No active class session'
+          message: "No active class session",
         });
         return;
       }
 
       // Check if student is already marked for this session
-      const sessionAttendance = await storage.getAttendanceBySession(classroomSession.id!);
-      const existingAttendance = sessionAttendance.find(a => a.studentId === student.id);
+      const sessionAttendance = await storage.getAttendanceBySession(
+        classroomSession.id!
+      );
+      const existingAttendance = sessionAttendance.find(
+        (a) => a.studentId === student.id
+      );
 
-      let attendanceStatus = 'checked_in';
+      let attendanceStatus = "checked_in";
       if (existingAttendance) {
-        attendanceStatus = 'already_present';
-        console.log(`Student ${student.firstName} ${student.lastName} already marked present`);
+        attendanceStatus = "already_present";
+        console.log(
+          `Student ${student.firstName} ${student.lastName} already marked present`
+        );
       } else {
         // Create attendance record
         await storage.createAttendance({
           studentId: student.id,
           sessionId: classroomSession.id,
-          status: 'present',
-          checkInTime: new Date()
+          status: "present",
+          checkInTime: new Date(),
         });
-        
-        console.log(`✅ Attendance recorded: ${student.firstName} ${student.lastName}`);
-        
+
+        console.log(
+          `✅ Attendance recorded: ${student.firstName} ${student.lastName}`
+        );
+
         // Notify web clients
         this.broadcastToWebClients({
-          type: 'attendance_update',
+          type: "attendance_update",
           student: student,
           session: classroomSession,
-          status: 'present',
-          timestamp: new Date()
+          status: "present",
+          timestamp: new Date(),
         });
       }
 
       // Send response to device
       this.sendToDevice(deviceId, {
-        type: 'scan_result',
+        type: "scan_result",
         status: attendanceStatus,
         cardId: rfidCardId,
         studentName: `${student.firstName} ${student.lastName}`,
         studentId: student.studentId,
-        message: attendanceStatus === 'checked_in' ? 'Attendance recorded' : 'Already present'
+        message:
+          attendanceStatus === "checked_in"
+            ? "Attendance recorded"
+            : "Already present",
       });
-
     } catch (error) {
-      console.error('❌ Error processing RFID scan:', error);
+      console.error("❌ Error processing RFID scan:", error);
       this.sendToDevice(deviceId, {
-        type: 'scan_result',
-        status: 'error',
-        message: 'System error, please try again'
+        type: "scan_result",
+        status: "error",
+        message: "System error, please try again",
       });
     }
   }
@@ -324,14 +369,18 @@ export class IoTDeviceManager {
 
   // Handle presence detection from ESP32
   private async handlePresenceDetection(data: any): Promise<void> {
-    console.log(`👁️ Presence ${data.presenceDetected ? 'detected' : 'cleared'} from device ${data.deviceId}`);
-    
+    console.log(
+      `👁️ Presence ${
+        data.presenceDetected ? "detected" : "cleared"
+      } from device ${data.deviceId}`
+    );
+
     // Store presence data and notify web clients
     this.broadcastToWebClients({
-      type: 'presence_update',
+      type: "presence_update",
       deviceId: data.deviceId,
       presenceDetected: data.presenceDetected,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
   }
 
@@ -340,7 +389,7 @@ export class IoTDeviceManager {
     const deviceInfo = this.deviceInfo.get(data.deviceId);
     if (deviceInfo) {
       deviceInfo.lastSeen = new Date();
-      deviceInfo.status = 'online';
+      deviceInfo.status = "online";
     }
   }
 
@@ -349,14 +398,16 @@ export class IoTDeviceManager {
     const deviceInfo = this.deviceInfo.get(data.deviceId);
     if (deviceInfo) {
       deviceInfo.lastSeen = new Date();
-      deviceInfo.status = 'online';
+      deviceInfo.status = "online";
     }
-    
+
     // Optional: send heartbeat response
-    ws.send(JSON.stringify({
-      type: 'heartbeat_ack',
-      timestamp: new Date().toISOString()
-    }));
+    ws.send(
+      JSON.stringify({
+        type: "heartbeat_ack",
+        timestamp: new Date().toISOString(),
+      })
+    );
   }
 
   // Broadcast message to all web clients
@@ -381,10 +432,12 @@ export class IoTDeviceManager {
   public updateDeviceConfig(deviceId: string, config: any): boolean {
     const ws = this.connectedDevices.get(deviceId);
     if (ws && ws.readyState === ws.OPEN) {
-      ws.send(JSON.stringify({
-        type: 'config_update',
-        config: config
-      }));
+      ws.send(
+        JSON.stringify({
+          type: "config_update",
+          config: config,
+        })
+      );
       return true;
     }
     return false;
@@ -394,9 +447,11 @@ export class IoTDeviceManager {
   public requestDiagnostics(deviceId: string): boolean {
     const ws = this.connectedDevices.get(deviceId);
     if (ws && ws.readyState === ws.OPEN) {
-      ws.send(JSON.stringify({
-        type: 'request_diagnostics'
-      }));
+      ws.send(
+        JSON.stringify({
+          type: "request_diagnostics",
+        })
+      );
       return true;
     }
     return false;
@@ -414,41 +469,45 @@ export class IoTDeviceManager {
   // Get device count
   public getDeviceStats(): { total: number; online: number; offline: number } {
     const devices = this.getConnectedDevices();
-    const online = devices.filter(d => d.status === 'online').length;
+    const online = devices.filter((d) => d.status === "online").length;
     return {
       total: devices.length,
       online,
-      offline: devices.length - online
+      offline: devices.length - online,
     };
   }
 
   // Log connection event
-  private logConnectionEvent(deviceId: string, event: ConnectionEvent['event'], message: string): void {
+  private logConnectionEvent(
+    deviceId: string,
+    event: ConnectionEvent["event"],
+    message: string
+  ): void {
     const connectionEvent: ConnectionEvent = {
       id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       deviceId,
       event,
       timestamp: new Date(),
-      message
+      message,
     };
 
     this.connectionEvents.unshift(connectionEvent);
-    
+
     // Keep only last maxEvents
     if (this.connectionEvents.length > this.maxEvents) {
       this.connectionEvents = this.connectionEvents.slice(0, this.maxEvents);
     }
 
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === "development") {
       console.log(`📝 Connection Event: [${event}] ${deviceId} - ${message}`);
     }
   }
 
   // Get connection events
   public getConnectionEvents(): ConnectionEvent[] {
-    return this.connectionEvents.map(event => ({
+    return this.connectionEvents.map((event) => ({
       ...event,
-      timestamp: event.timestamp.toISOString() as any
+      timestamp: event.timestamp.toISOString() as any,
     }));
   }
 }

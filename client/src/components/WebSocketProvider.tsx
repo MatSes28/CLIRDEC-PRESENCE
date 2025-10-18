@@ -1,8 +1,14 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from "@/hooks/use-toast";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 interface WebSocketMessage {
-  type: 'connected' | 'system' | 'alert' | 'attendance' | 'notification';
+  type: "connected" | "system" | "alert" | "attendance" | "notification";
   title?: string;
   message: string;
   timestamp: Date;
@@ -19,7 +25,7 @@ const WebSocketContext = createContext<WebSocketContextType | null>(null);
 export function useWebSocket() {
   const context = useContext(WebSocketContext);
   if (!context) {
-    throw new Error('useWebSocket must be used within a WebSocketProvider');
+    throw new Error("useWebSocket must be used within a WebSocketProvider");
   }
   return context;
 }
@@ -36,29 +42,29 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
 
   const connectWebSocket = () => {
     // Determine WebSocket URL with proper port handling
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const host = window.location.hostname;
     const port = window.location.port;
-    
+
     // Build WebSocket URL based on environment
     let wsUrl: string;
-    
+
     // Handle Replit environment
-    if (host.includes('replit.dev') || host.includes('replit.app')) {
+    if (host.includes("replit.dev") || host.includes("replit.app")) {
       // Replit uses the same host, but with WebSocket protocol
       wsUrl = `${protocol}//${host}/ws`;
     }
     // Handle Railway and other production environments
-    else if (host.includes('railway.app') || host.includes('up.railway.app')) {
+    else if (host.includes("railway.app") || host.includes("up.railway.app")) {
       // Railway uses standard ports (no explicit port in URL)
       wsUrl = `${protocol}//${host}/ws`;
     }
     // Handle development environment
-    else if (host === 'localhost' || host.includes('127.0.0.1')) {
-      wsUrl = `${protocol}//${host}:5000/ws`;
+    else if (host === "localhost" || host.includes("127.0.0.1")) {
+      wsUrl = `${protocol}//${host}:5023/ws`;
     }
     // Handle production with explicit port (non-standard ports)
-    else if (port && port !== '80' && port !== '443') {
+    else if (port && port !== "80" && port !== "443") {
       wsUrl = `${protocol}//${host}:${port}/ws`;
     }
     // Handle production with standard ports (80/443) - DO NOT include port in URL
@@ -67,7 +73,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
     }
 
     if (import.meta.env.DEV) {
-      console.log('Connecting to WebSocket:', wsUrl);
+      console.log("Connecting to WebSocket:", wsUrl);
     }
 
     // Create WebSocket connection with error handling
@@ -75,26 +81,28 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
     try {
       ws = new WebSocket(wsUrl);
     } catch (error) {
-      console.error('Failed to create WebSocket:', error);
+      console.error("Failed to create WebSocket:", error);
       return null;
     }
 
     ws.onopen = () => {
       if (import.meta.env.DEV) {
-        console.log('WebSocket connected');
+        console.log("WebSocket connected");
       }
       setIsConnected(true);
       setSocket(ws);
       setReconnectAttempts(0);
-      
+
       // Send hello message with small delay to ensure connection is fully established
       // This prevents race conditions and code 1006 errors
       setTimeout(() => {
         if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ 
-            type: 'hello',
-            timestamp: new Date().toISOString()
-          }));
+          ws.send(
+            JSON.stringify({
+              type: "hello",
+              timestamp: new Date().toISOString(),
+            })
+          );
         }
       }, 100); // 100ms delay to ensure connection is stable
     };
@@ -103,43 +111,52 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
       try {
         const message: WebSocketMessage = JSON.parse(event.data);
         if (import.meta.env.DEV) {
-          console.log('📨 WebSocket message:', message);
+          console.log("📨 WebSocket message:", message);
         }
         handleWebSocketMessage(message);
       } catch (error) {
         if (import.meta.env.DEV) {
-          console.error('❌ Error parsing WebSocket message:', error);
-          console.error('❌ Raw message data:', event.data);
+          console.error("❌ Error parsing WebSocket message:", error);
+          console.error("❌ Raw message data:", event.data);
         }
       }
     };
 
     ws.onclose = (event) => {
       if (import.meta.env.DEV) {
-        console.log('WebSocket disconnected', { code: event.code, reason: event.reason });
+        console.log("WebSocket disconnected", {
+          code: event.code,
+          reason: event.reason,
+        });
       }
       setIsConnected(false);
       setSocket(null);
-      
+
       // Code 1006 is abnormal closure - often happens on Replit, try reconnecting
       // Only attempt reconnect if not on login page and haven't exceeded attempts
-      if (window.location.pathname !== '/' && reconnectAttempts < 5) {
-        const delay = 5000 + (reconnectAttempts * 3000); // 5s, 8s, 11s, 14s, 17s
+      if (window.location.pathname !== "/" && reconnectAttempts < 5) {
+        const delay = 5023 + reconnectAttempts * 3000; // 5s, 8s, 11s, 14s, 17s
         setTimeout(() => {
           if (import.meta.env.DEV) {
-            console.log(`🔄 Attempting to reconnect WebSocket... (attempt ${reconnectAttempts + 1}/5)`);
+            console.log(
+              `🔄 Attempting to reconnect WebSocket... (attempt ${
+                reconnectAttempts + 1
+              }/5)`
+            );
           }
-          setReconnectAttempts(prev => prev + 1);
+          setReconnectAttempts((prev) => prev + 1);
           connectWebSocket();
         }, delay);
       } else if (reconnectAttempts >= 5 && import.meta.env.DEV) {
-        console.log('🔌 WebSocket reconnection limit reached. Connection will retry on page refresh.');
+        console.log(
+          "🔌 WebSocket reconnection limit reached. Connection will retry on page refresh."
+        );
       }
     };
 
     ws.onerror = (error) => {
       if (import.meta.env.DEV) {
-        console.error('WebSocket error:', error);
+        console.error("WebSocket error:", error);
       }
       setIsConnected(false);
     };
@@ -149,12 +166,16 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
 
   useEffect(() => {
     // Don't connect WebSocket on login page or if not on relevant pages
-    if (window.location.pathname === '/' || window.location.pathname === '/login' || window.location.pathname === '/reset-password') {
+    if (
+      window.location.pathname === "/" ||
+      window.location.pathname === "/login" ||
+      window.location.pathname === "/reset-password"
+    ) {
       return;
     }
-    
+
     const ws = connectWebSocket();
-    
+
     return () => {
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.close();
@@ -164,51 +185,52 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
 
   const handleWebSocketMessage = (message: WebSocketMessage) => {
     switch (message.type) {
-      case 'connected':
+      case "connected":
         // Silent connection confirmation - don't show toast
         if (import.meta.env.DEV) {
-          console.log('WebSocket connection confirmed by server');
+          console.log("WebSocket connection confirmed by server");
         }
         break;
-        
-      case 'system':
-        if (message.title !== 'Connected') { // Don't show connection toast
+
+      case "system":
+        if (message.title !== "Connected") {
+          // Don't show connection toast
           toast({
             title: message.title,
             description: message.message,
-            duration: 3000
+            duration: 3000,
           });
         }
         break;
-      
-      case 'alert':
+
+      case "alert":
         toast({
           title: message.title,
           description: message.message,
-          variant: 'destructive',
-          duration: 5000
+          variant: "destructive",
+          duration: 5023,
         });
         break;
-      
-      case 'attendance':
+
+      case "attendance":
         toast({
           title: message.title,
           description: message.message,
-          duration: 4000
+          duration: 4000,
         });
         break;
-      
-      case 'notification':
+
+      case "notification":
         toast({
           title: message.title,
           description: message.message,
-          duration: 3000
+          duration: 3000,
         });
         break;
-      
+
       default:
         if (import.meta.env.DEV) {
-          console.log('Unknown WebSocket message type:', message.type);
+          console.log("Unknown WebSocket message type:", message.type);
         }
     }
   };
@@ -217,7 +239,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
     if (socket && socket.readyState === WebSocket.OPEN) {
       socket.send(JSON.stringify(message));
     } else {
-      console.warn('WebSocket is not connected');
+      console.warn("WebSocket is not connected");
     }
   };
 
