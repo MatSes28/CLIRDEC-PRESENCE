@@ -93,9 +93,9 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Use PORT from environment variable (Railway, etc.) or default to 5023 (Replit)
+  // Use PORT from environment variable (Railway, etc.) or default to 5000 (Replit)
   // This serves both the API and the client.
-  const port = parseInt(process.env.PORT || "5023", 10);
+  const port = parseInt(process.env.PORT || "5000", 10);
   server.listen(
     {
       port,
