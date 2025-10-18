@@ -13,6 +13,7 @@ import { Route, Switch } from "wouter";
 import { queryClient } from "./lib/queryClient";
 
 const AuthPage = lazy(() => import("@/pages/AuthPage"));
+const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const EnhancedDashboard = lazy(() => import("@/pages/EnhancedDashboard"));
 const LiveAttendance = lazy(() => import("@/pages/LiveAttendance"));
@@ -67,6 +68,7 @@ function Router() {
         <Suspense fallback={<LoadingFallback />}>
           <Route path="/" component={AuthPage} />
           <Route path="/login" component={AuthPage} />
+          <Route path="/forgot-password" component={ForgotPassword} />
           <Route path="/reset-password" component={ResetPassword} />
           <Route component={AuthPage} />
         </Suspense>
