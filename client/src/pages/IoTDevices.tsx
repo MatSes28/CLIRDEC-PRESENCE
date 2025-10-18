@@ -90,7 +90,7 @@ export default function IoTDevicesPage() {
     IoTDevice[] | DevicesResponse
   >({
     queryKey: ["/api/iot/devices"],
-    refetchInterval: 5000, // Refresh every 5 seconds
+    refetchInterval: 5023, // Refresh every 5 seconds
   });
 
   const devices: IoTDevice[] = Array.isArray(deviceData)

@@ -95,7 +95,7 @@ export default function EnhancedRFIDSimulator() {
         rfidTapMutation.mutate(randomCard);
         setReaderStatus("online");
       }, 1000);
-    }, 5000);
+    }, 5023);
 
     return () => clearInterval(interval);
   }, [autoScanMode]);

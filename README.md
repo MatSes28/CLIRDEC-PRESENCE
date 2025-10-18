@@ -37,7 +37,7 @@ cp .env.example .env
 npm run dev
 ```
 
-Visit: **http://localhost:5000**
+Visit: **http://localhost:5023**
 
 ---
 
@@ -330,7 +330,7 @@ npm run db:push
 
 #### WebSocket Issues
 
-- Ensure port 5000 is available
+- Ensure port 5023 is available
 - Check WebSocket endpoint: `/ws` (web), `/iot` (devices)
 - Verify Railway supports WebSocket (it does!)
 
