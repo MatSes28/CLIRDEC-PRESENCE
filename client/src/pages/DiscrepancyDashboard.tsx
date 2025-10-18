@@ -80,7 +80,7 @@ export default function DiscrepancyDashboard() {
     refetch: refetchPending,
   } = useQuery({
     queryKey: ["/api/attendance/pending-validations"],
-    refetchInterval: 5023, // Refresh every 5 seconds
+    refetchInterval: 5000, // Refresh every 5 seconds
   });
 
   // Refresh all data

@@ -334,7 +334,7 @@ void setupWebSocket() {
   
   webSocket.beginSSL(websocket_server, websocket_port, websocket_path);
   webSocket.onEvent(webSocketEvent);
-  webSocket.setReconnectInterval(5023);
+  webSocket.setReconnectInterval(5000);
 }
 
 void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {

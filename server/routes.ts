@@ -96,11 +96,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Input validation
       if (!email || !password || !firstName || !lastName) {
-        return res
-          .status(400)
-          .json({
-            message: "Email, password, first name, and last name are required",
-          });
+        return res.status(400).json({
+          message: "Email, password, first name, and last name are required",
+        });
       }
 
       // Validate password strength (ISO 27001 compliance)
@@ -297,7 +295,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`[FORGOT_PASSWORD] Token inserted successfully`);
 
         // Get reset link - works for both Replit and Railway
-        let FRONTEND_URL = "http://localhost:5023"; // default
+        let FRONTEND_URL = "http://localhost:5000"; // default
 
         if (process.env.REPLIT_DOMAINS) {
           // Replit environment
@@ -463,11 +461,9 @@ Central Luzon State University
 
       // Check if token has expired
       if (new Date() > new Date(resetToken.expiresAt)) {
-        return res
-          .status(400)
-          .json({
-            message: "Reset token has expired. Please request a new one.",
-          });
+        return res.status(400).json({
+          message: "Reset token has expired. Please request a new one.",
+        });
       }
 
       // Hash new password
@@ -713,11 +709,9 @@ Central Luzon State University
           (s) => s.rfidCardId === studentData.rfidCardId && s.isActive
         );
         if (duplicateRfid) {
-          return res
-            .status(400)
-            .json({
-              message: "RFID card is already assigned to another student",
-            });
+          return res.status(400).json({
+            message: "RFID card is already assigned to another student",
+          });
         }
       }
 
@@ -795,11 +789,9 @@ Central Luzon State University
             s.rfidCardId === updateData.rfidCardId && s.id !== id && s.isActive
         );
         if (duplicateRfid) {
-          return res
-            .status(400)
-            .json({
-              message: "RFID card is already assigned to another student",
-            });
+          return res.status(400).json({
+            message: "RFID card is already assigned to another student",
+          });
         }
       }
 
@@ -1426,11 +1418,9 @@ Central Luzon State University
         );
 
         if (duplicate) {
-          return res
-            .status(400)
-            .json({
-              message: `Computer "${computerData.name}" already exists in this classroom`,
-            });
+          return res.status(400).json({
+            message: `Computer "${computerData.name}" already exists in this classroom`,
+          });
         }
       }
 
@@ -2889,12 +2879,9 @@ Central Luzon State University
         const { sessionId, studentId, detectionType, deviceId } = req.body;
 
         if (!sessionId || !studentId || !detectionType) {
-          return res
-            .status(400)
-            .json({
-              message:
-                "Session ID, student ID, and detection type are required",
-            });
+          return res.status(400).json({
+            message: "Session ID, student ID, and detection type are required",
+          });
         }
 
         const result =
@@ -3038,8 +3025,8 @@ Central Luzon State University
 
       // In development, allow localhost
       if (process.env.NODE_ENV === "development") {
-        allowedOrigins.push("http://localhost:5023");
-        allowedOrigins.push("https://localhost:5023");
+        allowedOrigins.push("http://localhost:5000");
+        allowedOrigins.push("https://localhost:5000");
 
         // Only allow specific Replit domain patterns (not any arbitrary origin)
         if (
@@ -3155,7 +3142,7 @@ Central Luzon State University
       } else {
         if (pingInterval) clearInterval(pingInterval);
       }
-    }, 45023); // Ping every 45 seconds (longer interval for stability)
+    }, 45000); // Ping every 45 seconds (longer interval for stability)
 
     // Handle pong responses
     ws.on("pong", () => {

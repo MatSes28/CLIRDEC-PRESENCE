@@ -221,15 +221,15 @@ export function getHardwareStatus(): HardwareStatus {
     proximitySensors: {
       sensor1: {
         status: "online",
-        lastReading: new Date(now.getTime() - Math.random() * 5023),
+        lastReading: new Date(now.getTime() - Math.random() * 5000),
       },
       sensor2: {
         status: "online",
-        lastReading: new Date(now.getTime() - Math.random() * 5023),
+        lastReading: new Date(now.getTime() - Math.random() * 5000),
       },
       sensor3: {
         status: Math.random() > 0.8 ? "error" : "online",
-        lastReading: new Date(now.getTime() - Math.random() * 15023),
+        lastReading: new Date(now.getTime() - Math.random() * 15000),
       },
     },
     networkConnection: {

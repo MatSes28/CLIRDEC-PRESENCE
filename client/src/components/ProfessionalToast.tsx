@@ -21,7 +21,7 @@ export function ProfessionalToast({
   type,
   title,
   message,
-  duration = 5023,
+  duration = 5000,
   onClose,
   action,
 }: ProfessionalToastProps) {

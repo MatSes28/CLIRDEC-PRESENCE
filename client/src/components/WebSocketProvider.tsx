@@ -61,7 +61,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
     }
     // Handle development environment
     else if (host === "localhost" || host.includes("127.0.0.1")) {
-      wsUrl = `${protocol}//${host}:5023/ws`;
+      wsUrl = `${protocol}//${host}:5000/ws`;
     }
     // Handle production with explicit port (non-standard ports)
     else if (port && port !== "80" && port !== "443") {
@@ -135,7 +135,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
       // Code 1006 is abnormal closure - often happens on Replit, try reconnecting
       // Only attempt reconnect if not on login page and haven't exceeded attempts
       if (window.location.pathname !== "/" && reconnectAttempts < 5) {
-        const delay = 5023 + reconnectAttempts * 3000; // 5s, 8s, 11s, 14s, 17s
+        const delay = 5000 + reconnectAttempts * 3000; // 5s, 8s, 11s, 14s, 17s
         setTimeout(() => {
           if (import.meta.env.DEV) {
             console.log(
@@ -208,7 +208,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
           title: message.title,
           description: message.message,
           variant: "destructive",
-          duration: 5023,
+          duration: 5000,
         });
         break;
 

@@ -211,7 +211,7 @@ export class IoTDeviceManager {
         classroomName: classroomName,
         serverTime: new Date().toISOString(),
         settings: {
-          scanTimeout: 5023,
+          scanTimeout: 5000,
           presenceTimeout: 30000,
           heartbeatInterval: 30000,
         },

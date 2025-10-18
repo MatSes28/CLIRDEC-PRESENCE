@@ -28,7 +28,7 @@ export default function RealTimeNotifications() {
     }
     // For local development
     else if (host === "localhost" || host.includes("127.0.0.1")) {
-      wsUrl = `${protocol}//${host}:5023/ws`;
+      wsUrl = `${protocol}//${host}:5000/ws`;
     }
     // Default fallback
     else {
@@ -99,7 +99,7 @@ export default function RealTimeNotifications() {
         </div>
       ) as any,
       description: notification.message,
-      duration: 5023,
+      duration: 5000,
     });
 
     // Play a subtle notification sound

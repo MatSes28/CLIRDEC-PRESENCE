@@ -93,9 +93,9 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Use PORT from environment variable (Railway, etc.) or default to 5023 (Replit)
+  // Use PORT from environment variable (Railway, etc.) or default to 5000 (Replit)
   // This serves both the API and the client.
-  const port = parseInt(process.env.PORT || "5023", 10);
+  const port = parseInt(process.env.PORT || "5000", 10);
   server.listen(
     {
       port,
@@ -137,7 +137,7 @@ app.use((req, res, next) => {
         } catch (error) {
           console.error("Failed to start attendance monitoring:", error);
         }
-      }, 5023); // Reduced delay
+      }, 5000); // Reduced delay
 
       // Emergency memory cleanup - every 2 minutes during high usage
       setInterval(() => {
