@@ -1,12 +1,18 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, XCircle, Loader2, KeyRound } from "lucide-react";
-import { useLocation } from "wouter";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import { PasswordInput } from "@/components/PasswordInput";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { apiRequest } from "@/lib/queryClient";
+import { useMutation } from "@tanstack/react-query";
+import { CheckCircle, KeyRound, Loader2, XCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useLocation } from "wouter";
 
 export default function ResetPassword() {
   const [, setLocation] = useLocation();
@@ -15,15 +21,17 @@ export default function ResetPassword() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-  
+
   // Password match validation
-  const passwordsMatch = confirmPassword.length > 0 && newPassword === confirmPassword;
-  const passwordsDontMatch = confirmPassword.length > 0 && newPassword !== confirmPassword;
+  const passwordsMatch =
+    confirmPassword.length > 0 && newPassword === confirmPassword;
+  const passwordsDontMatch =
+    confirmPassword.length > 0 && newPassword !== confirmPassword;
 
   useEffect(() => {
     // Get token from URL
     const params = new URLSearchParams(window.location.search);
-    const tokenParam = params.get('token');
+    const tokenParam = params.get("token");
     if (tokenParam) {
       setToken(tokenParam);
     } else {
@@ -39,17 +47,22 @@ export default function ResetPassword() {
     onSuccess: () => {
       setSuccess(true);
       setTimeout(() => {
-        setLocation("/login");
+        setLocation("/");
       }, 3000);
     },
     onError: (error: any) => {
       // Handle specific error cases
-      const errorMessage = error.message || "Failed to reset password. Please try again.";
-      
+      const errorMessage =
+        error.message || "Failed to reset password. Please try again.";
+
       if (errorMessage.includes("expired")) {
-        setError("This reset link has expired. Please request a new password reset.");
+        setError(
+          "This reset link has expired. Please request a new password reset."
+        );
       } else if (errorMessage.includes("Invalid or expired")) {
-        setError("Invalid or expired reset link. Please request a new password reset.");
+        setError(
+          "Invalid or expired reset link. Please request a new password reset."
+        );
       } else {
         setError(errorMessage);
       }
@@ -82,9 +95,12 @@ export default function ResetPassword() {
               <div className="flex justify-center">
                 <CheckCircle className="h-16 w-16 text-green-500" />
               </div>
-              <h2 className="text-2xl font-bold text-green-700">Password Reset Successful!</h2>
+              <h2 className="text-2xl font-bold text-green-700">
+                Password Reset Successful!
+              </h2>
               <p className="text-muted-foreground">
-                Your password has been updated successfully. Redirecting to login...
+                Your password has been updated successfully. Redirecting to
+                login...
               </p>
             </div>
           </CardContent>
@@ -103,9 +119,7 @@ export default function ResetPassword() {
             </div>
           </div>
           <CardTitle className="text-2xl">Reset Your Password</CardTitle>
-          <CardDescription>
-            Enter your new password below
-          </CardDescription>
+          <CardDescription>Enter your new password below</CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
@@ -138,7 +152,7 @@ export default function ResetPassword() {
                 testId="input-confirm-password"
                 autoComplete="new-password"
               />
-              
+
               {/* Password Match Indicator */}
               {confirmPassword.length > 0 && (
                 <div className="flex items-center gap-2 text-sm">
@@ -176,8 +190,9 @@ export default function ResetPassword() {
               <Button
                 type="button"
                 variant="link"
-                onClick={() => setLocation("/login")}
+                onClick={() => setLocation("/")}
                 className="text-sm"
+                data-testid="link-back-to-login"
               >
                 Back to Login
               </Button>
