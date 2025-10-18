@@ -64,11 +64,19 @@ function Router() {
 
   return (
     <Switch>
+      {/* Public routes - always accessible */}
+      <Route path="/reset-password">
+        {() => (
+          <Suspense fallback={<LoadingFallback />}>
+            <ResetPassword />
+          </Suspense>
+        )}
+      </Route>
+
       {!isAuthenticated ? (
         <Suspense fallback={<LoadingFallback />}>
           <Route path="/" component={AuthPage} />
           <Route path="/forgot-password" component={ForgotPassword} />
-          <Route path="/reset-password" component={ResetPassword} />
           <Route component={AuthPage} />
         </Suspense>
       ) : (
