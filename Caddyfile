@@ -1,0 +1,57 @@
+# Caddyfile for CLIRDEC Presence System
+
+# Main domain (adjust as needed)
+{$DOMAIN:localhost} {
+    # Enable automatic HTTPS
+    tls internal
+
+    # Proxy API requests to the Node.js server
+    handle /api/* {
+        uri strip_prefix /api
+        reverse_proxy localhost:5023
+    }
+
+    # Proxy WebSocket connections
+    handle /ws {
+        reverse_proxy localhost:5023
+    }
+
+    handle /iot {
+        reverse_proxy localhost:5023
+    }
+
+    # Serve static files from the client build
+    handle /* {
+        try_files {path} {path}/ /index.html
+        root * /app/client/dist
+        file_server
+    }
+
+    # Security headers
+    header {
+        # Enable HSTS
+        Strict-Transport-Security max-age=31536000;
+        # Prevent clickjacking
+        X-Frame-Options DENY
+        # Prevent MIME type sniffing
+        X-Content-Type-Options nosniff
+        # Enable XSS filtering
+        X-XSS-Protection "1; mode=block"
+        # Referrer policy
+        Referrer-Policy strict-origin-when-cross-origin
+    }
+
+    # Gzip compression
+    encode gzip
+
+    # Logging
+    log {
+        output file /var/log/caddy/access.log
+        format json
+    }
+}
+
+# Health check endpoint
+{$DOMAIN:localhost}/health {
+    respond "OK" 200
+}

@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["nodejs_20"]
+nixPkgs = ["nodejs_20", "caddy"]
 
 [phases.install]
 cmds = [
@@ -8,8 +8,9 @@ cmds = [
 
 [phases.build]
 cmds = [
-  "npm run build"
+  "npm run build",
+  "caddy fmt --overwrite Caddyfile"
 ]
 
 [start]
-cmd = "NODE_ENV=production node dist/index.js"
+cmd = "caddy run --config Caddyfile"
