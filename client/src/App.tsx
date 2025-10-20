@@ -62,6 +62,15 @@ function Router() {
     );
   }
 
+  // Public routes that should be accessible regardless of auth status
+  if (window.location.pathname === '/reset-password') {
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <ResetPassword />
+      </Suspense>
+    );
+  }
+
   return (
     <Switch>
       {!isAuthenticated ? (
