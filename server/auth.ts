@@ -127,16 +127,17 @@ export async function setupAuth(app: Express) {
   });
 
   app.post("/api/login", async (req: any, res, next) => {
-    const { username: email } = req.body;
+    const { email, username } = req.body;
+    const loginEmail = email || username; // Support both email and username fields
     const ipAddress = req.ip || req.headers['x-forwarded-for'] || 'unknown';
     const userAgent = req.headers['user-agent'] || 'unknown';
 
     try {
       // Check rate limit (ISO 27001: max 5 failed attempts in 5 minutes)
-      const isRateLimited = await auditService.checkRateLimit(email, ipAddress);
+      const isRateLimited = await auditService.checkRateLimit(loginEmail, ipAddress);
       if (isRateLimited) {
         await auditService.logLoginAttempt({
-          email,
+          email: loginEmail,
           ipAddress,
           success: false,
           userAgent,
@@ -155,7 +156,7 @@ export async function setupAuth(app: Express) {
 
         // Log login attempt
         await auditService.logLoginAttempt({
-          email,
+          email: loginEmail,
           ipAddress,
           success,
           userAgent,
