@@ -470,9 +470,8 @@ Central Luzon State University
           });
       }
 
-      // Hash new password
-      const bcrypt = await import("bcrypt");
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      // Hash new password using the same hashPassword function as registration/login
+      const hashedPassword = await hashPassword(newPassword);
 
       // Update user's password
       await db
