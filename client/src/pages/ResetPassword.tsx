@@ -75,14 +75,14 @@ export default function ResetPassword() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
               <div className="flex justify-center">
-                <CheckCircle className="h-16 w-16 text-green-500" />
+                <CheckCircle className="h-16 w-16 text-green-500 dark:text-green-400" />
               </div>
-              <h2 className="text-2xl font-bold text-green-700">Password Reset Successful!</h2>
+              <h2 className="text-2xl font-bold text-green-700 dark:text-green-400">Password Reset Successful!</h2>
               <p className="text-muted-foreground">
                 Your password has been updated successfully. Redirecting to login...
               </p>
@@ -94,11 +94,11 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="bg-primary/10 p-3 rounded-full">
+            <div className="bg-primary/10 dark:bg-primary/20 p-3 rounded-full">
               <KeyRound className="h-8 w-8 text-primary" />
             </div>
           </div>
@@ -143,12 +143,12 @@ export default function ResetPassword() {
               {confirmPassword.length > 0 && (
                 <div className="flex items-center gap-2 text-sm">
                   {passwordsMatch ? (
-                    <div className="flex items-center gap-1 text-green-600">
+                    <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
                       <CheckCircle className="h-4 w-4" />
                       <span>Passwords match</span>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-1 text-red-600">
+                    <div className="flex items-center gap-1 text-red-600 dark:text-red-400">
                       <XCircle className="h-4 w-4" />
                       <span>Passwords do not match</span>
                     </div>
