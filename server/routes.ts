@@ -276,9 +276,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const resetToken = crypto.randomBytes(32).toString("hex");
         console.log(`[FORGOT_PASSWORD] Generated reset token`);
 
-        // Token expires in 1 hour
+        // Token expires in 30 minutes (ISO 27001 security best practice)
         const expiresAt = new Date();
-        expiresAt.setHours(expiresAt.getHours() + 1);
+        expiresAt.setMinutes(expiresAt.getMinutes() + 30);
 
         // Store token in database
         if (!db) {
@@ -334,7 +334,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               </div>
               <p>Or copy and paste this link into your browser:</p>
               <p style="background-color: #f0f0f0; padding: 10px; word-break: break-all; font-family: monospace; font-size: 12px;">${resetLink}</p>
-              <p><strong>⏰ This link will expire in 1 hour for security reasons.</strong></p>
+              <p><strong>⏰ This link will expire in 30 minutes and can only be used once for security reasons.</strong></p>
               <p>If you didn't request this password reset, please ignore this email or contact IT support if you're concerned about your account security.</p>
               <p>Best regards,<br>CLIRDEC: PRESENCE System<br>Department of Information Technology<br>Central Luzon State University</p>
             </div>
@@ -351,7 +351,7 @@ We received a request to reset your password for your CLIRDEC: PRESENCE account.
 To reset your password, click the link below or copy it into your browser:
 ${resetLink}
 
-⏰ This link will expire in 1 hour for security reasons.
+⏰ This link will expire in 30 minutes and can only be used once for security reasons.
 
 If you didn't request this password reset, please ignore this email or contact IT support if you're concerned about your account security.
 
@@ -456,17 +456,17 @@ Central Luzon State University
       if (!tokenRecord || tokenRecord.length === 0) {
         return res
           .status(400)
-          .json({ message: "Invalid or expired reset token" });
+          .json({ message: "Invalid reset token. This link may have already been used or has expired. Please request a new password reset." });
       }
 
       const resetToken = tokenRecord[0];
 
-      // Check if token has expired
+      // Check if token has expired (30 minutes)
       if (new Date() > new Date(resetToken.expiresAt)) {
         return res
           .status(400)
           .json({
-            message: "Reset token has expired. Please request a new one.",
+            message: "Reset token has expired (valid for 30 minutes only). Please request a new password reset.",
           });
       }
 
