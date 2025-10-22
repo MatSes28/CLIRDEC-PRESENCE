@@ -22,14 +22,9 @@ import {
   Settings,
   LogOut,
   Zap,
-  Shield,
   Activity,
   ArrowRight,
-  Smartphone,
-  TestTube,
-  BookOpen,
-  FileCheck,
-  HelpCircle
+  BookOpen
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -71,49 +66,13 @@ export default function Sidebar() {
       path: "/computers", 
       icon: Monitor, 
       label: "Lab Computers",
-      description: "Computer allocation"
-    },
-    { 
-      path: "/monitoring", 
-      icon: Shield, 
-      label: "Monitor",
-      description: "System oversight"
-    },
-    { 
-      path: "/iot", 
-      icon: Smartphone, 
-      label: "IoT Devices",
-      description: "ESP32 hardware"
-    },
-    { 
-      path: "/health", 
-      icon: Activity, 
-      label: "System Health",
-      description: "Performance monitor"
-    },
-    { 
-      path: "/testing", 
-      icon: TestTube, 
-      label: "System Testing",
-      description: "Test & simulate"
+      description: "Computer usage"
     },
     { 
       path: "/reports", 
       icon: BarChart3, 
       label: "Reports",
-      description: "Data insights"
-    },
-    { 
-      path: "/compliance", 
-      icon: FileCheck, 
-      label: "Compliance",
-      description: "ISO 27001/27701"
-    },
-    { 
-      path: "/help", 
-      icon: HelpCircle, 
-      label: "Help Center",
-      description: "Guides & FAQs"
+      description: "Attendance reports"
     },
     { 
       path: "/settings", 
@@ -126,20 +85,16 @@ export default function Sidebar() {
   // Filter navigation items based on user role
   const filteredNavigationItems = user?.role === 'admin' 
     ? [
-        ...navigationItems.slice(0, -3), // All items except compliance, help, and settings
+        ...navigationItems.slice(0, -1), // All items except settings
         { 
           path: "/users", 
           icon: Users, 
           label: "User Management",
           description: "Faculty & admin accounts"
         },
-        navigationItems[navigationItems.length - 3], // Compliance
-        navigationItems[navigationItems.length - 2], // Help
         navigationItems[navigationItems.length - 1] // Settings last
       ]
-    : navigationItems.filter(item => 
-        item.path !== "/monitoring" && item.path !== "/compliance" // Faculty can't access monitoring or compliance (but can access Help)
-      );
+    : navigationItems; // Faculty sees all basic navigation items
 
   const isActive = (path: string) => {
     if (path === "/") {

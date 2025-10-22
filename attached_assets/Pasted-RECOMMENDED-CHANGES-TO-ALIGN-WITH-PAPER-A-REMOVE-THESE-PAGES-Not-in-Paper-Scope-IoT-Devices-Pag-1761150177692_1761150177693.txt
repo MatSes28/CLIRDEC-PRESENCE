@@ -1,0 +1,169 @@
+RECOMMENDED CHANGES TO ALIGN WITH PAPER
+A. REMOVE THESE PAGES (Not in Paper Scope)
+IoT Devices Page (/iot) - Remove entirely
+System Health Page (/health) - Remove entirely
+System Testing Page (/testing) - Remove entirely
+Discrepancy Dashboard Page (/discrepancies) - Remove entirely
+Compliance Page (/compliance) - Remove entirely
+Help Center Page (/help) - Remove entirely
+Attendance Monitoring Page (/monitoring) - Remove entirely
+Keep only these pages:
+
+Dashboard
+Live Attendance (for real-time tracking)
+Schedule
+Students
+Class Roster
+Lab Computers
+Reports
+User Management (Admin only)
+Settings
+B. SIMPLIFY USER ROLE CAPABILITIES
+Faculty should ONLY:
+
+✅ View attendance logs
+✅ View reports for their classes
+✅ View their schedules
+❌ Remove: Create/edit schedules (Admin only in paper)
+❌ Remove: Create/manage students (Admin only in paper)
+❌ Remove: Send notifications manually (should be automatic only)
+❌ Remove: Start/end sessions manually (should be automatic based on schedule)
+Admin should ONLY:
+
+✅ Manage users (faculty accounts)
+✅ Configure system settings
+✅ Manage schedules
+✅ Manage students
+✅ Manage classrooms
+✅ View all reports
+❌ Remove: Advanced compliance features (not in paper)
+❌ Remove: IoT device management UI (should be background only)
+C. COMPUTER TRACKING - ADD ACTUAL USAGE MONITORING
+Current: Only tracks computer assignment (which student assigned to which computer)
+
+Paper requires: Track computer usage in real-time
+
+Add:
+
+Login time when student starts using computer
+Logout time when student stops
+Session duration calculation
+Active/inactive status indicator
+Display in Lab Computers page showing who's currently using which computer
+D. EMAIL NOTIFICATIONS - FOCUS ON PARENTS
+Current: Generic notification system
+
+Paper requires: Specifically send to parents/guardians for absences
+
+Change:
+
+Make parent email mandatory in student records
+Auto-send absence alerts to parent email (not student email)
+Notification should say: "Your child [Student Name] was marked absent from [Subject] on [Date]"
+Remove manual notification sending from faculty
+E. SIMPLIFY SESSION MANAGEMENT
+Current: Faculty can manually start/end sessions
+
+Paper says: "Automatic schedule-based session activation"
+
+Change:
+
+Remove manual "Start Session" button from faculty interface
+Sessions should auto-activate based on schedule (schedule says 8:00 AM, session starts at 8:00 AM automatically)
+Faculty should only be able to VIEW sessions, not control them
+Keep tap-in/tap-out automated based on schedule times
+F. ADD DEPLOYMENT SCOPE RESTRICTIONS
+Add to system:
+
+Limit to 4 classrooms only (2 lecture, 2 lab rooms)
+Add "CLIRDEC Building" identifier to classroom records
+Filter dashboard to show only CLIRDEC classrooms
+Add restriction: "System deployed only for BSIT students from DIT under College of Engineering"
+G. REMOVE ADVANCED FEATURES NOT IN PAPER
+Remove these features:
+
+Audit Logs - Not mentioned in paper
+GDPR Compliance features - Not mentioned in paper
+Rate limiting login attempts - Not mentioned in paper
+Password reset tokens - Not mentioned in paper
+Consent logs - Not mentioned in paper
+Data retention policies - Not mentioned in paper
+WebSocket real-time updates - Paper doesn't specify this technology
+Role-based complex filtering - Keep it simple: Admin sees all, Faculty sees theirs
+H. SIMPLIFY SIDEBAR NAVIGATION
+Remove from sidebar:
+
+Monitor
+IoT Devices
+System Health
+System Testing
+Discrepancy Dashboard
+Compliance
+Help Center
+Keep only:
+
+Dashboard
+Live Attendance
+Schedule (read-only for faculty, editable for admin)
+Students (read-only for faculty, editable for admin)
+Class Roster
+Lab Computers
+Reports
+User Management (Admin only)
+Settings
+I. ADJUST COMPUTER PAGE FUNCTIONALITY
+Current: Basic assignment tracking
+
+Paper needs: Real-time laboratory computer usage monitoring
+
+Add to Computers page:
+
+Show which computer is currently in use (green = occupied, gray = available)
+Show student currently logged in to each computer
+Show how long they've been using it
+Only show computers in laboratory classrooms (not lecture rooms)
+J. SIMPLIFY REPORTS PAGE
+Current: Complex reporting with many filters
+
+Paper says: "Automated downloadable attendance reports with timestamps and entry/exit status"
+
+Keep only:
+
+Date range selector
+Subject filter
+Download CSV button
+Simple table showing: Student Name, Student ID, Check-in Time, Check-out Time, Status (Present/Late/Absent)
+Remove:
+
+Complex charts and graphs
+Trend analysis
+Multiple export formats
+Advanced analytics
+K. ENROLLMENT MANAGEMENT
+Paper doesn't mention: Student enrollment system
+
+Current system has: Complex enrollment tables
+
+Suggestion: Keep it simple - students belong to subjects directly, no separate enrollment tracking needed (or make it admin-only background feature, not a separate page)
+
+L. SETTINGS PAGE - SIMPLIFY
+Admin should configure:
+
+Late threshold (default: 15 minutes as per paper)
+Absent threshold (default: 60% of class time as per paper)
+Email notification settings
+System-wide semester/academic year
+Faculty should configure:
+
+Personal profile only
+Password change only
+SUMMARY OF CHANGES
+REMOVE: 7 extra pages, advanced compliance features, manual session controls, complex analytics
+
+SIMPLIFY: User permissions, navigation, reports, settings
+
+ADD: Computer usage tracking, parent-focused email notifications, CLIRDEC deployment restrictions
+
+KEEP: Core attendance monitoring with RFID + proximity validation, dashboard, basic reporting, role-based access
+
+This will make your system perfectly aligned with your paper's scope without over-engineering features that aren't documented in your research.

@@ -24,13 +24,6 @@ const Computers = lazy(() => import("@/pages/Computers"));
 const Reports = lazy(() => import("@/pages/Reports"));
 const Settings = lazy(() => import("@/pages/Settings"));
 const UserManagement = lazy(() => import("@/pages/UserManagement"));
-const AttendanceMonitoring = lazy(() => import("@/pages/AttendanceMonitoring"));
-const IoTDevicesPage = lazy(() => import("@/pages/IoTDevices"));
-const SystemHealthPage = lazy(() => import("@/pages/SystemHealth"));
-const SystemTestingPage = lazy(() => import("@/pages/SystemTesting"));
-const DiscrepancyDashboard = lazy(() => import("@/pages/DiscrepancyDashboard"));
-const Compliance = lazy(() => import("@/pages/Compliance"));
-const HelpCenter = lazy(() => import("@/pages/HelpCenter"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 const LoadingFallback = () => (
@@ -101,19 +94,6 @@ function Router() {
                     <Route path="/computers" component={Computers} />
                     <Route path="/reports" component={Reports} />
                     <Route path="/users" component={UserManagement} />
-                    <Route
-                      path="/monitoring"
-                      component={AttendanceMonitoring}
-                    />
-                    <Route path="/iot" component={IoTDevicesPage} />
-                    <Route
-                      path="/discrepancies"
-                      component={DiscrepancyDashboard}
-                    />
-                    <Route path="/health" component={SystemHealthPage} />
-                    <Route path="/testing" component={SystemTestingPage} />
-                    <Route path="/compliance" component={Compliance} />
-                    <Route path="/help" component={HelpCenter} />
                     <Route path="/settings" component={Settings} />
                     <Route component={NotFound} />
                   </Switch>
@@ -136,16 +116,6 @@ function Router() {
                   <Route path="/computers" component={Computers} />
                   <Route path="/reports" component={Reports} />
                   <Route path="/users" component={UserManagement} />
-                  <Route path="/monitoring" component={AttendanceMonitoring} />
-                  <Route path="/iot" component={IoTDevicesPage} />
-                  <Route
-                    path="/discrepancies"
-                    component={DiscrepancyDashboard}
-                  />
-                  <Route path="/health" component={SystemHealthPage} />
-                  <Route path="/testing" component={SystemTestingPage} />
-                  <Route path="/compliance" component={Compliance} />
-                  <Route path="/help" component={HelpCenter} />
                   <Route path="/settings" component={Settings} />
                   <Route component={NotFound} />
                 </Switch>
