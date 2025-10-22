@@ -36,10 +36,6 @@ localPort = 34389
 externalPort = 6000
 
 [[ports]]
-localPort = 35593
-externalPort = 5000
-
-[[ports]]
 localPort = 36095
 externalPort = 5173
 
@@ -98,3 +94,4 @@ waitForPort = 5023
 
 [agent]
 integrations = ["javascript_log_in_with_replit:1.0.0"]
+expertMode = true
