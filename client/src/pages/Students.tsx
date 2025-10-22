@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
 import { GenderAvatar } from "@/components/GenderAvatar";
 import { EmptyState } from "@/components/EmptyState";
 import { LoadingState } from "@/components/LoadingState";
@@ -38,10 +37,6 @@ export default function Students() {
   const [contactType, setContactType] = useState<'contact' | 'alert'>('contact');
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
-  
-  // Faculty can only view students, not add or edit
-  const isReadOnly = user?.role === 'faculty';
 
   const { data: students, isLoading } = useQuery({
     queryKey: ['/api/students'],
@@ -137,27 +132,19 @@ export default function Students() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
         <div>
-          <h1 className="text-xl sm:text-2xl font-semibold">
-            {isReadOnly ? 'Students' : 'Student Management'}
-          </h1>
-          <p className="text-sm text-muted-foreground hidden sm:block">
-            {isReadOnly 
-              ? 'View student information and contact parents' 
-              : 'Manage student information and parent contact details'}
-          </p>
+          <h1 className="text-xl sm:text-2xl font-semibold">Student Management</h1>
+          <p className="text-sm text-muted-foreground hidden sm:block">Manage student information and parent contact details</p>
         </div>
-        {!isReadOnly && (
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-            <Button variant="outline" size="sm" className="w-full sm:w-auto" data-testid="button-import-students">
-              <FolderInput className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="text-xs sm:text-sm">Import</span>
-            </Button>
-            <Button onClick={() => setAddModalOpen(true)} data-tour="add-student" size="sm" className="w-full sm:w-auto" data-testid="button-add-student">
-              <UserPlus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="text-xs sm:text-sm">Add Student</span>
-            </Button>
-          </div>
-        )}
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+          <Button variant="outline" size="sm" className="w-full sm:w-auto">
+            <FolderInput className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="text-xs sm:text-sm">Import</span>
+          </Button>
+          <Button onClick={() => setAddModalOpen(true)} data-tour="add-student" size="sm" className="w-full sm:w-auto">
+            <UserPlus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="text-xs sm:text-sm">Add Student</span>
+          </Button>
+        </div>
       </div>
 
       {/* Search and Filters */}
@@ -255,15 +242,13 @@ export default function Students() {
                     </Badge>
                   </div>
                   <div className="mt-3 flex gap-1">
-                    <Button size="sm" variant="outline" onClick={() => handleViewStudent(student)} className="flex-1 text-xs h-8" data-testid={`button-view-student-${student.id}`}>
+                    <Button size="sm" variant="outline" onClick={() => handleViewStudent(student)} className="flex-1 text-xs h-8">
                       <Eye className="h-3 w-3 mr-1" /> View
                     </Button>
-                    {!isReadOnly && (
-                      <Button size="sm" variant="outline" onClick={() => handleEditStudent(student)} className="flex-1 text-xs h-8" data-testid={`button-edit-student-${student.id}`}>
-                        <Edit className="h-3 w-3 mr-1" /> Edit
-                      </Button>
-                    )}
-                    <Button size="sm" variant="outline" onClick={() => handleContactStudent(student)} className="flex-1 text-xs h-8" data-testid={`button-contact-student-${student.id}`}>
+                    <Button size="sm" variant="outline" onClick={() => handleEditStudent(student)} className="flex-1 text-xs h-8">
+                      <Edit className="h-3 w-3 mr-1" /> Edit
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => handleContactStudent(student)} className="flex-1 text-xs h-8">
                       <Mail className="h-3 w-3 mr-1" /> Contact
                     </Button>
                   </div>
@@ -331,23 +316,19 @@ export default function Students() {
                     </div>
                     
                     <div className="flex space-x-2">
-                      {!isReadOnly && (
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleEditStudent(student)}
-                          data-testid={`button-edit-student-desktop-${student.id}`}
-                        >
-                          <Edit className="mr-1 h-3 w-3" />
-                          Edit
-                        </Button>
-                      )}
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleEditStudent(student)}
+                      >
+                        <Edit className="mr-1 h-3 w-3" />
+                        Edit
+                      </Button>
                       <Button 
                         size="sm" 
                         variant="outline"
                         onClick={() => handleContactStudent(student)}
                         data-tour="student-actions"
-                        data-testid={`button-contact-student-desktop-${student.id}`}
                       >
                         <Mail className="mr-1 h-3 w-3" />
                         Contact
@@ -356,7 +337,6 @@ export default function Students() {
                         size="sm" 
                         variant="outline"
                         onClick={() => handleViewStudent(student)}
-                        data-testid={`button-view-student-desktop-${student.id}`}
                       >
                         <Eye className="mr-1 h-3 w-3" />
                         View

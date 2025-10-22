@@ -6,7 +6,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { 
   Download, 
+  FileText, 
   Calendar,
+  CalendarDays,
+  BarChart3,
   FileSpreadsheet,
   Filter
 } from "lucide-react";
@@ -55,9 +58,34 @@ export default function Reports() {
     }
   };
 
-  const exportCSV = async () => {
+  const generateReport = async () => {
     try {
-      const response = await fetch(`/api/reports/export?range=${selectedRange}&subject=${selectedSubject}&section=${selectedSection}&format=csv`, {
+      const response = await fetch(`/api/reports/generate?range=${selectedRange}&subject=${selectedSubject}&section=${selectedSection}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        toast({
+          title: "Report Generated",
+          description: `Generated report for ${selectedRange} range with ${data.records} records`,
+        });
+      } else {
+        throw new Error('Failed to generate report');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Generation Failed",
+        description: error.message || "Failed to generate report",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const exportReport = async (format: 'excel' | 'pdf') => {
+    try {
+      const response = await fetch(`/api/reports/export?range=${selectedRange}&subject=${selectedSubject}&section=${selectedSection}&format=${format}`, {
         method: 'GET',
       });
       
@@ -66,7 +94,7 @@ export default function Reports() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `attendance-report-${selectedRange}-${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `attendance-report-${selectedRange}-${new Date().toISOString().split('T')[0]}.${format === 'excel' ? 'xlsx' : 'pdf'}`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -74,7 +102,7 @@ export default function Reports() {
         
         toast({
           title: "Export Successful",
-          description: "Report exported as CSV",
+          description: `Report exported as ${format.toUpperCase()}`,
         });
       } else {
         throw new Error('Failed to export report');
@@ -95,7 +123,7 @@ export default function Reports() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-semibold">Attendance Reports</h1>
-            <p className="text-muted-foreground">View and export attendance data</p>
+            <p className="text-muted-foreground">Generate and download comprehensive attendance reports</p>
           </div>
         </div>
         <div className="flex items-center justify-center py-12">
@@ -115,14 +143,14 @@ export default function Reports() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-semibold">Attendance Reports</h1>
-            <p className="text-muted-foreground">View and export attendance data</p>
+            <p className="text-muted-foreground">Generate and download comprehensive attendance reports</p>
           </div>
         </div>
         <Card>
           <CardContent className="p-6">
             <div className="text-center py-8">
               <div className="w-16 h-16 mx-auto mb-4 bg-destructive/10 rounded-full flex items-center justify-center">
-                <FileSpreadsheet className="h-8 w-8 text-destructive" />
+                <BarChart3 className="h-8 w-8 text-destructive" />
               </div>
               <h3 className="font-semibold mb-2">Failed to Load Reports</h3>
               <p className="text-muted-foreground mb-4">Unable to fetch attendance data. Please try again.</p>
@@ -140,57 +168,52 @@ export default function Reports() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
         <div>
           <h1 className="text-xl sm:text-2xl font-semibold">Attendance Reports</h1>
-          <p className="text-muted-foreground">View and export attendance data</p>
+          <p className="text-muted-foreground">Generate and download comprehensive attendance reports</p>
         </div>
-        <Button onClick={exportCSV} className="w-full sm:w-auto" data-testid="button-export-csv">
-          <FileSpreadsheet className="mr-2 h-4 w-4" />
-          Export CSV
-        </Button>
       </div>
 
       {/* Report Filters */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center text-base sm:text-lg">
+          <CardTitle className="flex items-center">
             <Filter className="mr-2 h-5 w-5" />
-            Filter Reports
+            Report Filters
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2">Date Range</label>
               <Select value={selectedRange} onValueChange={setSelectedRange}>
-                <SelectTrigger data-testid="select-date-range">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="today">Today</SelectItem>
                   <SelectItem value="week">This Week</SelectItem>
                   <SelectItem value="month">This Month</SelectItem>
+                  <SelectItem value="custom">Custom Range</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">Subject</label>
               <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-                <SelectTrigger data-testid="select-subject">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Subjects</SelectItem>
-                  {subjects?.map((subject: any) => (
-                    <SelectItem key={subject.id} value={subject.id.toString()}>
-                      {subject.name}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="database">Database Systems</SelectItem>
+                  <SelectItem value="programming">Programming Logic</SelectItem>
+                  <SelectItem value="structures">Data Structures</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Section</label>
+              <label className="block text-sm font-medium mb-2">Class Section</label>
               <Select value={selectedSection} onValueChange={setSelectedSection}>
-                <SelectTrigger data-testid="select-section">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -201,51 +224,69 @@ export default function Reports() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="flex items-end">
+              <Button className="w-full" onClick={generateReport}>
+                <BarChart3 className="mr-2 h-4 w-4" />
+                Generate Report
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Summary Statistics */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-        <Card>
-          <CardContent className="p-4 sm:p-6">
-            <div className="text-center">
-              <p className="text-xl sm:text-2xl font-bold" data-testid="text-total-records">{summary.total}</p>
-              <p className="text-xs sm:text-sm text-muted-foreground">Total Records</p>
+      {/* Quick Reports */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => exportReport('pdf')}>
+          <CardContent className="p-6">
+            <div className="flex items-center mb-4">
+              <div className="p-3 bg-primary/10 rounded-lg mr-4">
+                <Calendar className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Daily Report</h3>
+                <p className="text-sm text-muted-foreground">Today's attendance summary</p>
+              </div>
             </div>
+            <Button variant="outline" className="w-full">
+              <Download className="mr-2 h-4 w-4" />
+              Download Daily Report
+            </Button>
           </CardContent>
         </Card>
-        
-        <Card>
-          <CardContent className="p-4 sm:p-6">
-            <div className="text-center">
-              <p className="text-xl sm:text-2xl font-bold text-secondary" data-testid="text-present-count">
-                {summary.present}
-              </p>
-              <p className="text-xs sm:text-sm text-muted-foreground">Present</p>
+
+        <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => exportReport('excel')}>
+          <CardContent className="p-6">
+            <div className="flex items-center mb-4">
+              <div className="p-3 bg-secondary/10 rounded-lg mr-4">
+                <CalendarDays className="h-6 w-6 text-secondary" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Weekly Report</h3>
+                <p className="text-sm text-muted-foreground">This week's attendance trends</p>
+              </div>
             </div>
+            <Button variant="outline" className="w-full">
+              <Download className="mr-2 h-4 w-4" />
+              Download Weekly Report
+            </Button>
           </CardContent>
         </Card>
-        
-        <Card>
-          <CardContent className="p-4 sm:p-6">
-            <div className="text-center">
-              <p className="text-xl sm:text-2xl font-bold text-accent" data-testid="text-late-count">
-                {summary.late}
-              </p>
-              <p className="text-xs sm:text-sm text-muted-foreground">Late</p>
+
+        <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => exportReport('pdf')}>
+          <CardContent className="p-6">
+            <div className="flex items-center mb-4">
+              <div className="p-3 bg-accent/10 rounded-lg mr-4">
+                <BarChart3 className="h-6 w-6 text-accent" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Analytics Report</h3>
+                <p className="text-sm text-muted-foreground">Detailed attendance analytics</p>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4 sm:p-6">
-            <div className="text-center">
-              <p className="text-xl sm:text-2xl font-bold text-destructive" data-testid="text-absent-count">
-                {summary.absent}
-              </p>
-              <p className="text-xs sm:text-sm text-muted-foreground">Absent</p>
-            </div>
+            <Button variant="outline" className="w-full">
+              <Download className="mr-2 h-4 w-4" />
+              Download Analytics
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -253,7 +294,27 @@ export default function Reports() {
       {/* Report Preview */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base sm:text-lg">Attendance Records</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Report Preview - Database Systems (Today)</CardTitle>
+            <div className="flex space-x-2">
+              <Button 
+                variant="outline" 
+                onClick={() => exportReport('excel')}
+                className="bg-secondary/10 hover:bg-secondary/20"
+              >
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                Export Excel
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => exportReport('pdf')}
+                className="bg-destructive/10 hover:bg-destructive/20"
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                Export PDF
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -274,11 +335,11 @@ export default function Reports() {
                       <Calendar className="h-8 w-8 text-muted-foreground" />
                     </div>
                     <h3 className="font-semibold mb-2">No Attendance Records</h3>
-                    <p className="text-muted-foreground">No attendance data found for the selected criteria. Try adjusting your filters.</p>
+                    <p className="text-muted-foreground">No attendance data found for the selected criteria. Try adjusting your filters or check back later.</p>
                   </div>
                 ) : (
                   attendanceRecords.map((record: any) => (
-                    <div key={record.id} className="grid grid-cols-6 gap-4 py-4 px-6 items-center" data-testid={`row-attendance-${record.id}`}>
+                    <div key={record.id} className="grid grid-cols-6 gap-4 py-4 px-6 items-center">
                       <div className="font-medium">{record.studentName}</div>
                       <div className="font-mono text-sm">{record.studentId}</div>
                       <div className="font-mono text-sm">{record.checkIn}</div>
@@ -293,6 +354,51 @@ export default function Reports() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Summary Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">
+              <p className="text-2xl font-bold">{summary.total}</p>
+              <p className="text-sm text-muted-foreground">Total Records</p>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-secondary">
+                {summary.present}
+              </p>
+              <p className="text-sm text-muted-foreground">Present</p>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-accent">
+                {summary.late}
+              </p>
+              <p className="text-sm text-muted-foreground">Late</p>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-destructive">
+                {summary.absent}
+              </p>
+              <p className="text-sm text-muted-foreground">Absent</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
