@@ -65,7 +65,6 @@ export const students = pgTable("students", {
 export const classrooms = pgTable("classrooms", {
   id: serial("id").primaryKey(),
   name: varchar("name").notNull(),
-  building: varchar("building").default("CLIRDEC"), // Building identifier (CLIRDEC)
   location: varchar("location"),
   type: varchar("type").notNull(), // 'lecture' or 'laboratory'
   capacity: integer("capacity").default(30),
@@ -156,15 +155,11 @@ export const computers = pgTable("computers", {
   name: varchar("name").notNull(),
   classroomId: integer("classroom_id").references(() => classrooms.id),
   ipAddress: varchar("ip_address"),
-  status: varchar("status").default("available"), // available, in_use, maintenance
+  status: varchar("status").default("available"), // available, occupied, maintenance
   assignedStudentId: integer("assigned_student_id").references(() => students.id),
   professorId: varchar("professor_id").notNull(), // Track which faculty created this computer
-  loginTime: timestamp("login_time"), // When student logged in to use computer
-  logoutTime: timestamp("logout_time"), // When student logged out
-  sessionDuration: integer("session_duration"), // Duration in minutes
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Email notifications log
@@ -452,7 +447,6 @@ export const updateStudentSchema = z.object({
 
 export const updateClassroomSchema = z.object({
   name: z.string().optional(),
-  building: z.string().optional(),
   location: z.string().nullable().optional(),
   type: z.enum(["lecture", "laboratory"]).optional(),
   capacity: z.number().int().positive().optional(),
@@ -483,11 +477,8 @@ export const updateScheduleSchema = z.object({
 export const updateComputerSchema = z.object({
   name: z.string().optional(),
   classroomId: z.number().int().optional(),
-  status: z.enum(["available", "in_use", "maintenance"]).optional(),
+  status: z.enum(["available", "occupied", "maintenance"]).optional(),
   assignedStudentId: z.number().int().nullable().optional(),
-  loginTime: z.date().nullable().optional(),
-  logoutTime: z.date().nullable().optional(),
-  sessionDuration: z.number().int().nullable().optional(),
   isActive: z.boolean().optional(),
 });
 
