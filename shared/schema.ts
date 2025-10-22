@@ -121,7 +121,7 @@ export const attendance = pgTable("attendance", {
   studentId: integer("student_id").references(() => students.id),
   checkInTime: timestamp("check_in_time"),
   checkOutTime: timestamp("check_out_time"),
-  status: varchar("status").default("absent"), // present, late, absent
+  status: varchar("status").default("absent"), // present, late, absent, excused
   proximityValidated: boolean("proximity_validated").default(false),
   entryValidated: boolean("entry_validated").default(false),
   exitValidated: boolean("exit_validated").default(false),
@@ -130,6 +130,10 @@ export const attendance = pgTable("attendance", {
   validationTimeout: boolean("validation_timeout").default(false),
   discrepancyFlag: varchar("discrepancy_flag"), // ghost_tap, missed_tap, sensor_only, normal
   computerId: integer("computer_id"),
+  excuseReason: varchar("excuse_reason"), // medical, family_emergency, school_event, other
+  excuseNotes: text("excuse_notes"), // Additional details about the excuse
+  excusedBy: varchar("excused_by").references(() => users.id), // Professor who marked as excused
+  excusedAt: timestamp("excused_at"), // When marked as excused
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

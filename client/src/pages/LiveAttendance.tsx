@@ -10,14 +10,18 @@ import {
   Users, 
   Monitor,
   Phone,
-  IdCard
+  IdCard,
+  FileText
 } from "lucide-react";
 import RFIDSimulator from "@/components/RFIDSimulator";
+import { MarkExcusedModal } from "@/components/MarkExcusedModal";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 export default function LiveAttendance() {
   const [selectedSession, setSelectedSession] = useState<number | null>(null);
+  const [excuseModalOpen, setExcuseModalOpen] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -86,11 +90,53 @@ export default function LiveAttendance() {
     }
   };
 
+  const markExcusedMutation = useMutation({
+    mutationFn: async (data: { attendanceId: number; excuseReason: string; excuseNotes: string }) => {
+      const response = await apiRequest('PUT', `/api/attendance/${data.attendanceId}/excuse`, {
+        excuseReason: data.excuseReason,
+        excuseNotes: data.excuseNotes
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Marked as Excused",
+        description: "The student's absence has been marked as excused.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/attendance'] });
+      setExcuseModalOpen(false);
+      setSelectedRecord(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to mark attendance as excused",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleMarkExcused = (data: { excuseReason: string; excuseNotes: string }) => {
+    if (selectedRecord) {
+      markExcusedMutation.mutate({
+        attendanceId: selectedRecord.id,
+        excuseReason: data.excuseReason,
+        excuseNotes: data.excuseNotes
+      });
+    }
+  };
+
+  const openExcuseModal = (record: any) => {
+    setSelectedRecord(record);
+    setExcuseModalOpen(true);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'present': return 'bg-secondary text-secondary-foreground';
       case 'late': return 'bg-accent text-accent-foreground';
       case 'absent': return 'bg-destructive text-destructive-foreground';
+      case 'excused': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100';
       default: return 'bg-muted text-muted-foreground';
     }
   };
@@ -183,12 +229,26 @@ export default function LiveAttendance() {
                             <Monitor className="mr-1 h-3 w-3" />
                             Monitor
                           </Button>
-                        ) : (
-                          <Button size="sm" variant="outline">
-                            <Phone className="mr-1 h-3 w-3" />
-                            Contact
-                          </Button>
-                        )}
+                        ) : record.status === 'absent' ? (
+                          <>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => openExcuseModal(record)}
+                            >
+                              <FileText className="mr-1 h-3 w-3" />
+                              Excuse
+                            </Button>
+                            <Button size="sm" variant="outline">
+                              <Phone className="mr-1 h-3 w-3" />
+                              Contact
+                            </Button>
+                          </>
+                        ) : record.status === 'excused' ? (
+                          <Badge variant="outline" className="text-xs">
+                            {record.excuseReason?.replace('_', ' ') || 'Excused'}
+                          </Badge>
+                        ) : null}
                       </div>
                     </div>
                   ))
@@ -207,6 +267,15 @@ export default function LiveAttendance() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Mark Excused Modal */}
+      <MarkExcusedModal
+        open={excuseModalOpen}
+        onOpenChange={setExcuseModalOpen}
+        attendanceRecord={selectedRecord}
+        onMarkExcused={handleMarkExcused}
+        isLoading={markExcusedMutation.isPending}
+      />
     </div>
   );
 }

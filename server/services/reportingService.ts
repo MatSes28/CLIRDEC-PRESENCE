@@ -16,21 +16,27 @@ export async function generateAttendanceTrendData() {
       let totalAbsent = 0;
       let totalLate = 0;
       
+      let totalExcused = 0;
+      
       for (const session of sessions) {
         const attendance = await storage.getAttendanceBySession(session.id);
         totalPresent += attendance.filter(a => a.status === 'present').length;
         totalAbsent += attendance.filter(a => a.status === 'absent').length;
         totalLate += attendance.filter(a => a.status === 'late').length;
+        totalExcused += attendance.filter(a => a.status === 'excused').length;
       }
       
-      const total = totalPresent + totalAbsent + totalLate;
-      const attendanceRate = total > 0 ? Math.round((totalPresent / total) * 100) : 0;
+      const total = totalPresent + totalAbsent + totalLate + totalExcused;
+      // Excused absences should count as attendance
+      const totalAttended = totalPresent + totalLate + totalExcused;
+      const attendanceRate = total > 0 ? Math.round((totalAttended / total) * 100) : 0;
       
       trendData.push({
         date: new Date(d).toISOString().split('T')[0],
         present: totalPresent,
         absent: totalAbsent,
         late: totalLate,
+        excused: totalExcused,
         attendanceRate
       });
     }
@@ -54,6 +60,7 @@ export async function generateStudentPerformanceData() {
       let presentCount = 0;
       let absentCount = 0;
       let lateCount = 0;
+      let excusedCount = 0;
       
       for (const session of allSessions) {
         const attendance = await storage.getAttendanceBySession(session.id);
@@ -64,10 +71,13 @@ export async function generateStudentPerformanceData() {
           if (studentAttendance.status === 'present') presentCount++;
           else if (studentAttendance.status === 'absent') absentCount++;
           else if (studentAttendance.status === 'late') lateCount++;
+          else if (studentAttendance.status === 'excused') excusedCount++;
         }
       }
       
-      const attendanceRate = totalClasses > 0 ? Math.round((presentCount / totalClasses) * 100) : 0;
+      // Excused absences should count as attendance, not penalize the student
+      const totalAttended = presentCount + lateCount + excusedCount;
+      const attendanceRate = totalClasses > 0 ? Math.round((totalAttended / totalClasses) * 100) : 0;
       
       performanceData.push({
         name: `${student.firstName} ${student.lastName}`,
@@ -75,7 +85,8 @@ export async function generateStudentPerformanceData() {
         totalClasses,
         present: presentCount,
         absent: absentCount,
-        late: lateCount
+        late: lateCount,
+        excused: excusedCount
       });
     }
     
@@ -99,6 +110,10 @@ export async function generateDailyReport(date: Date) {
       const attendance = await storage.getAttendanceBySession(session.id);
       const present = attendance.filter(a => a.status === 'present' || a.status === 'late').length;
       const absent = attendance.filter(a => a.status === 'absent').length;
+      const excused = attendance.filter(a => a.status === 'excused').length;
+      
+      // Excused absences count as attendance, not against the student
+      const totalAttended = present + excused;
       
       report.attendanceData.push({
         sessionId: session.id,
@@ -106,7 +121,8 @@ export async function generateDailyReport(date: Date) {
         totalStudents: attendance.length,
         present,
         absent,
-        attendanceRate: attendance.length > 0 ? Math.round((present / attendance.length) * 100) : 0
+        excused,
+        attendanceRate: attendance.length > 0 ? Math.round((totalAttended / attendance.length) * 100) : 0
       });
     }
     

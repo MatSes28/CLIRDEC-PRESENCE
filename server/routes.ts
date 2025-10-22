@@ -543,7 +543,8 @@ Central Luzon State University
 
           let totalPresent = 0,
             totalAbsent = 0,
-            totalLate = 0;
+            totalLate = 0,
+            totalExcused = 0;
 
           for (const session of todaySessions) {
             const attendance = await storage.getAttendanceBySession(session.id);
@@ -554,22 +555,25 @@ Central Luzon State University
               (a) => a.status === "absent"
             ).length;
             totalLate += attendance.filter((a) => a.status === "late").length;
+            totalExcused += attendance.filter((a) => a.status === "excused").length;
           }
+
+          // Excused absences should count as attendance
+          const totalAttended = totalPresent + totalLate + totalExcused;
+          const totalRecords = totalPresent + totalAbsent + totalLate + totalExcused;
 
           res.json({
             todayClasses: todaySessions.length,
             presentStudents: totalPresent,
             absentStudents: totalAbsent,
             lateStudents: totalLate,
+            excusedStudents: totalExcused,
             totalStudents: students.length,
             totalClassrooms: classrooms.length,
             totalFaculty: faculty.length,
             attendanceRate: `${
-              totalPresent + totalAbsent + totalLate > 0
-                ? Math.round(
-                    (totalPresent / (totalPresent + totalAbsent + totalLate)) *
-                      100
-                  )
+              totalRecords > 0
+                ? Math.round((totalAttended / totalRecords) * 100)
                 : 0
             }%`,
             systemRole: "admin",
@@ -587,6 +591,7 @@ Central Luzon State University
           let presentCount = 0;
           let absentCount = 0;
           let lateCount = 0;
+          let excusedCount = 0;
           let totalStudents = 0;
 
           if (activeSession) {
@@ -602,12 +607,17 @@ Central Luzon State University
             absentCount = attendanceRecords.filter(
               (a) => a.status === "absent"
             ).length;
+            excusedCount = attendanceRecords.filter(
+              (a) => a.status === "excused"
+            ).length;
             totalStudents = attendanceRecords.length;
           }
 
+          // Excused absences should count as attendance
+          const totalAttended = presentCount + lateCount + excusedCount;
           const attendanceRate =
             totalStudents > 0
-              ? Math.round(((presentCount + lateCount) / totalStudents) * 100)
+              ? Math.round((totalAttended / totalStudents) * 100)
               : 0;
 
           res.json({
@@ -615,6 +625,7 @@ Central Luzon State University
             presentStudents: presentCount,
             absentStudents: absentCount,
             lateStudents: lateCount,
+            excusedStudents: excusedCount,
             attendanceRate: `${attendanceRate}%`,
             activeSession,
             systemRole: "faculty",
@@ -1363,6 +1374,97 @@ Central Luzon State University
     } catch (error) {
       console.error("Error creating attendance:", error);
       res.status(400).json({ message: "Failed to create attendance record" });
+    }
+  });
+
+  // Mark attendance as excused
+  app.put("/api/attendance/:id/excuse", requireAdminOrFaculty, async (req: any, res) => {
+    try {
+      const attendanceId = parseInt(req.params.id);
+      const { excuseReason, excuseNotes } = req.body;
+      const professorId = req.user.id;
+
+      if (!excuseReason) {
+        return res.status(400).json({ message: "Excuse reason is required" });
+      }
+
+      if (!db) throw new Error("Database not available");
+
+      // Get current attendance record with session info
+      const currentRecord = await db
+        .select()
+        .from(attendance)
+        .where(eq(attendance.id, attendanceId))
+        .limit(1);
+
+      if (currentRecord.length === 0) {
+        return res.status(404).json({ message: "Attendance record not found" });
+      }
+
+      // Verify the record is currently "absent" - only absent records can be excused
+      if (currentRecord[0].status !== 'absent') {
+        return res.status(400).json({ 
+          message: `Cannot mark as excused. Current status is "${currentRecord[0].status}". Only absent records can be marked as excused.` 
+        });
+      }
+
+      // Get the session to verify authorization
+      const sessionId = currentRecord[0].sessionId;
+      if (!sessionId) {
+        return res.status(400).json({ message: "Attendance record has no associated session" });
+      }
+
+      const session = await db
+        .select()
+        .from(sessions_class)
+        .where(eq(sessions_class.id, sessionId))
+        .limit(1);
+
+      if (session.length === 0) {
+        return res.status(404).json({ message: "Session not found" });
+      }
+
+      // Authorization check: faculty can only excuse records from their own sessions
+      // Admins can excuse any record
+      if (req.user.role !== 'admin' && session[0].professorId !== professorId) {
+        return res.status(403).json({ 
+          message: "Unauthorized. You can only mark absences as excused for your own class sessions." 
+        });
+      }
+
+      // Update attendance record to mark as excused
+      const updated = await db
+        .update(attendance)
+        .set({
+          status: "excused",
+          excuseReason,
+          excuseNotes: excuseNotes || null,
+          excusedBy: professorId,
+          excusedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(attendance.id, attendanceId))
+        .returning();
+
+      // Log the action for audit trail
+      await auditService.logAction({
+        userId: professorId,
+        action: "UPDATE",
+        entityType: "attendance",
+        entityId: attendanceId.toString(),
+        changes: {
+          before: { status: currentRecord[0].status },
+          after: { status: "excused", excuseReason, excuseNotes }
+        },
+        ipAddress: req.ip || "unknown",
+        userAgent: req.headers["user-agent"] || "unknown",
+        status: "success",
+      });
+
+      res.json(updated[0]);
+    } catch (error) {
+      console.error("Error marking attendance as excused:", error);
+      res.status(500).json({ message: "Failed to mark attendance as excused" });
     }
   });
 

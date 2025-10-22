@@ -50,8 +50,10 @@ export async function analyzeStudentAttendanceBehavior(studentId: number): Promi
   const presentCount = attendanceRecords.filter((r: any) => r.status === 'present').length;
   const absentCount = attendanceRecords.filter((r: any) => r.status === 'absent').length;
   const lateCount = attendanceRecords.filter((r: any) => r.status === 'late').length;
+  const excusedCount = attendanceRecords.filter((r: any) => r.status === 'excused').length;
   
-  const attendanceRate = totalClasses > 0 ? (presentCount + lateCount) / totalClasses * 100 : 100;
+  // Excused absences don't count against attendance rate
+  const attendanceRate = totalClasses > 0 ? (presentCount + lateCount + excusedCount) / totalClasses * 100 : 100;
   
   // Calculate consecutive absences
   const consecutiveAbsences = calculateConsecutiveAbsences(attendanceRecords);
@@ -156,8 +158,12 @@ function calculateConsecutiveAbsences(records: any[]): number {
   const sortedRecords = records.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   
   for (const record of sortedRecords) {
+    // Only count unexcused absences - excused absences don't trigger alerts
     if (record.status === 'absent') {
       consecutive++;
+    } else if (record.status === 'excused') {
+      // Excused absences break the consecutive absence streak
+      break;
     } else {
       break;
     }
