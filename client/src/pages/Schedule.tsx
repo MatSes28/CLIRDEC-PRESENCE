@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import AddScheduleModal from "@/components/AddScheduleModal";
 import FileUpload from "@/components/FileUpload";
 import type { Schedule, Subject, Classroom } from "@shared/schema";
@@ -22,7 +23,11 @@ import type { Schedule, Subject, Classroom } from "@shared/schema";
 export default function Schedule() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [showAddModal, setShowAddModal] = useState(false);
+  
+  // Faculty can only view schedules, not create or modify
+  const isReadOnly = user?.role === 'faculty';
 
   const { data: schedules, isLoading } = useQuery<Schedule[]>({
     queryKey: ['/api/schedules'],
@@ -106,23 +111,32 @@ export default function Schedule() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
         <div>
-          <h1 className="text-xl sm:text-2xl font-semibold">Class Schedule Management</h1>
-          <p className="text-sm text-muted-foreground hidden sm:block">Manage your class schedules and automated session triggers</p>
+          <h1 className="text-xl sm:text-2xl font-semibold">
+            {isReadOnly ? 'Class Schedules' : 'Class Schedule Management'}
+          </h1>
+          <p className="text-sm text-muted-foreground hidden sm:block">
+            {isReadOnly 
+              ? 'View your class schedules and session information' 
+              : 'Manage your class schedules and automated session triggers'}
+          </p>
         </div>
-        <Button onClick={() => setShowAddModal(true)} size="sm" className="w-full sm:w-auto">
-          <Plus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-          <span className="text-xs sm:text-sm">Add New Schedule</span>
-        </Button>
+        {!isReadOnly && (
+          <Button onClick={() => setShowAddModal(true)} size="sm" className="w-full sm:w-auto" data-testid="button-add-schedule">
+            <Plus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="text-xs sm:text-sm">Add New Schedule</span>
+          </Button>
+        )}
       </div>
 
-      {/* Schedule Upload Section */}
-      <Card>
-        <CardHeader className="p-4 sm:p-6">
-          <CardTitle className="text-base sm:text-lg">Upload Schedule</CardTitle>
-          <p className="text-xs sm:text-sm text-muted-foreground">Upload your class schedule file (CSV/Excel format)</p>
-        </CardHeader>
-        <CardContent>
-          <FileUpload 
+      {/* Schedule Upload Section - Only for Admin */}
+      {!isReadOnly && (
+        <Card>
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="text-base sm:text-lg">Upload Schedule</CardTitle>
+            <p className="text-xs sm:text-sm text-muted-foreground">Upload your class schedule file (CSV/Excel format)</p>
+          </CardHeader>
+          <CardContent>
+            <FileUpload 
             onFileUpload={(file) => {
               toast({
                 title: "File Upload Started",
@@ -133,6 +147,7 @@ export default function Schedule() {
           />
         </CardContent>
       </Card>
+      )}
 
       {/* Current Schedule */}
       <Card>
@@ -172,11 +187,17 @@ export default function Schedule() {
                     </div>
                   ))}
                 
-                {/* Add Class Slot */}
-                <button className="w-full border-2 border-dashed border-muted-foreground/25 rounded-lg p-2 lg:p-3 text-center text-muted-foreground hover:border-muted-foreground/50 hover:text-foreground transition-colors">
-                  <Plus className="h-3 w-3 lg:h-4 lg:w-4 mx-auto mb-1" />
-                  <div className="text-xs">Add Class</div>
-                </button>
+                {/* Add Class Slot - Only for Admin */}
+                {!isReadOnly && (
+                  <button 
+                    onClick={() => setShowAddModal(true)}
+                    className="w-full border-2 border-dashed border-muted-foreground/25 rounded-lg p-2 lg:p-3 text-center text-muted-foreground hover:border-muted-foreground/50 hover:text-foreground transition-colors"
+                    data-testid="button-add-class-slot"
+                  >
+                    <Plus className="h-3 w-3 lg:h-4 lg:w-4 mx-auto mb-1" />
+                    <div className="text-xs">Add Class</div>
+                  </button>
+                )}
               </div>
             ))}
           </div>

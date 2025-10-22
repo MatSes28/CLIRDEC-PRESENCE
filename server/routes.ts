@@ -2206,18 +2206,37 @@ Central Luzon State University
           ],
         };
 
-        if (format === "excel") {
-          // For Excel export, we would typically use a library like ExcelJS
+        if (format === "csv") {
+          // CSV export
           res.setHeader(
             "Content-Type",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            "text/csv"
           );
           res.setHeader(
             "Content-Disposition",
-            `attachment; filename="attendance-report-${range}.xlsx"`
+            `attachment; filename="attendance-report-${range}.csv"`
           );
 
-          // Mock Excel data as text for now
+          const csvData =
+            "Student ID,Name,Check In,Check Out,Status\n" +
+            reportData.records
+              .map(
+                (r) =>
+                  `${r.studentId},${r.name},${r.checkIn},${r.checkOut},${r.status}`
+              )
+              .join("\n");
+          res.send(csvData);
+        } else if (format === "excel") {
+          // Excel export (legacy support)
+          res.setHeader(
+            "Content-Type",
+            "text/csv"
+          );
+          res.setHeader(
+            "Content-Disposition",
+            `attachment; filename="attendance-report-${range}.csv"`
+          );
+
           const csvData =
             "Student ID,Name,Check In,Check Out,Status\n" +
             reportData.records
@@ -2228,15 +2247,21 @@ Central Luzon State University
               .join("\n");
           res.send(csvData);
         } else {
-          // PDF export would use a library like PDFKit
-          res.setHeader("Content-Type", "application/pdf");
+          // Default to CSV
+          res.setHeader("Content-Type", "text/csv");
           res.setHeader(
             "Content-Disposition",
-            `attachment; filename="attendance-report-${range}.pdf"`
+            `attachment; filename="attendance-report-${range}.csv"`
           );
-          res.send(
-            "Mock PDF content - PDF generation would be implemented with PDFKit"
-          );
+          const csvData =
+            "Student ID,Name,Check In,Check Out,Status\n" +
+            reportData.records
+              .map(
+                (r) =>
+                  `${r.studentId},${r.name},${r.checkIn},${r.checkOut},${r.status}`
+              )
+              .join("\n");
+          res.send(csvData);
         }
       } catch (error) {
         console.error("Error exporting report:", error);
